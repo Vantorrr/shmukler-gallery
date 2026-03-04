@@ -9,7 +9,7 @@ export function CustomCursor() {
 
   const mouse = useRef({ x: -200, y: -200 })
   const ring  = useRef({ x: -200, y: -200 })
-  const raf   = useRef<number>()
+  const raf   = useRef<number | undefined>(undefined)
   const hoverRef = useRef(false)
 
   useEffect(() => {
