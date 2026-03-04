@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { useRef, useState } from 'react'
 
 interface Props {
@@ -109,11 +110,12 @@ export function ArtistRow({ artist, index }: Props) {
             boxShadow: '0 20px 60px rgba(0,0,0,0.4)',
           }}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src={imageUrl}
             alt={artist.name}
-            className="w-full h-full object-cover"
+            fill
+            sizes="200px"
+            className="object-cover"
           />
         </div>
       )}

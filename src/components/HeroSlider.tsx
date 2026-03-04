@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
+import NextImage from 'next/image'
 import { clsx } from 'clsx'
 
 const SLIDES = [
@@ -90,11 +91,13 @@ export function HeroSlider() {
             className="absolute inset-0 will-change-transform"
             style={{ transform: 'translateY(0) scale(1.15)' }}
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <NextImage
               src={s.image}
               alt={s.title}
-              className="w-full h-full object-cover"
+              fill
+              priority={i === 0}
+              sizes="100vw"
+              className="object-cover"
               style={{ transformOrigin: 'center center' }}
             />
           </div>

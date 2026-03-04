@@ -82,11 +82,12 @@ export default async function Home() {
             <Link href={`/artwork/${art1.slug.current}`} className="group md:col-span-2 block">
               <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">
                 {art1.mainImage?.asset?.url && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
+                  <Image
                     src={art1.mainImage.asset.url}
                     alt={art1.title}
-                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    fill
+                    sizes="(max-width: 768px) 100vw, 66vw"
+                    className="object-cover transition-transform duration-700 group-hover:scale-105"
                   />
                 )}
                 {art1.status === 'sold' && (
@@ -113,11 +114,12 @@ export default async function Home() {
               <Link key={artwork._id} href={`/artwork/${artwork.slug.current}`} className="group block">
                 <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">
                   {artwork.mainImage?.asset?.url && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
+                    <Image
                       src={artwork.mainImage.asset.url}
                       alt={artwork.title}
-                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      fill
+                      sizes="(max-width: 768px) 100vw, 33vw"
+                      className="object-cover transition-transform duration-700 group-hover:scale-105"
                     />
                   )}
                   {artwork.status === 'sold' && (
@@ -144,11 +146,12 @@ export default async function Home() {
             <Link key={artwork._id} href={`/artwork/${artwork.slug.current}`} className="group block">
               <div className="relative aspect-[3/4] overflow-hidden bg-gray-100">
                 {artwork.mainImage?.asset?.url && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
+                  <Image
                     src={artwork.mainImage.asset.url}
                     alt={artwork.title}
-                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    fill
+                    sizes="(max-width: 768px) 100vw, 33vw"
+                    className="object-cover transition-transform duration-700 group-hover:scale-105"
                   />
                 )}
                 {artwork.status === 'sold' && (
@@ -331,12 +334,13 @@ export default async function Home() {
               href={`/artists/${artist.slug.current}`}
               className="group shrink-0 w-36 md:w-auto block"
             >
-              <div className="aspect-square overflow-hidden bg-gray-100 mb-3">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+              <div className="relative aspect-square overflow-hidden bg-gray-100 mb-3">
+                <Image
                   src={artist.portrait.asset.url}
                   alt={artist.name}
-                  className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500 group-hover:scale-105"
+                  fill
+                  sizes="(max-width: 768px) 144px, 16vw"
+                  className="object-cover grayscale group-hover:grayscale-0 transition-all duration-500 group-hover:scale-105"
                 />
               </div>
               <p className="text-[11px] leading-tight group-hover:opacity-50 transition-opacity">

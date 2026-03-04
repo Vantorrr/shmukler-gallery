@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { useRef } from 'react'
 import { urlForImage } from '@sanity/lib/image'
 
@@ -53,12 +54,12 @@ export function ArtworkCard({ artwork }: ArtworkCardProps) {
       >
         <div className="relative aspect-[3/4] overflow-hidden bg-gray-100 mb-4">
           {imageUrl && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <Image
               src={imageUrl}
               alt={artwork.title}
-              className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-              loading="lazy"
+              fill
+              sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+              className="object-cover transition-transform duration-700 group-hover:scale-105"
             />
           )}
           {artwork.status === 'sold' && (
