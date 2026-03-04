@@ -1,36 +1,57 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Shmukler Gallery Website
+
+This is a Next.js project with Sanity CMS for content management.
 
 ## Getting Started
 
-First, run the development server:
+1.  **Install Dependencies:**
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+    ```bash
+    cd art-gallery
+    npm install
+    ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2.  **Set up Sanity:**
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+    -   Create a project at [sanity.io](https://www.sanity.io).
+    -   Get your Project ID and Dataset (usually "production").
+    -   Update `.env.local` with your credentials:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+    ```env
+    NEXT_PUBLIC_SANITY_PROJECT_ID=your_project_id
+    NEXT_PUBLIC_SANITY_DATASET=production
+    ```
 
-## Learn More
+    -   Add `http://localhost:3000` to your CORS origins in Sanity management dashboard.
 
-To learn more about Next.js, take a look at the following resources:
+3.  **Run the Development Server:**
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+    ```bash
+    npm run dev
+    ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+    Open [http://localhost:3000](http://localhost:3000) to view the site.
+    Open [http://localhost:3000/studio](http://localhost:3000/studio) to access the CMS.
 
-## Deploy on Vercel
+## Project Structure
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+-   `src/app/(site)`: Main website pages (Home, Artwork, etc.)
+-   `src/app/studio`: Sanity Studio embedded route.
+-   `src/components`: React components (Navigation, ArtworkCard, etc.)
+-   `sanity/schemaTypes`: Content schemas (Artwork, Artist, Exhibition).
+-   `sanity/lib`: Sanity client and utilities.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Features
+
+-   **Ultra-Minimal Design:** Focus on artwork with clean typography.
+-   **Sanity CMS:** Manage Artworks, Artists, and Exhibitions.
+-   **E-commerce:** Mock checkout flow for LifePay and Dolyame integration.
+-   **Responsive:** Works on mobile and desktop.
+
+## Deployment
+
+To deploy on Vercel:
+
+1.  Push to GitHub.
+2.  Import project in Vercel.
+3.  Add Environment Variables (`NEXT_PUBLIC_SANITY_PROJECT_ID`, etc.) in Vercel settings.
