@@ -36,11 +36,11 @@ export default async function EventsPage() {
 
   try {
     const data = await client.fetch(EVENTS_QUERY)
-    events = data?.length ? data : MOCK_EVENTS
-  } catch (error) {
-    console.error('Failed to fetch events, using mock data:', error)
-    events = MOCK_EVENTS
+    if (data?.length) events = data
+  } catch {
+    // ignore
   }
+  if (!events?.length) events = MOCK_EVENTS
 
   const getCategory = (e: (typeof events)[0]) =>
     e.category ?? (e.type === 'masterclass' || e.type === 'lecture' ? 'course' : 'event')

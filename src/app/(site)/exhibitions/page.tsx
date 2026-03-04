@@ -13,10 +13,10 @@ export default async function ExhibitionsPage() {
 
   try {
     exhibitions = await client.fetch(EXHIBITIONS_QUERY)
-  } catch (error) {
-    console.error('Failed to fetch exhibitions, using mock data:', error)
-    exhibitions = MOCK_EXHIBITIONS
+  } catch {
+    // ignore
   }
+  if (!exhibitions?.length) exhibitions = MOCK_EXHIBITIONS
 
   return (
     <div className="min-h-screen bg-white pt-32 pb-24 px-6 md:px-12">

@@ -25,8 +25,9 @@ export default async function Home() {
   try {
     artworks = await client.fetch(ARTWORKS_QUERY)
   } catch {
-    artworks = MOCK_ARTWORKS
+    // ignore
   }
+  if (!artworks?.length) artworks = MOCK_ARTWORKS
 
   const exhibitions = MOCK_EXHIBITIONS.slice(0, 2)
   const [art1, art2, art3, art4, art5, art6] = artworks

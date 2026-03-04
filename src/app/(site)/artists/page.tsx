@@ -15,8 +15,9 @@ export default async function ArtistsPage() {
   try {
     artists = await client.fetch(ARTISTS_QUERY)
   } catch {
-    artists = MOCK_ARTISTS
+    // ignore
   }
+  if (!artists?.length) artists = MOCK_ARTISTS
 
   return (
     <div className="min-h-screen bg-white">
