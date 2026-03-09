@@ -7,13 +7,14 @@ import { ShoppingBag } from 'lucide-react'
 import { useState, useEffect } from 'react'
 
 const links = [
-  { href: '/gallery',     label: 'Галерея',      num: '01' },
+  { href: '/gallery',     label: 'Каталог',      num: '01' },
   { href: '/artists',     label: 'Художники',    num: '02' },
   { href: '/exhibitions', label: 'Выставки',     num: '03' },
-  { href: '/events',      label: 'Мероприятия',  num: '04' },
-  { href: '/services',    label: 'Услуги',        num: '05' },
-  { href: '/about',       label: 'О нас',         num: '06' },
-  { href: '/contact',     label: 'Контакты',     num: '07' },
+  { href: '/fairs',       label: 'Ярмарки',      num: '04' },
+  { href: '/events',      label: 'Мероприятия',  num: '05' },
+  { href: '/services',    label: 'Услуги',       num: '06' },
+  { href: '/about',       label: 'О нас',        num: '07' },
+  { href: '/contact',     label: 'Контакты',     num: '08' },
 ]
 
 export function Navigation() {
@@ -161,7 +162,7 @@ export function Navigation() {
                     {link.num}
                   </span>
                   <span
-                    className="font-serif italic text-white leading-none"
+                    className="font-serif text-white leading-none"
                     style={{
                       fontSize: 'clamp(2.2rem, 8vw, 3.5rem)',
                       opacity: pathname === link.href ? 1 : 0.6,

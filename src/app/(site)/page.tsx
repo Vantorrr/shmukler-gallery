@@ -42,7 +42,7 @@ export default async function Home() {
       <div className="border-y border-black/10 py-4 bg-white overflow-hidden">
         <Marquee
           items={ARTIST_NAMES}
-          speed={35}
+          speed={80}
           className="text-[11px] tracking-[0.25em] uppercase text-black/40"
           separator="·"
         />
@@ -60,7 +60,7 @@ export default async function Home() {
             <SplitText
               text="Сейчас в галерее"
               as="h2"
-              className="font-serif italic leading-none"
+              className="font-serif leading-none"
               style={{ fontSize: 'clamp(2.8rem, 7vw, 7rem)' } as React.CSSProperties}
               delay={100}
               stagger={80}
@@ -181,26 +181,7 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* ── STATS STRIP ── */}
-      <div className="border-y border-black/8 my-16 py-12 px-6 md:px-12 bg-[#f8f8f6]">
-        <div className="max-w-[1600px] mx-auto grid grid-cols-2 md:grid-cols-4 gap-8">
-          {[
-            { num: '22+', label: 'Художника' },
-            { num: '4',   label: 'Выставки в 2026' },
-            { num: '6',   label: 'Лет в искусстве' },
-            { num: '∞',   label: 'Любовь к искусству' },
-          ].map((stat) => (
-            <div key={stat.label} className="text-center">
-              <div className="font-serif italic text-5xl md:text-6xl text-black/80 leading-none mb-2">
-                {stat.num}
-              </div>
-              <div className="text-[10px] tracking-[0.3em] uppercase text-black/40">
-                {stat.label}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+      {/* Stats strip removed */}
 
       {/* ── EXHIBITIONS — editorial layout ── */}
       <section className="px-6 md:px-12 py-16 max-w-[1600px] mx-auto">
@@ -212,7 +193,7 @@ export default async function Home() {
             <SplitText
               text="Выставки"
               as="h2"
-              className="font-serif italic leading-none"
+              className="font-serif leading-none"
               style={{ fontSize: 'clamp(2.8rem, 7vw, 6rem)' } as React.CSSProperties}
               delay={50}
             />
@@ -235,7 +216,7 @@ export default async function Home() {
             >
               <div className="flex gap-6 items-start">
                 <div
-                  className="shrink-0 font-serif italic text-7xl leading-none text-black/10 select-none"
+                  className="shrink-0 font-serif text-7xl leading-none text-black/10 select-none"
                 >
                   {String(i + 1).padStart(2, '0')}
                 </div>
@@ -283,7 +264,7 @@ export default async function Home() {
             <SplitText
               text="Искусство для вашего пространства"
               as="h2"
-              className="font-serif italic text-white leading-none"
+              className="font-serif text-white leading-none"
               style={{ fontSize: 'clamp(2.5rem, 5vw, 5rem)' } as React.CSSProperties}
               delay={100}
               stagger={70}
@@ -313,7 +294,7 @@ export default async function Home() {
             <SplitText
               text="Художники"
               as="h2"
-              className="font-serif italic leading-none"
+              className="font-serif leading-none"
               style={{ fontSize: 'clamp(2.8rem, 7vw, 6rem)' } as React.CSSProperties}
               delay={50}
             />

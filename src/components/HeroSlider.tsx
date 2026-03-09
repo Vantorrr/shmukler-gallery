@@ -126,7 +126,7 @@ export function HeroSlider() {
             Shmukler Gallery — Выставка
           </p>
           <h2
-            className="font-serif italic text-white leading-[0.9] mb-6 whitespace-pre-line"
+            className="font-serif text-white leading-[0.9] mb-6 whitespace-pre-line"
             style={{ fontSize: 'clamp(3.5rem, 9vw, 9rem)' }}
           >
             {slide.title}
@@ -151,7 +151,7 @@ export function HeroSlider() {
 
       {/* Slide counter + dots */}
       <div className="absolute bottom-16 right-6 md:right-14 z-10 flex flex-col items-end gap-4">
-        <div className="text-white/30 text-xs font-serif italic tabular-nums">
+        <div className="text-white/30 text-xs font-serif tabular-nums">
           {String(current + 1).padStart(2, '0')} / {String(SLIDES.length).padStart(2, '0')}
         </div>
         <div className="flex gap-2">

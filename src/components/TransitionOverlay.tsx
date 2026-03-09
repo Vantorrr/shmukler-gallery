@@ -92,7 +92,7 @@ export function TransitionOverlay() {
       {/* Subtle label in center of the curtain */}
       <div className="text-center select-none">
         <p
-          className="font-serif italic text-white/20 leading-none"
+          className="font-serif text-white/20 leading-none"
           style={{ fontSize: 'clamp(2.5rem, 6vw, 6rem)' }}
         >
           Shmukler

@@ -24,7 +24,7 @@ export default async function ExhibitionsPage() {
         <div className="pb-12">
           <ScrollReveal>
             <p className="text-[10px] tracking-[0.5em] uppercase text-black/30 mb-4">Программа</p>
-            <h1 className="font-serif italic leading-none" style={{ fontSize: 'clamp(4rem, 10vw, 10rem)' }}>
+            <h1 className="font-serif leading-none" style={{ fontSize: 'clamp(4rem, 10vw, 10rem)' }}>
               Выставки
             </h1>
           </ScrollReveal>
@@ -56,7 +56,7 @@ export default async function ExhibitionsPage() {
                   <p className="text-xs uppercase tracking-widest text-gray-500">
                     {new Date(exhibition.startDate).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })} — {new Date(exhibition.endDate).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}
                   </p>
-                  <h2 className="text-3xl font-serif italic group-hover:opacity-60 transition-opacity">
+                  <h2 className="text-3xl font-serif group-hover:opacity-60 transition-opacity">
                     {exhibition.title}
                   </h2>
                   <p className="text-sm font-light text-gray-600">

@@ -116,7 +116,7 @@ export function LoadingScreen() {
             Москва
           </p>
           <h1
-            className="font-serif italic text-white text-center leading-none"
+            className="font-serif text-white text-center leading-none"
             style={{ fontSize: 'clamp(3rem, 8vw, 7rem)' }}
           >
             Shmukler

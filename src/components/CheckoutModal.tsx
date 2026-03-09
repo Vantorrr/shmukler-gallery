@@ -1,150 +1,156 @@
 'use client'
 
 import { useState } from 'react'
-import { X, CreditCard, Loader2 } from 'lucide-react'
 
-interface CheckoutModalProps {
-  isOpen: boolean
-  onClose: () => void
+interface Props {
   artwork: {
     title: string
-    price: number
+    price?: number
   }
+  onClose: () => void
 }
 
-export function CheckoutModal({ isOpen, onClose, artwork }: CheckoutModalProps) {
-  const [step, setStep] = useState<'info' | 'payment'>('info')
-  const [isLoading, setIsLoading] = useState(false)
+export function CheckoutModal({ artwork, onClose }: Props) {
+  const [form, setForm] = useState({
+    name: '', email: '', phone: '', address: '', comment: '', consent: false,
+  })
+  const [submitted, setSubmitted] = useState(false)
 
-  if (!isOpen) return null
-
-  const handleInfoSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    setStep('payment')
+    if (!form.consent) {
+      alert('Пожалуйста, дайте согласие на обработку персональных данных')
+      return
+    }
+    setSubmitted(true)
   }
 
-  const handlePayment = (method: 'lifepay' | 'dolyame') => {
-    setIsLoading(true)
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false)
-      alert(`Оплата через ${method === 'lifepay' ? 'LifePay' : 'Долями'} прошла успешно! Спасибо за покупку.`)
-      onClose()
-      setStep('info')
-    }, 2000)
-  }
+  const set = (field: string, value: string | boolean) =>
+    setForm(prev => ({ ...prev, [field]: value }))
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="bg-white w-full max-w-md rounded-lg shadow-xl overflow-hidden relative">
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
-        >
-          <X className="w-5 h-5" />
-        </button>
+    <div
+      className="fixed inset-0 z-[9999] bg-black/50 flex items-end md:items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white w-full max-w-lg max-h-[90vh] overflow-y-auto"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="p-8 space-y-6">
+          {/* Header */}
+          <div className="flex items-start justify-between">
+            <div>
+              <h2 className="font-serif text-xl">Оформление заказа</h2>
+              <p className="text-sm text-black/40 font-light mt-1">{artwork.title}</p>
+            </div>
+            <button onClick={onClose} className="text-black/30 hover:text-black text-lg leading-none ml-4">✕</button>
+          </div>
 
-        <div className="p-6 border-b border-gray-100">
-          <h2 className="text-xl font-medium uppercase tracking-wide">Оформление заказа</h2>
-          <p className="text-sm text-gray-500 mt-1">
-            {artwork.title} — {artwork.price.toLocaleString('ru-RU')} ₽
-          </p>
-        </div>
+          {submitted ? (
+            <div className="py-8 text-center space-y-3">
+              <p className="text-2xl">✓</p>
+              <p className="font-serif text-xl">Заявка отправлена</p>
+              <p className="text-sm text-black/50 font-light">Мы свяжемся с вами в ближайшее время для подтверждения.</p>
+              <button
+                onClick={onClose}
+                className="mt-4 text-[11px] uppercase tracking-widest border-b border-black pb-px hover:opacity-50 transition-opacity"
+              >
+                Закрыть
+              </button>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {artwork.price && (
+                <div className="bg-gray-50 p-4 flex justify-between items-center text-sm">
+                  <span className="font-light text-black/60">{artwork.title}</span>
+                  <span className="font-serif text-lg">{artwork.price.toLocaleString('ru-RU')} ₽</span>
+                </div>
+              )}
 
-        <div className="p-6">
-          {step === 'info' ? (
-            <form onSubmit={handleInfoSubmit} className="space-y-4">
-              <div>
-                <label className="block text-xs font-medium uppercase text-gray-500 mb-1">
-                  Email
-                </label>
+              <div className="space-y-4 pt-2">
+                <div>
+                  <label className="text-[10px] uppercase tracking-widest text-black/40 block mb-1.5">Имя *</label>
+                  <input
+                    required
+                    type="text"
+                    value={form.name}
+                    onChange={e => set('name', e.target.value)}
+                    placeholder="Ваше имя"
+                    className="w-full border-b border-gray-200 py-2 text-sm focus:outline-none focus:border-black transition-colors bg-transparent placeholder:text-black/25"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] uppercase tracking-widest text-black/40 block mb-1.5">Телефон *</label>
+                  <input
+                    required
+                    type="tel"
+                    value={form.phone}
+                    onChange={e => set('phone', e.target.value)}
+                    placeholder="+7 (___) ___-__-__"
+                    className="w-full border-b border-gray-200 py-2 text-sm focus:outline-none focus:border-black transition-colors bg-transparent placeholder:text-black/25"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] uppercase tracking-widest text-black/40 block mb-1.5">Email *</label>
+                  <input
+                    required
+                    type="email"
+                    value={form.email}
+                    onChange={e => set('email', e.target.value)}
+                    placeholder="your@email.com"
+                    className="w-full border-b border-gray-200 py-2 text-sm focus:outline-none focus:border-black transition-colors bg-transparent placeholder:text-black/25"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] uppercase tracking-widest text-black/40 block mb-1.5">Адрес доставки</label>
+                  <input
+                    type="text"
+                    value={form.address}
+                    onChange={e => set('address', e.target.value)}
+                    placeholder="Город, улица, дом, квартира"
+                    className="w-full border-b border-gray-200 py-2 text-sm focus:outline-none focus:border-black transition-colors bg-transparent placeholder:text-black/25"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] uppercase tracking-widest text-black/40 block mb-1.5">Комментарий</label>
+                  <textarea
+                    rows={2}
+                    value={form.comment}
+                    onChange={e => set('comment', e.target.value)}
+                    placeholder="Пожелания по упаковке, доставке или другое"
+                    className="w-full border-b border-gray-200 py-2 text-sm focus:outline-none focus:border-black transition-colors bg-transparent placeholder:text-black/25 resize-none"
+                  />
+                </div>
+              </div>
+
+              {/* Consent */}
+              <label className="flex items-start gap-3 cursor-pointer pt-2">
                 <input
-                  type="email"
-                  required
-                  className="w-full border border-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-black transition-colors"
-                  placeholder="email@example.com"
+                  type="checkbox"
+                  checked={form.consent}
+                  onChange={e => set('consent', e.target.checked)}
+                  className="mt-0.5 shrink-0 accent-black"
                 />
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-medium uppercase text-gray-500 mb-1">
-                    Имя
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    className="w-full border border-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-black transition-colors"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium uppercase text-gray-500 mb-1">
-                    Фамилия
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    className="w-full border border-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-black transition-colors"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium uppercase text-gray-500 mb-1">
-                  Адрес доставки
-                </label>
-                <textarea
-                  required
-                  rows={3}
-                  className="w-full border border-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-black transition-colors resize-none"
-                />
-              </div>
+                <span className="text-xs font-light text-black/50 leading-relaxed">
+                  Я даю согласие на обработку персональных данных в соответствии с{' '}
+                  <a href="/legal/privacy" className="underline hover:text-black" target="_blank">
+                    Политикой конфиденциальности
+                  </a>
+                </span>
+              </label>
 
               <button
                 type="submit"
-                className="w-full bg-black text-white py-3 uppercase tracking-widest text-sm font-medium hover:bg-gray-800 transition-colors mt-4"
+                className="w-full bg-black text-white py-4 text-[11px] uppercase tracking-[0.2em] hover:bg-black/80 transition-colors mt-2"
               >
-                Перейти к оплате
+                Отправить заявку
               </button>
+
+              <p className="text-xs text-black/30 text-center font-light">
+                Мы свяжемся с вами для подтверждения и оплаты через LifePay
+              </p>
             </form>
-          ) : (
-            <div className="space-y-4">
-              <p className="text-sm text-gray-600 mb-4">Выберите способ оплаты:</p>
-              
-              <button
-                onClick={() => handlePayment('lifepay')}
-                disabled={isLoading}
-                className="w-full flex items-center justify-between border border-gray-200 rounded p-4 hover:border-black transition-colors group disabled:opacity-50"
-              >
-                <div className="flex items-center gap-3">
-                  <CreditCard className="w-5 h-5 text-gray-400 group-hover:text-black transition-colors" />
-                  <span className="font-medium">Банковская карта (LifePay)</span>
-                </div>
-                {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
-              </button>
-
-              <button
-                onClick={() => handlePayment('dolyame')}
-                disabled={isLoading}
-                className="w-full flex items-center justify-between border border-gray-200 rounded p-4 hover:border-black transition-colors group disabled:opacity-50"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-5 h-5 bg-gray-200 rounded-full" /> {/* Dolyame logo placeholder */}
-                  <div className="text-left">
-                    <span className="block font-medium">Оплата частями (Долями)</span>
-                    <span className="text-xs text-gray-500">4 платежа по {(artwork.price / 4).toLocaleString('ru-RU')} ₽</span>
-                  </div>
-                </div>
-                {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
-              </button>
-
-              <button
-                onClick={() => setStep('info')}
-                className="text-xs text-gray-500 hover:text-black underline mt-4 block text-center w-full"
-              >
-                Назад к данным доставки
-              </button>
-            </div>
           )}
         </div>
       </div>

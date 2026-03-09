@@ -59,7 +59,7 @@ export function ArtistRow({ artist, index }: Props) {
       {/* Left: number + name */}
       <div className="relative z-10 flex items-center gap-6 md:gap-10 min-w-0">
         <span
-          className="font-serif italic shrink-0 select-none"
+          className="font-serif shrink-0 select-none"
           style={{
             fontSize: 'clamp(1.5rem, 3vw, 2.5rem)',
             color: hovered ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)',
@@ -69,7 +69,7 @@ export function ArtistRow({ artist, index }: Props) {
           {String(index + 1).padStart(2, '0')}
         </span>
         <h2
-          className="font-serif italic truncate"
+          className="font-serif truncate"
           style={{
             fontSize: 'clamp(1.8rem, 4vw, 3.5rem)',
             color: hovered ? '#fff' : '#000',

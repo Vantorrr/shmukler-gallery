@@ -32,7 +32,7 @@ export default function ServicesPage() {
         <div className="pb-10 mb-16">
           <ScrollReveal>
             <p className="text-[10px] tracking-[0.5em] uppercase text-black/30 mb-4">Каталог</p>
-            <h1 className="font-serif italic leading-none" style={{ fontSize: 'clamp(4rem, 10vw, 10rem)' }}>
+            <h1 className="font-serif leading-none" style={{ fontSize: 'clamp(4rem, 10vw, 10rem)' }}>
               Услуги
             </h1>
             <p className="text-xl md:text-2xl text-gray-600 font-light mt-4">Для коллекционеров и дизайнеров</p>

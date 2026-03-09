@@ -1,35 +1,49 @@
 'use client'
 
 import { useState } from 'react'
-import { CheckoutModal } from '@/components/CheckoutModal'
+import { CheckoutModal } from './CheckoutModal'
 
-interface PurchaseButtonProps {
+interface Props {
   artwork: {
-    _id: string
     title: string
-    price: number
-    mainImage: any
+    price?: number
+    slug: { current: string }
   }
 }
 
-export function PurchaseButton({ artwork }: PurchaseButtonProps) {
-  const [isModalOpen, setIsModalOpen] = useState(false)
+export function PurchaseButton({ artwork }: Props) {
+  const [inCart,   setInCart]   = useState(false)
+  const [checkout, setCheckout] = useState(false)
+
+  const handleAdd = () => {
+    setInCart(true)
+  }
 
   return (
     <>
-      <button
-        onClick={() => setIsModalOpen(true)}
-        className="w-full bg-black text-white py-4 px-8 uppercase tracking-widest text-sm font-medium hover:bg-gray-800 transition-colors"
-      >
-        В корзину
-      </button>
+      {!inCart ? (
+        <button
+          onClick={handleAdd}
+          className="w-full bg-black text-white py-4 text-[11px] uppercase tracking-[0.2em] hover:bg-black/80 transition-colors"
+        >
+          В корзину
+        </button>
+      ) : (
+        <div className="space-y-2">
+          <div className="w-full border border-black py-3.5 text-[11px] uppercase tracking-[0.2em] text-center text-black/50">
+            ✓ Добавлено в корзину
+          </div>
+          <button
+            onClick={() => setCheckout(true)}
+            className="w-full bg-black text-white py-4 text-[11px] uppercase tracking-[0.2em] hover:bg-black/80 transition-colors"
+          >
+            Оформить заказ
+          </button>
+        </div>
+      )}
 
-      {isModalOpen && (
-        <CheckoutModal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          artwork={artwork}
-        />
+      {checkout && (
+        <CheckoutModal artwork={artwork} onClose={() => setCheckout(false)} />
       )}
     </>
   )

@@ -31,10 +31,13 @@ export default function ContactPage() {
         {/* Heading */}
         <div className="pb-10 mb-16">
           <ScrollReveal>
-            <p className="text-[10px] tracking-[0.5em] uppercase text-black/30 mb-4">Связь</p>
-            <h1 className="font-serif italic leading-none" style={{ fontSize: 'clamp(4rem, 10vw, 10rem)' }}>
+            <p className="text-[10px] tracking-[0.5em] uppercase text-black/30 mb-4">Связаться с нами</p>
+            <h1 className="font-serif leading-none" style={{ fontSize: 'clamp(4rem, 10vw, 10rem)' }}>
               Контакты
             </h1>
+            <p className="text-base font-light text-black/50 mt-4 max-w-lg">
+              Чтобы связаться с нами по любому вопросу, оставьте заявку. Мы ответим в ближайшее время.
+            </p>
           </ScrollReveal>
         </div>
 

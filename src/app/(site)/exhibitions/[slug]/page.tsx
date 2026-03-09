@@ -45,7 +45,7 @@ export default async function ExhibitionPage({ params }: { params: Promise<{ slu
           <p className="text-xs uppercase tracking-widest text-gray-500 mb-4">
             {new Date(exhibition.startDate).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })} — {new Date(exhibition.endDate).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}
           </p>
-          <h1 className="text-4xl md:text-6xl font-serif italic mb-6">
+          <h1 className="text-4xl md:text-6xl font-serif mb-6">
             {exhibition.title}
           </h1>
           <p className="text-sm font-light text-gray-600 uppercase tracking-widest">

@@ -9,7 +9,7 @@ export default function AboutPage() {
         {/* Mission Statement */}
         <section className="mb-24">
           <ScrollReveal>
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif italic mb-8 max-w-4xl">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif mb-8 max-w-4xl">
             Shmukler Gallery was founded by art historian and coach Olga Shmukler in 2022. Наша цель — создать пространство, где различные формы искусства становятся способом познания себя и окружающего мира.
           </h1>
           <p className="text-lg md:text-xl text-gray-600 font-light max-w-2xl leading-relaxed">

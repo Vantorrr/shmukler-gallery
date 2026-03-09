@@ -42,7 +42,7 @@ export default async function ArtistPage({ params }: { params: Promise<{ slug: s
         
         {/* Artist Info - Sticky */}
         <div className="lg:col-span-4 lg:sticky lg:top-32 h-fit space-y-8">
-          <h1 className="text-4xl md:text-5xl font-serif italic leading-tight">
+          <h1 className="text-4xl md:text-5xl font-serif leading-tight">
             {artist.name}
           </h1>
           

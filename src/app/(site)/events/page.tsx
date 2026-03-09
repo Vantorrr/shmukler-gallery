@@ -2,6 +2,7 @@ import { MOCK_EVENTS } from '@/lib/mockData'
 import { client } from '@sanity/lib/client'
 import { EVENTS_QUERY } from '@sanity/lib/queries'
 import { ScrollReveal } from '@/components/ScrollReveal'
+import Image from 'next/image'
 
 export const revalidate = 60
 
@@ -54,7 +55,7 @@ export default async function EventsPage() {
         <div className="pb-12">
           <ScrollReveal>
             <p className="text-[10px] tracking-[0.5em] uppercase text-black/30 mb-4">Афиша</p>
-            <h1 className="font-serif italic leading-none" style={{ fontSize: 'clamp(4rem, 10vw, 10rem)' }}>
+            <h1 className="font-serif leading-none" style={{ fontSize: 'clamp(4rem, 10vw, 10rem)' }}>
               Мероприятия
             </h1>
           </ScrollReveal>
@@ -67,43 +68,30 @@ export default async function EventsPage() {
             <h2 className="text-xs uppercase tracking-widest text-gray-500 mb-12">
               Онлайн-курсы
             </h2>
-            <div className="space-y-0 border-t border-gray-100">
-              {onlineCourses.map((event) => (
-                <article
-                  key={event._id}
-                  className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-16 py-12 border-b border-gray-100"
-                >
-                  <div className="md:col-span-3">
-                    <p className="text-sm text-gray-600 font-light">
-                      {formatDate(event.date)}
-                    </p>
-                    {(event.time ?? event.startTime) && (
-                      <p className="text-sm text-gray-500 mt-1">{event.time ?? event.startTime}</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {onlineCourses.map((event) => {
+                const ev = event as any
+                const imgUrl = ev.coverImage?.asset?.url
+                return (
+                  <article key={event._id} className="group">
+                    {imgUrl && (
+                      <div className="relative aspect-[4/3] overflow-hidden bg-gray-100 mb-4">
+                        <Image src={imgUrl} alt={event.title} fill sizes="(max-width: 768px) 100vw, 33vw" className="object-cover transition-transform duration-700 group-hover:scale-105" />
+                        <div className="absolute top-3 left-3 bg-white text-black text-[9px] px-2.5 py-1 uppercase tracking-widest">
+                          {event.format === 'online' ? 'Онлайн' : 'Офлайн'}
+                        </div>
+                      </div>
                     )}
-                    <p className="text-xs uppercase tracking-wider text-gray-400 mt-2">
-                      {event.format === 'online' ? 'Онлайн' : 'Офлайн'}
-                    </p>
-                    {event.price !== undefined && (
-                      <p className="text-sm font-medium mt-2">
-                        {formatPrice(event.price)}
-                      </p>
-                    )}
-                  </div>
-                  <div className="md:col-span-9">
-                    <h3 className="text-2xl md:text-3xl font-serif mb-4">
-                      {event.title}
-                    </h3>
-                    {event.description && (
-                      <p className="text-gray-600 font-light leading-relaxed mb-2">
-                        {event.description}
-                      </p>
-                    )}
-                    {event.location && (
-                      <p className="text-sm text-gray-500">{event.location}</p>
-                    )}
-                  </div>
-                </article>
-              ))}
+                    <p className="text-[10px] uppercase tracking-widest text-black/30 mb-1">{formatDate(event.date)}{(event.time ?? event.startTime) ? ` · ${event.time ?? event.startTime}` : ''}</p>
+                    <h3 className="font-serif text-lg leading-snug mb-2">{event.title}</h3>
+                    {event.description && <p className="text-sm font-light text-black/50 leading-relaxed mb-2">{event.description}</p>}
+                    <div className="flex items-center justify-between">
+                      {event.location && <p className="text-xs text-black/30">{event.location}</p>}
+                      {event.price !== undefined && <p className="text-sm font-serif">{formatPrice(event.price)}</p>}
+                    </div>
+                  </article>
+                )
+              })}
             </div>
           </section>
           </ScrollReveal>
@@ -116,43 +104,30 @@ export default async function EventsPage() {
             <h2 className="text-xs uppercase tracking-widest text-gray-500 mb-12">
               Ближайшие события
             </h2>
-            <div className="space-y-0 border-t border-gray-100">
-              {upcomingEvents.map((event) => (
-                <article
-                  key={event._id}
-                  className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-16 py-12 border-b border-gray-100"
-                >
-                  <div className="md:col-span-3">
-                    <p className="text-sm text-gray-600 font-light">
-                      {formatDate(event.date)}
-                    </p>
-                    {(event.time ?? event.startTime) && (
-                      <p className="text-sm text-gray-500 mt-1">{event.time ?? event.startTime}</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {upcomingEvents.map((event) => {
+                const ev = event as any
+                const imgUrl = ev.coverImage?.asset?.url
+                return (
+                  <article key={event._id} className="group">
+                    {imgUrl && (
+                      <div className="relative aspect-[4/3] overflow-hidden bg-gray-100 mb-4">
+                        <Image src={imgUrl} alt={event.title} fill sizes="(max-width: 768px) 100vw, 33vw" className="object-cover transition-transform duration-700 group-hover:scale-105" />
+                        <div className="absolute top-3 left-3 bg-white text-black text-[9px] px-2.5 py-1 uppercase tracking-widest">
+                          {event.format === 'online' ? 'Онлайн' : 'Офлайн'}
+                        </div>
+                      </div>
                     )}
-                    <p className="text-xs uppercase tracking-wider text-gray-400 mt-2">
-                      {event.format === 'online' ? 'Онлайн' : 'Офлайн'}
-                    </p>
-                    {event.price !== undefined && (
-                      <p className="text-sm font-medium mt-2">
-                        {formatPrice(event.price)}
-                      </p>
-                    )}
-                  </div>
-                  <div className="md:col-span-9">
-                    <h3 className="text-2xl md:text-3xl font-serif mb-4">
-                      {event.title}
-                    </h3>
-                    {event.description && (
-                      <p className="text-gray-600 font-light leading-relaxed mb-2">
-                        {event.description}
-                      </p>
-                    )}
-                    {event.location && (
-                      <p className="text-sm text-gray-500">{event.location}</p>
-                    )}
-                  </div>
-                </article>
-              ))}
+                    <p className="text-[10px] uppercase tracking-widest text-black/30 mb-1">{formatDate(event.date)}{(event.time ?? event.startTime) ? ` · ${event.time ?? event.startTime}` : ''}</p>
+                    <h3 className="font-serif text-lg leading-snug mb-2">{event.title}</h3>
+                    {event.description && <p className="text-sm font-light text-black/50 leading-relaxed mb-2">{event.description}</p>}
+                    <div className="flex items-center justify-between">
+                      {event.location && <p className="text-xs text-black/30">{event.location}</p>}
+                      {event.price !== undefined && <p className="text-sm font-serif">{formatPrice(event.price)}</p>}
+                    </div>
+                  </article>
+                )
+              })}
             </div>
           </section>
           </ScrollReveal>
