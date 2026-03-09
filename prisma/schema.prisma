@@ -1,0 +1,66 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Artwork {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique
+  artistName  String
+  artistSlug  String?
+  series      String?
+  year        Int?
+  medium      String?
+  materials   String?
+  dimensions  String?
+  description String?
+  price       Int?
+  status      String   @default("available")
+  imagePath   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Artist {
+  id           String   @id @default(cuid())
+  name         String
+  slug         String   @unique
+  bio          String?
+  birthYear    Int?
+  portraitPath String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Exhibition {
+  id             String   @id @default(cuid())
+  title          String
+  slug           String   @unique
+  description    String?
+  startDate      String?
+  endDate        String?
+  location       String?
+  coverImagePath String?
+  isCurrent      Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Event {
+  id             String   @id @default(cuid())
+  title          String
+  description    String?
+  date           String?
+  time           String?
+  location       String?
+  format         String   @default("offline")
+  price          Int?
+  coverImagePath String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}

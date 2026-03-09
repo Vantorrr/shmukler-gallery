@@ -1,10 +1,7 @@
-import { client } from '@sanity/lib/client'
-import { ARTWORK_BY_SLUG_QUERY } from '@sanity/lib/queries'
-import { urlForImage } from '@sanity/lib/image'
+import { prisma } from '@/lib/prisma'
 import Image from 'next/image'
 import { PurchaseButton } from '@/components/PurchaseButton'
 import { DeliveryModal } from '@/components/DeliveryModal'
-import { PortableText } from '@portabletext/react'
 import { MOCK_ARTWORKS } from '@/lib/mockData'
 import Link from 'next/link'
 
@@ -12,14 +9,35 @@ export const revalidate = 60
 
 export default async function ArtworkPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-  let artwork = null
+  let artwork: any = null
 
   try {
-    artwork = await client.fetch(ARTWORK_BY_SLUG_QUERY, { slug })
-  } catch {
-    artwork = MOCK_ARTWORKS.find(a => a.slug.current === slug)
+    artwork = await prisma.artwork.findUnique({ where: { slug } })
+  } catch { /* ignore */ }
+
+  // Fallback to mock data
+  if (!artwork) {
+    const mock = MOCK_ARTWORKS.find(a => a.slug.current === slug)
+    if (mock) {
+      const m = mock as any
+      artwork = {
+        id: m._id,
+        title: m.title,
+        slug: m.slug.current,
+        artistName: m.artist,
+        artistSlug: m.artistSlug,
+        series: m.series,
+        year: m.year,
+        medium: m.medium,
+        materials: m.materials,
+        dimensions: m.dimensions,
+        description: Array.isArray(m.description) ? m.description.map((b: any) => b.children?.map((c: any) => c.text).join('')).join('\n') : m.description,
+        price: m.price,
+        status: m.status,
+        imagePath: m.mainImage?.asset?.url,
+      }
+    }
   }
-  if (!artwork) artwork = MOCK_ARTWORKS.find(a => a.slug.current === slug)
 
   if (!artwork) {
     return (
@@ -29,9 +47,7 @@ export default async function ArtworkPage({ params }: { params: Promise<{ slug: 
     )
   }
 
-  const imageUrl = artwork.mainImage?.asset?.url ||
-    (artwork.mainImage ? urlForImage(artwork.mainImage).url() : null)
-
+  const imageUrl = artwork.imagePath
   const art = artwork as any
 
   return (
@@ -65,7 +81,7 @@ export default async function ArtworkPage({ params }: { params: Promise<{ slug: 
               href={`/artists/${art.artistSlug || ''}`}
               className="text-lg md:text-xl font-serif hover:opacity-50 transition-opacity block mb-2 text-black/70"
             >
-              {artwork.artist}
+              {art.artistName || art.artist}
             </Link>
             <h1 className="text-2xl md:text-3xl font-serif leading-snug">{artwork.title}</h1>
           </div>
@@ -82,7 +98,9 @@ export default async function ArtworkPage({ params }: { params: Promise<{ slug: 
           {/* Description */}
           {artwork.description && (
             <div className="prose prose-sm font-light text-gray-600 max-w-none border-t border-gray-100 pt-6">
-              <PortableText value={artwork.description} />
+              {typeof artwork.description === 'string'
+                ? <p>{artwork.description}</p>
+                : null}
             </div>
           )}
 
@@ -94,7 +112,7 @@ export default async function ArtworkPage({ params }: { params: Promise<{ slug: 
                   <span className="text-2xl font-serif">{art.price?.toLocaleString('ru-RU')} ₽</span>
                 </div>
 
-                <PurchaseButton artwork={artwork} />
+                <PurchaseButton artwork={{ title: art.title, price: art.price ? Number(art.price) : undefined, slug: { current: art.slug?.current ?? art.slug ?? slug } }} />
 
                 <div className="bg-gray-50 px-4 py-3 text-xs text-black/50 space-y-1.5">
                   <p>Сертификат подлинности включён.</p>

@@ -1,15 +1,22 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { ScrollReveal } from '@/components/ScrollReveal'
-import { MOCK_ARTWORKS, MOCK_ARTISTS } from '@/lib/mockData'
+import { MOCK_ARTWORKS } from '@/lib/mockData'
 
 type SortKey = 'default' | 'price-asc' | 'price-desc' | 'newest'
 
 export default function GalleryPage() {
-  const artworks = MOCK_ARTWORKS
+  const [artworks, setArtworks] = useState<any[]>(MOCK_ARTWORKS)
+
+  useEffect(() => {
+    fetch('/api/artworks')
+      .then(r => r.json())
+      .then(data => { if (data?.length) setArtworks(data) })
+      .catch(() => {})
+  }, [])
 
   const [artistFilter, setArtistFilter] = useState<string>('all')
   const [mediumFilter, setMediumFilter] = useState<string>('all')
@@ -20,7 +27,7 @@ export default function GalleryPage() {
 
   // Unique artists from artworks
   const artistOptions = useMemo(() => {
-    const names = [...new Set(artworks.map(a => (a as any).artist).filter(Boolean))]
+    const names = [...new Set(artworks.map(a => { const x = a as any; return x.artistName || x.artist }).filter(Boolean))]
     return names.sort()
   }, [artworks])
 
@@ -37,7 +44,7 @@ export default function GalleryPage() {
   const filtered = useMemo(() => {
     let res = artworks.filter(a => {
       const art = a as any
-      if (artistFilter !== 'all' && art.artist !== artistFilter) return false
+      if (artistFilter !== 'all' && (art.artistName || art.artist) !== artistFilter) return false
       if (mediumFilter !== 'all') {
         const m = (art.medium || '').toLowerCase()
         if (mediumFilter === 'Живопись'          && !(m.includes('масло') || m.includes('акрил') || m.includes('акварел') || m.includes('холст') || m.includes('лён') || m.includes('дерево'))) return false
@@ -195,10 +202,13 @@ export default function GalleryPage() {
           <div className="columns-2 md:columns-3 lg:columns-4 gap-4 space-y-0">
             {filtered.map((artwork) => {
               const art = artwork as any
-              const imageUrl = art.mainImage?.asset?.url
+              // Support both DB format (imagePath, artistName) and mock format (mainImage.asset.url, artist)
+              const imageUrl = art.imagePath || art.mainImage?.asset?.url
+              const artistLabel = art.artistName || art.artist
+              const slugStr = art.slug?.current ?? art.slug
               return (
-                <div key={artwork._id} className="break-inside-avoid mb-4 group">
-                  <Link href={`/artwork/${artwork.slug.current}`} className="block">
+                <div key={art.id || art._id} className="break-inside-avoid mb-4 group">
+                  <Link href={`/artwork/${slugStr}`} className="block">
                     <div className="overflow-hidden bg-gray-50 relative">
                       {imageUrl ? (
                         <Image
@@ -225,10 +235,10 @@ export default function GalleryPage() {
                       )}
                     </div>
                     <div className="pt-3 pb-1">
-                      <p className="text-[10px] text-black/40 font-light">{art.artist}</p>
+                      <p className="text-[10px] text-black/40 font-light">{artistLabel}</p>
                       <h3 className="text-sm font-serif leading-snug mt-0.5 group-hover:opacity-50 transition-opacity">{artwork.title}</h3>
                       {art.price && art.status !== 'sold' && art.status !== 'reserved' && (
-                        <p className="text-xs font-light text-black/60 mt-1">{art.price.toLocaleString('ru-RU')} ₽</p>
+                        <p className="text-xs font-light text-black/60 mt-1">{Number(art.price).toLocaleString('ru-RU')} ₽</p>
                       )}
                     </div>
                   </Link>
