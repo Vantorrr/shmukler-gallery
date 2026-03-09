@@ -252,7 +252,7 @@ export const MOCK_ARTWORKS = [
     slug: { current: 'composition-no-5' },
     mainImage: {
       asset: {
-        url: 'https://images.unsplash.com/photo-1541963463532-d68292c34b19?q=80&w=1000&auto=format&fit=crop',
+        url: '/artworks/artwork-1.png',
       },
     },
     artist: 'Александр Болквадзе',
@@ -274,7 +274,7 @@ export const MOCK_ARTWORKS = [
     slug: { current: 'silent-horizon' },
     mainImage: {
       asset: {
-        url: 'https://images.unsplash.com/photo-1547891654-e66ed7ebb968?q=80&w=1000&auto=format&fit=crop',
+        url: '/artworks/artwork-2.png',
       },
     },
     artist: 'Анастасия Лесюк',
@@ -296,7 +296,7 @@ export const MOCK_ARTWORKS = [
     slug: { current: 'urban-fragments' },
     mainImage: {
       asset: {
-        url: 'https://images.unsplash.com/photo-1549490349-8643362247b5?q=80&w=1000&auto=format&fit=crop',
+        url: '/artworks/artwork-3.png',
       },
     },
     artist: 'Елена Шипилова',
@@ -318,7 +318,7 @@ export const MOCK_ARTWORKS = [
     slug: { current: 'blue-resonance' },
     mainImage: {
       asset: {
-        url: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?q=80&w=1000&auto=format&fit=crop',
+        url: '/artworks/artwork-4.png',
       },
     },
     artist: 'Лиза Шнейдер',
@@ -340,7 +340,7 @@ export const MOCK_ARTWORKS = [
     slug: { current: 'faces-of-memory' },
     mainImage: {
       asset: {
-        url: 'https://images.unsplash.com/photo-1578301978693-85fa9c0320b9?q=80&w=1000&auto=format&fit=crop',
+        url: '/artworks/artwork-5.png',
       },
     },
     artist: 'Наталья Чобанян',
@@ -362,7 +362,7 @@ export const MOCK_ARTWORKS = [
     slug: { current: 'morning-dew' },
     mainImage: {
       asset: {
-        url: 'https://images.unsplash.com/photo-1515405295579-ba7b45403062?q=80&w=1000&auto=format&fit=crop',
+        url: '/artworks/artwork-6.png',
       },
     },
     artist: 'Мария Стадник',
@@ -384,7 +384,7 @@ export const MOCK_ARTWORKS = [
     slug: { current: 'industrial-echo' },
     mainImage: {
       asset: {
-        url: 'https://images.unsplash.com/photo-1561214115-f2f134cc4912?q=80&w=1000&auto=format&fit=crop',
+        url: '/artworks/artwork-7.png',
       },
     },
     artist: 'Сергей Козликин',
@@ -406,7 +406,7 @@ export const MOCK_ARTWORKS = [
     slug: { current: 'dream-sequence' },
     mainImage: {
       asset: {
-        url: 'https://images.unsplash.com/photo-1558591710-4b4a1ae0f04d?q=80&w=1000&auto=format&fit=crop',
+        url: '/artworks/artwork-8.png',
       },
     },
     artist: 'Вера Латышева',
