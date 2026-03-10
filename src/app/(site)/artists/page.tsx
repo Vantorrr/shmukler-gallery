@@ -1,5 +1,4 @@
-import { client } from '@sanity/lib/client'
-import { ARTISTS_QUERY } from '@sanity/lib/queries'
+import { prisma } from '@/lib/prisma'
 import { MOCK_ARTISTS } from '@/lib/mockData'
 import { ScrollReveal } from '@/components/ScrollReveal'
 import { SplitText } from '@/components/SplitText'
@@ -13,9 +12,25 @@ export default async function ArtistsPage() {
   let artists: any[] = []
 
   try {
-    artists = await client.fetch(ARTISTS_QUERY)
+    artists = await prisma.artist.findMany({ orderBy: { name: 'asc' } })
   } catch { /* ignore */ }
-  if (!artists?.length) artists = MOCK_ARTISTS
+  if (!artists?.length) {
+    artists = MOCK_ARTISTS.map((a: any) => ({
+      _id: a._id,
+      name: a.name,
+      slug: a.slug,
+      portrait: a.portrait,
+      bio: a.bio,
+    }))
+  } else {
+    artists = artists.map((a: any) => ({
+      _id: a.id,
+      name: a.name,
+      slug: { current: a.slug },
+      portrait: a.portraitPath ? { asset: { url: a.portraitPath } } : null,
+      bio: a.bio,
+    }))
+  }
 
   return (
     <div className="min-h-screen bg-white">

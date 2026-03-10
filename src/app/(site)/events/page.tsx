@@ -1,6 +1,5 @@
 import { MOCK_EVENTS } from '@/lib/mockData'
-import { client } from '@sanity/lib/client'
-import { EVENTS_QUERY } from '@sanity/lib/queries'
+import { prisma } from '@/lib/prisma'
 import { ScrollReveal } from '@/components/ScrollReveal'
 import Image from 'next/image'
 
@@ -36,8 +35,22 @@ export default async function EventsPage() {
   }> = []
 
   try {
-    const data = await client.fetch(EVENTS_QUERY)
-    if (data?.length) events = data
+    const data = await prisma.event.findMany({ orderBy: { date: 'asc' } })
+    if (data?.length) {
+      events = data.map((e: any) => ({
+        _id: e.id,
+        title: e.title,
+        date: e.date || '',
+        time: e.time || '',
+        startTime: e.time || '',
+        format: e.format || 'offline',
+        price: e.price ?? 0,
+        description: e.description || '',
+        location: e.location || '',
+        category: e.format === 'online' ? 'course' : 'event',
+        coverImage: e.coverImagePath ? { asset: { url: e.coverImagePath } } : undefined,
+      })) as any
+    }
   } catch {
     // ignore
   }

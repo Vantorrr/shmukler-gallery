@@ -1,22 +1,33 @@
-import { client } from '@sanity/lib/client'
-import { EXHIBITIONS_QUERY } from '@sanity/lib/queries'
+import { prisma } from '@/lib/prisma'
 import { MOCK_EXHIBITIONS } from '@/lib/mockData'
 import Link from 'next/link'
 import Image from 'next/image'
-import { urlForImage } from '@sanity/lib/image'
 import { ScrollReveal } from '@/components/ScrollReveal'
 
 export const revalidate = 60
 
 export default async function ExhibitionsPage() {
-  let exhibitions = []
+  let exhibitions: any[] = []
 
   try {
-    exhibitions = await client.fetch(EXHIBITIONS_QUERY)
+    exhibitions = await prisma.exhibition.findMany({ orderBy: { startDate: 'desc' } })
   } catch {
     // ignore
   }
-  if (!exhibitions?.length) exhibitions = MOCK_EXHIBITIONS
+  if (!exhibitions?.length) {
+    exhibitions = MOCK_EXHIBITIONS
+  } else {
+    exhibitions = exhibitions.map((e: any) => ({
+      _id: e.id,
+      title: e.title,
+      slug: { current: e.slug },
+      startDate: e.startDate,
+      endDate: e.endDate,
+      location: e.location,
+      coverImage: e.coverImagePath ? { asset: { url: e.coverImagePath } } : null,
+      description: e.description,
+    }))
+  }
 
   return (
     <div className="min-h-screen bg-white pt-32 pb-24 px-6 md:px-12">
@@ -32,8 +43,7 @@ export default async function ExhibitionsPage() {
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-20">
           {exhibitions.map((exhibition: any, i: number) => {
-             const imageUrl = exhibition.coverImage?.asset?.url || 
-               (exhibition.coverImage ? urlForImage(exhibition.coverImage).url() : null)
+             const imageUrl = exhibition.coverImage?.asset?.url || null
 
             return (
               <ScrollReveal key={exhibition._id} delay={i * 100}>

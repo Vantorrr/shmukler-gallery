@@ -1,21 +1,48 @@
-import { client } from '@sanity/lib/client'
-import { EXHIBITION_BY_SLUG_QUERY } from '@sanity/lib/queries'
+import { prisma } from '@/lib/prisma'
 import { MOCK_EXHIBITIONS, MOCK_ARTWORKS } from '@/lib/mockData'
-import { PortableText } from '@portabletext/react'
 import { ArtworkCard } from '@/components/ArtworkCard'
 import Image from 'next/image'
-import { urlForImage } from '@sanity/lib/image'
 
 export const revalidate = 60
 
 export default async function ExhibitionPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-  let exhibition = null
+  let exhibition: any = null
 
   try {
-    exhibition = await client.fetch(EXHIBITION_BY_SLUG_QUERY, { slug })
+    const [dbExhibition, dbArtworks] = await Promise.all([
+      prisma.exhibition.findUnique({ where: { slug } }),
+      prisma.artwork.findMany({ orderBy: { createdAt: 'desc' }, take: 6 }),
+    ])
+    if (dbExhibition) {
+      exhibition = {
+        _id: dbExhibition.id,
+        title: dbExhibition.title,
+        slug: { current: dbExhibition.slug },
+        startDate: dbExhibition.startDate,
+        endDate: dbExhibition.endDate,
+        location: dbExhibition.location,
+        description: dbExhibition.description,
+        coverImage: dbExhibition.coverImagePath ? { asset: { url: dbExhibition.coverImagePath } } : null,
+        artworks: dbArtworks.map((a: any) => ({
+          _id: a.id,
+          title: a.title,
+          slug: { current: a.slug },
+          mainImage: a.imagePath ? { asset: { url: a.imagePath } } : null,
+          artist: a.artistName,
+          artistSlug: a.artistSlug,
+          price: a.price,
+          status: a.status,
+          medium: a.medium,
+          dimensions: a.dimensions,
+        })),
+      }
+    }
   } catch (error) {
     console.error('Failed to fetch exhibition, using mock data:', error)
+  }
+
+  if (!exhibition) {
     const mockExhibition = MOCK_EXHIBITIONS.find(e => e.slug.current === slug)
     if (mockExhibition) {
       exhibition = {
@@ -33,8 +60,7 @@ export default async function ExhibitionPage({ params }: { params: Promise<{ slu
     )
   }
 
-  const imageUrl = exhibition.coverImage?.asset?.url || 
-    (exhibition.coverImage ? urlForImage(exhibition.coverImage).url() : null)
+  const imageUrl = exhibition.coverImage?.asset?.url || null
 
   return (
     <div className="min-h-screen bg-white pt-32 pb-24 px-6 md:px-12">
@@ -68,11 +94,7 @@ export default async function ExhibitionPage({ params }: { params: Promise<{ slu
 
         {/* Description */}
         <div className="max-w-2xl mx-auto prose prose-lg font-light text-gray-600 mb-24 text-center">
-          {typeof exhibition.description === 'string' ? (
-            <p>{exhibition.description}</p>
-          ) : (
-            exhibition.description && <PortableText value={exhibition.description} />
-          )}
+          {exhibition.description && <p>{exhibition.description}</p>}
         </div>
 
         {/* Artworks */}

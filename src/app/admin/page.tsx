@@ -424,11 +424,28 @@ function Section({ endpoint, title, columns, FormComponent }: {
 ════════════════════════════════════════ */
 export default function AdminPage() {
   const [tab, setTab] = useState<Tab>('artworks')
+  const [syncing, setSyncing] = useState(false)
   const router = useRouter()
 
   const logout = async () => {
     await fetch('/api/admin/logout', { method: 'POST' })
     router.push('/admin/login')
+  }
+
+  const seedFromSite = async () => {
+    if (!confirm('Импортировать текущие данные сайта в админку? Это перезапишет текущие записи в БД.')) return
+    setSyncing(true)
+    try {
+      const res = await fetch('/api/admin/seed', { method: 'POST' })
+      const payload = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        alert(payload?.error || 'Не удалось импортировать данные')
+        return
+      }
+      alert('Готово: данные сайта импортированы в админку. Обнови страницу.')
+    } finally {
+      setSyncing(false)
+    }
   }
 
   const tabs: { key: Tab; label: string }[] = [
@@ -457,6 +474,13 @@ export default function AdminPage() {
           </nav>
         </div>
         <div className="flex items-center gap-4">
+          <button
+            onClick={seedFromSite}
+            disabled={syncing}
+            className="text-neutral-400 hover:text-white text-sm transition-colors disabled:opacity-50"
+          >
+            {syncing ? 'Импорт...' : 'Импорт с сайта'}
+          </button>
           <a href="/" target="_blank" className="text-neutral-500 hover:text-white text-sm transition-colors">↗ Сайт</a>
           <button onClick={logout} className="text-neutral-500 hover:text-white text-sm transition-colors">Выйти</button>
         </div>

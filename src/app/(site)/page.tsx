@@ -1,5 +1,4 @@
-import { client } from '@sanity/lib/client'
-import { ARTWORKS_QUERY } from '@sanity/lib/queries'
+import { prisma } from '@/lib/prisma'
 import { ArtworkCard } from '@/components/ArtworkCard'
 import { HeroSlider } from '@/components/HeroSlider'
 import { Marquee } from '@/components/Marquee'
@@ -12,24 +11,52 @@ import React from 'react'
 
 export const revalidate = 60
 
-const ARTIST_NAMES = [
-  'Александр Болквадзе', 'Анастасия Лесюк', 'Елена Шипилова',
-  'Лиза Шнейдер', 'Наталья Чобанян', 'Мария Стадник',
-  'Сергей Козликин', 'Вера Латышева', 'Иван Майт',
-  'Юлия Биктимирова', 'Дарья Пурпурная', 'Алишер Кушаков',
-]
-
 export default async function Home() {
-  let artworks = []
+  let artworks: any[] = []
+  let exhibitions: any[] = []
+  let artists: any[] = []
 
   try {
-    artworks = await client.fetch(ARTWORKS_QUERY)
+    const [dbArtworks, dbExhibitions, dbArtists] = await Promise.all([
+      prisma.artwork.findMany({ orderBy: { createdAt: 'desc' }, take: 6 }),
+      prisma.exhibition.findMany({ orderBy: { startDate: 'desc' }, take: 2 }),
+      prisma.artist.findMany({ orderBy: { name: 'asc' }, take: 12 }),
+    ])
+
+    artworks = dbArtworks.map((a: any) => ({
+      _id: a.id,
+      title: a.title,
+      slug: { current: a.slug },
+      mainImage: a.imagePath ? { asset: { url: a.imagePath } } : null,
+      artist: a.artistName,
+      artistSlug: a.artistSlug,
+      price: a.price,
+      status: a.status,
+      medium: a.medium,
+      dimensions: a.dimensions,
+    }))
+    exhibitions = dbExhibitions.map((e: any) => ({
+      _id: e.id,
+      title: e.title,
+      slug: { current: e.slug },
+      startDate: e.startDate,
+      endDate: e.endDate,
+      location: e.location,
+      coverImage: e.coverImagePath ? { asset: { url: e.coverImagePath } } : null,
+    }))
+    artists = dbArtists.map((a: any) => ({
+      _id: a.id,
+      name: a.name,
+      slug: { current: a.slug },
+      portrait: a.portraitPath ? { asset: { url: a.portraitPath } } : null,
+    }))
   } catch {
     // ignore
   }
-  if (!artworks?.length) artworks = MOCK_ARTWORKS
-
-  const exhibitions = MOCK_EXHIBITIONS.slice(0, 2)
+  if (!artworks?.length) artworks = MOCK_ARTWORKS.slice(0, 6)
+  if (!exhibitions?.length) exhibitions = MOCK_EXHIBITIONS.slice(0, 2)
+  if (!artists?.length) artists = MOCK_ARTISTS.slice(0, 12)
+  const ARTIST_NAMES = artists.map((a: any) => a.name).filter(Boolean)
   const [art1, art2, art3, art4, art5, art6] = artworks
 
   return (
@@ -309,7 +336,7 @@ export default async function Home() {
         </div>
 
         <div className="flex gap-4 overflow-x-auto pb-4 -mx-6 px-6 md:-mx-0 md:px-0 md:grid md:grid-cols-6">
-          {MOCK_ARTISTS.slice(0, 6).map((artist) => (
+          {artists.slice(0, 6).map((artist: any) => (
             <Link
               key={artist._id}
               href={`/artists/${artist.slug.current}`}

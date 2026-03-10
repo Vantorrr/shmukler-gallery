@@ -1,21 +1,45 @@
-import { client } from '@sanity/lib/client'
-import { ARTIST_BY_SLUG_QUERY } from '@sanity/lib/queries'
+import { prisma } from '@/lib/prisma'
 import { MOCK_ARTISTS, MOCK_ARTWORKS } from '@/lib/mockData'
-import { PortableText } from '@portabletext/react'
 import { ArtworkCard } from '@/components/ArtworkCard'
 import Image from 'next/image'
-import { urlForImage } from '@sanity/lib/image'
 
 export const revalidate = 60
 
 export default async function ArtistPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-  let artist = null
+  let artist: any = null
 
   try {
-    artist = await client.fetch(ARTIST_BY_SLUG_QUERY, { slug })
+    const [dbArtist, dbArtworks] = await Promise.all([
+      prisma.artist.findUnique({ where: { slug } }),
+      prisma.artwork.findMany({ where: { artistSlug: slug }, orderBy: { createdAt: 'desc' } }),
+    ])
+    if (dbArtist) {
+      artist = {
+        _id: dbArtist.id,
+        name: dbArtist.name,
+        slug: { current: dbArtist.slug },
+        bio: dbArtist.bio,
+        portrait: dbArtist.portraitPath ? { asset: { url: dbArtist.portraitPath } } : null,
+        artworks: dbArtworks.map((a: any) => ({
+          _id: a.id,
+          title: a.title,
+          slug: { current: a.slug },
+          mainImage: a.imagePath ? { asset: { url: a.imagePath } } : null,
+          artist: a.artistName,
+          artistSlug: a.artistSlug,
+          price: a.price,
+          status: a.status,
+          medium: a.medium,
+          dimensions: a.dimensions,
+        })),
+      }
+    }
   } catch (error) {
     console.error('Failed to fetch artist, using mock data:', error)
+  }
+
+  if (!artist) {
     const mockArtist = MOCK_ARTISTS.find(a => a.slug.current === slug)
     if (mockArtist) {
       artist = {
@@ -33,8 +57,7 @@ export default async function ArtistPage({ params }: { params: Promise<{ slug: s
     )
   }
 
-  const imageUrl = artist.portrait?.asset?.url || 
-    (artist.portrait ? urlForImage(artist.portrait).url() : null)
+  const imageUrl = artist.portrait?.asset?.url || null
 
   return (
     <div className="min-h-screen bg-white pt-32 pb-24 px-6 md:px-12">
@@ -58,11 +81,7 @@ export default async function ArtistPage({ params }: { params: Promise<{ slug: s
           )}
 
           <div className="prose prose-sm font-light text-gray-600 max-w-none">
-            {typeof artist.bio === 'string' ? (
-              <p>{artist.bio}</p>
-            ) : (
-              artist.bio && <PortableText value={artist.bio} />
-            )}
+            {artist.bio && <p>{artist.bio}</p>}
           </div>
         </div>
 
