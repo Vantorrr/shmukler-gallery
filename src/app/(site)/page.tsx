@@ -125,7 +125,7 @@ export default async function Home() {
               </div>
               <div className="mt-4 flex justify-between items-start">
                 <div>
-                  <p className="text-[11px] text-black/40 italic mb-1">{art1.artist}</p>
+                  <p className="text-[11px] text-black/40 mb-1">{art1.artist}</p>
                   <h3 className="text-xl font-serif group-hover:opacity-50 transition-opacity">{art1.title}</h3>
                 </div>
                 {art1.price && art1.status !== 'sold' && (
@@ -156,7 +156,7 @@ export default async function Home() {
                   )}
                 </div>
                 <div className="mt-3">
-                  <p className="text-[10px] text-black/40 italic mb-0.5">{artwork.artist}</p>
+                  <p className="text-[10px] text-black/40 mb-0.5">{artwork.artist}</p>
                   <h3 className="text-sm font-serif group-hover:opacity-50 transition-opacity">{artwork.title}</h3>
                   {artwork.price && artwork.status !== 'sold' && (
                     <p className="text-xs text-black/60 mt-1">{artwork.price.toLocaleString('ru-RU')} ₽</p>
@@ -188,7 +188,7 @@ export default async function Home() {
                 )}
               </div>
               <div className="mt-4">
-                <p className="text-[10px] text-black/40 italic mb-1">{artwork.artist}</p>
+                <p className="text-[10px] text-black/40 mb-1">{artwork.artist}</p>
                 <h3 className="text-base font-serif group-hover:opacity-50 transition-opacity">{artwork.title}</h3>
                 {artwork.price && artwork.status !== 'sold' && (
                   <p className="text-sm text-black/60 mt-1">{artwork.price.toLocaleString('ru-RU')} ₽</p>

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 
-type Tab = 'artworks' | 'artists' | 'exhibitions' | 'events'
+type Tab = 'artworks' | 'artists' | 'exhibitions' | 'events' | 'team' | 'fairs'
 
 /* ── helpers ── */
 function slugify(str: string) {
@@ -294,6 +294,108 @@ function EventForm({ initial, onSave, onCancel }: { initial?: any; onSave: (data
   )
 }
 
+function TeamForm({ initial, onSave, onCancel }: { initial?: any; onSave: (data: any) => Promise<void>; onCancel: () => void }) {
+  const blank = { name: '', role: '', bio: '', imagePath: '', orderIndex: '0' }
+  const [f, setF] = useState({ ...blank, ...initial, orderIndex: String(initial?.orderIndex ?? 0) })
+  const [saving, setSaving] = useState(false)
+  const set = (k: string, v: string) => setF((p: any) => ({ ...p, [k]: v }))
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setSaving(true)
+    await onSave({
+      ...f,
+      orderIndex: Number(f.orderIndex || '0'),
+    })
+    setSaving(false)
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Field label="Имя *">
+          <input required value={f.name} onChange={e => set('name', e.target.value)} className={inputCls} placeholder="Имя Фамилия" />
+        </Field>
+        <Field label="Роль">
+          <input value={f.role} onChange={e => set('role', e.target.value)} className={inputCls} placeholder="Должность" />
+        </Field>
+        <Field label="Порядок">
+          <input type="number" value={f.orderIndex} onChange={e => set('orderIndex', e.target.value)} className={inputCls} placeholder="0" />
+        </Field>
+      </div>
+      <Field label="Биография">
+        <textarea value={f.bio} onChange={e => set('bio', e.target.value)} rows={4} className={inputCls + ' resize-none'} />
+      </Field>
+      <ImageUpload value={f.imagePath} onChange={v => set('imagePath', v)} />
+      <div className="flex gap-3 pt-2">
+        <button type="submit" disabled={saving} className="bg-white text-black px-6 py-2.5 text-sm font-medium hover:bg-neutral-200 transition-colors disabled:opacity-50">
+          {saving ? 'Сохранение...' : 'Сохранить'}
+        </button>
+        <button type="button" onClick={onCancel} className="text-neutral-400 hover:text-white text-sm px-4 transition-colors">Отмена</button>
+      </div>
+    </form>
+  )
+}
+
+function FairForm({ initial, onSave, onCancel }: { initial?: any; onSave: (data: any) => Promise<void>; onCancel: () => void }) {
+  const blank = { title: '', slug: '', dates: '', location: '', booth: '', description: '', coverImage: '', status: 'upcoming', orderIndex: '0' }
+  const [f, setF] = useState({ ...blank, ...initial, orderIndex: String(initial?.orderIndex ?? 0) })
+  const [saving, setSaving] = useState(false)
+  const set = (k: string, v: string) => setF((p: any) => ({ ...p, [k]: v }))
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setSaving(true)
+    await onSave({
+      ...f,
+      slug: f.slug || slugify(f.title),
+      orderIndex: Number(f.orderIndex || '0'),
+    })
+    setSaving(false)
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Field label="Название *">
+          <input required value={f.title} onChange={e => { set('title', e.target.value); if (!initial) set('slug', slugify(e.target.value)) }} className={inputCls} placeholder="Название ярмарки" />
+        </Field>
+        <Field label="Slug">
+          <input value={f.slug} onChange={e => set('slug', e.target.value)} className={inputCls} placeholder="fair-slug" />
+        </Field>
+        <Field label="Даты">
+          <input value={f.dates} onChange={e => set('dates', e.target.value)} className={inputCls} placeholder="5–7 сентября 2026" />
+        </Field>
+        <Field label="Локация">
+          <input value={f.location} onChange={e => set('location', e.target.value)} className={inputCls} placeholder="Гостиный двор, Москва" />
+        </Field>
+        <Field label="Стенд">
+          <input value={f.booth} onChange={e => set('booth', e.target.value)} className={inputCls} placeholder="B12" />
+        </Field>
+        <Field label="Статус">
+          <select value={f.status} onChange={e => set('status', e.target.value)} className={selectCls}>
+            <option value="upcoming">Скоро</option>
+            <option value="past">Архив</option>
+          </select>
+        </Field>
+        <Field label="Порядок">
+          <input type="number" value={f.orderIndex} onChange={e => set('orderIndex', e.target.value)} className={inputCls} placeholder="0" />
+        </Field>
+      </div>
+      <Field label="Описание">
+        <textarea value={f.description} onChange={e => set('description', e.target.value)} rows={4} className={inputCls + ' resize-none'} />
+      </Field>
+      <ImageUpload value={f.coverImage} onChange={v => set('coverImage', v)} />
+      <div className="flex gap-3 pt-2">
+        <button type="submit" disabled={saving} className="bg-white text-black px-6 py-2.5 text-sm font-medium hover:bg-neutral-200 transition-colors disabled:opacity-50">
+          {saving ? 'Сохранение...' : 'Сохранить'}
+        </button>
+        <button type="button" onClick={onCancel} className="text-neutral-400 hover:text-white text-sm px-4 transition-colors">Отмена</button>
+      </div>
+    </form>
+  )
+}
+
 /* ════════════════════════════════════════
    SECTION (generic list + add/edit)
 ════════════════════════════════════════ */
@@ -453,6 +555,8 @@ export default function AdminPage() {
     { key: 'artists',     label: 'Художники' },
     { key: 'exhibitions', label: 'Выставки' },
     { key: 'events',      label: 'Мероприятия' },
+    { key: 'team',        label: 'Команда' },
+    { key: 'fairs',       label: 'Ярмарки' },
   ]
 
   return (
@@ -537,6 +641,31 @@ export default function AdminPage() {
               { key: 'price', label: 'Цена', render: v => v ? `${Number(v).toLocaleString('ru-RU')} ₽` : 'Бесплатно' },
             ]}
             FormComponent={EventForm}
+          />
+        )}
+        {tab === 'team' && (
+          <Section
+            endpoint="team-members"
+            title="Команда"
+            columns={[
+              { key: 'name', label: 'Имя' },
+              { key: 'role', label: 'Роль' },
+              { key: 'orderIndex', label: 'Порядок' },
+            ]}
+            FormComponent={TeamForm}
+          />
+        )}
+        {tab === 'fairs' && (
+          <Section
+            endpoint="fairs"
+            title="Ярмарки"
+            columns={[
+              { key: 'title', label: 'Название' },
+              { key: 'dates', label: 'Даты' },
+              { key: 'status', label: 'Статус', render: v => v === 'past' ? 'Архив' : 'Скоро' },
+              { key: 'orderIndex', label: 'Порядок' },
+            ]}
+            FormComponent={FairForm}
           />
         )}
       </main>

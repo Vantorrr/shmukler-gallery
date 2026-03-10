@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { ScrollReveal } from '@/components/ScrollReveal'
+import { prisma } from '@/lib/prisma'
 
 const MOCK_FAIRS = [
   {
@@ -38,9 +39,30 @@ const MOCK_FAIRS = [
   },
 ]
 
-export default function FairsPage() {
-  const upcoming = MOCK_FAIRS.filter(f => f.status === 'upcoming')
-  const past     = MOCK_FAIRS.filter(f => f.status === 'past')
+export default async function FairsPage() {
+  let fairs: any[] = []
+  try {
+    const dbFairs = await prisma.fair.findMany({
+      orderBy: [{ orderIndex: 'asc' }, { createdAt: 'asc' }],
+    })
+    fairs = dbFairs.map((f: any) => ({
+      _id: f.id,
+      title: f.title,
+      slug: { current: f.slug },
+      dates: f.dates,
+      location: f.location,
+      status: f.status,
+      description: f.description,
+      coverImage: f.coverImage,
+      booth: f.booth,
+    }))
+  } catch {
+    // ignore
+  }
+  if (!fairs?.length) fairs = MOCK_FAIRS
+
+  const upcoming = fairs.filter(f => f.status === 'upcoming')
+  const past     = fairs.filter(f => f.status === 'past')
 
   return (
     <div className="min-h-screen bg-white pt-32 pb-24 px-6 md:px-12">

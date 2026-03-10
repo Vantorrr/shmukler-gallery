@@ -1,8 +1,26 @@
 import Image from 'next/image'
 import { MOCK_TEAM } from '@/lib/mockData'
 import { ScrollReveal } from '@/components/ScrollReveal'
+import { prisma } from '@/lib/prisma'
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  let team: any[] = []
+  try {
+    const dbTeam = await prisma.teamMember.findMany({
+      orderBy: [{ orderIndex: 'asc' }, { createdAt: 'asc' }],
+    })
+    team = dbTeam.map((m: any) => ({
+      _id: m.id,
+      name: m.name,
+      role: m.role,
+      bio: m.bio,
+      image: m.imagePath ? { asset: { url: m.imagePath } } : null,
+    }))
+  } catch {
+    // ignore
+  }
+  if (!team?.length) team = MOCK_TEAM
+
   return (
     <div className="pt-32 pb-24 px-6 md:px-12">
       <div className="max-w-[1600px] mx-auto">
@@ -23,7 +41,7 @@ export default function AboutPage() {
         <section className="py-24">
           <h2 className="text-3xl md:text-4xl font-serif mb-16">Команда</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12">
-            {MOCK_TEAM.map((member) => (
+            {team.map((member) => (
               <article key={member._id} className="group">
                 <div className="relative aspect-[3/4] mb-6 overflow-hidden">
                   <Image

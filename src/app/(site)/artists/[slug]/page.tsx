@@ -98,7 +98,7 @@ export default async function ArtistPage({ params }: { params: Promise<{ slug: s
               ))}
             </div>
           ) : (
-            <p className="text-gray-400 font-light italic">В данный момент работы отсутствуют.</p>
+            <p className="text-gray-400 font-light">В данный момент работы отсутствуют.</p>
           )}
         </div>
       </div>

@@ -75,7 +75,7 @@ export function ArtworkCard({ artwork }: ArtworkCardProps) {
         </div>
 
         <div className="space-y-1">
-          <p className="text-[10px] text-black/40 font-light italic">{artwork.artist}</p>
+          <p className="text-[10px] text-black/40 font-light">{artwork.artist}</p>
           <h3 className="text-base font-serif leading-tight group-hover:opacity-50 transition-opacity duration-300">
             {artwork.title}
           </h3>
