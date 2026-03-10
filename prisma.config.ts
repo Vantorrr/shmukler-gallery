@@ -1,5 +1,8 @@
 import 'dotenv/config'
-import { defineConfig, env } from 'prisma/config'
+import { defineConfig } from 'prisma/config'
+
+const fallbackDbUrl = 'postgresql://postgres:postgres@localhost:5432/postgres'
+const datasourceUrl = process.env.DATABASE_URL || fallbackDbUrl
 
 export default defineConfig({
   schema: 'prisma/schema.prisma',
@@ -7,6 +10,6 @@ export default defineConfig({
     path: 'prisma/migrations',
   },
   datasource: {
-    url: env('DATABASE_URL'),
+    url: datasourceUrl,
   },
 })
