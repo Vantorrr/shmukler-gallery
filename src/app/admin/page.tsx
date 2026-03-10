@@ -307,31 +307,56 @@ function Section({ endpoint, title, columns, FormComponent }: {
   const [mode, setMode]     = useState<'list' | 'add' | 'edit'>('list')
   const [editing, setEditing] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
   const load = async () => {
     setLoading(true)
-    const res = await fetch(`/api/admin/${endpoint}`)
-    setItems(await res.json())
-    setLoading(false)
+    setError('')
+    try {
+      const res = await fetch(`/api/admin/${endpoint}`)
+      const data = await res.json().catch(() => [])
+      if (Array.isArray(data)) {
+        setItems(data)
+      } else {
+        setItems([])
+        setError(data?.error || 'Ошибка загрузки данных')
+      }
+    } catch {
+      setItems([])
+      setError('Ошибка соединения с сервером')
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => { load() }, []) // eslint-disable-line
 
   const handleSave = async (data: any) => {
-    if (editing) {
-      await fetch(`/api/admin/${endpoint}/${editing.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
-    } else {
-      await fetch(`/api/admin/${endpoint}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
+    setError('')
+    const res = editing
+      ? await fetch(`/api/admin/${endpoint}/${editing.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
+      : await fetch(`/api/admin/${endpoint}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
+
+    if (!res.ok) {
+      const payload = await res.json().catch(() => ({}))
+      setError(payload?.error || 'Не удалось сохранить изменения')
+      return
     }
     setMode('list')
     setEditing(null)
-    load()
+    await load()
   }
 
   const handleDelete = async (id: string) => {
     if (!confirm('Удалить?')) return
-    await fetch(`/api/admin/${endpoint}/${id}`, { method: 'DELETE' })
-    load()
+    setError('')
+    const res = await fetch(`/api/admin/${endpoint}/${id}`, { method: 'DELETE' })
+    if (!res.ok) {
+      const payload = await res.json().catch(() => ({}))
+      setError(payload?.error || 'Не удалось удалить запись')
+      return
+    }
+    await load()
   }
 
   if (mode !== 'list') {
@@ -354,6 +379,11 @@ function Section({ endpoint, title, columns, FormComponent }: {
           + Добавить
         </button>
       </div>
+      {error && (
+        <div className="mb-4 border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+          {error}
+        </div>
+      )}
 
       {loading ? (
         <p className="text-neutral-500 text-sm">Загрузка...</p>
