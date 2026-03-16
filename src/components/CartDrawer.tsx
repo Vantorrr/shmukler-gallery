@@ -1,0 +1,185 @@
+'use client'
+
+import { useState } from 'react'
+import { X, ShoppingBag, Trash2 } from 'lucide-react'
+import { useCart } from '@/lib/CartContext'
+import Image from 'next/image'
+import Link from 'next/link'
+
+const DELIVERY_OPTIONS = [
+  { key: 'pickup', label: 'Самовывоз', price: 0 },
+  { key: 'moscow', label: 'Доставка по Москве', price: 1500 },
+  { key: 'russia', label: 'Доставка по России', price: 3000 },
+]
+
+export function CartDrawer() {
+  const { items, count, remove, clear } = useCart()
+  const [open, setOpen] = useState(false)
+  const [checkout, setCheckout] = useState(false)
+  const [delivery, setDelivery] = useState('pickup')
+  const [form, setForm] = useState({ name: '', email: '', phone: '', address: '', comment: '', consent: false })
+  const [sent, setSent] = useState(false)
+  const [sending, setSending] = useState(false)
+
+  const subtotal = items.reduce((s, i) => s + (i.price || 0), 0)
+  const deliveryPrice = DELIVERY_OPTIONS.find(o => o.key === delivery)?.price || 0
+  const total = subtotal + deliveryPrice
+
+  async function handleOrder(e: React.FormEvent) {
+    e.preventDefault()
+    if (!form.consent) { alert('Необходимо дать согласие на обработку персональных данных'); return }
+    setSending(true)
+    await new Promise(r => setTimeout(r, 800))
+    setSent(true)
+    setSending(false)
+    clear()
+  }
+
+  return (
+    <>
+      <button
+        onClick={() => setOpen(true)}
+        className="relative p-1 text-black hover:opacity-70 transition-opacity"
+        aria-label="Корзина"
+      >
+        <ShoppingBag className="w-5 h-5 stroke-[1.5]" />
+        {count > 0 && (
+          <span className="absolute -top-1 -right-1 bg-black text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-medium">
+            {count}
+          </span>
+        )}
+      </button>
+
+      {open && (
+        <div className="fixed inset-0 z-[80]">
+          <div className="absolute inset-0 bg-black/40" onClick={() => { setOpen(false); setCheckout(false) }} />
+          <div className="absolute right-0 top-0 bottom-0 w-full max-w-md bg-white shadow-2xl flex flex-col">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
+              <h2 className="text-lg font-medium">Корзина {count > 0 && `(${count})`}</h2>
+              <button onClick={() => { setOpen(false); setCheckout(false) }}><X className="w-5 h-5" /></button>
+            </div>
+
+            {sent ? (
+              <div className="flex-1 flex flex-col items-center justify-center text-center px-8">
+                <div className="w-16 h-16 rounded-full bg-green-50 flex items-center justify-center mb-6">
+                  <svg className="w-8 h-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-medium mb-3">Заявка отправлена!</h3>
+                <p className="text-gray-500 text-sm leading-relaxed">Мы свяжемся с вами в ближайшее время для подтверждения заказа.</p>
+                <button onClick={() => { setOpen(false); setSent(false); setCheckout(false) }} className="mt-8 text-sm underline text-gray-500 hover:text-black">Закрыть</button>
+              </div>
+            ) : !checkout ? (
+              <>
+                <div className="flex-1 overflow-y-auto">
+                  {items.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-full text-center px-8">
+                      <ShoppingBag className="w-12 h-12 text-gray-200 mb-4" />
+                      <p className="text-gray-400 text-sm">Корзина пуста</p>
+                      <p className="text-gray-300 text-xs mt-1">Добавьте работы из каталога</p>
+                      <Link href="/gallery" onClick={() => setOpen(false)} className="mt-6 text-xs uppercase tracking-widest border-b border-black pb-1">Перейти в каталог</Link>
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-gray-100">
+                      {items.map(item => (
+                        <div key={item.id} className="flex gap-4 p-5">
+                          {item.imagePath && (
+                            <div className="relative w-20 h-20 bg-gray-50 flex-shrink-0 overflow-hidden">
+                              <Image src={item.imagePath} alt={item.title} fill className="object-cover" sizes="80px" />
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">{item.title}</p>
+                            {item.artistName && <p className="text-xs text-gray-500 mt-0.5">{item.artistName}</p>}
+                            {item.price && <p className="text-sm mt-2">{item.price.toLocaleString()} ₽</p>}
+                          </div>
+                          <button onClick={() => remove(item.id)} className="text-gray-300 hover:text-red-400 transition-colors self-start">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {items.length > 0 && (
+                  <div className="border-t border-gray-100 p-6 space-y-4">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">Итого</span>
+                      <span className="font-medium">{subtotal.toLocaleString()} ₽</span>
+                    </div>
+                    <button onClick={() => setCheckout(true)} className="w-full bg-black text-white py-3 text-sm uppercase tracking-widest hover:bg-gray-900 transition-colors">
+                      Оформить заказ
+                    </button>
+                  </div>
+                )}
+              </>
+            ) : (
+              <form onSubmit={handleOrder} className="flex-1 overflow-y-auto flex flex-col">
+                <div className="flex-1 p-6 space-y-5">
+                  <h3 className="text-base font-medium">Оформление заказа</h3>
+
+                  <div className="space-y-3">
+                    <input required placeholder="Имя *" value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} className="w-full border-b border-gray-200 py-2 text-sm focus:outline-none focus:border-black" />
+                    <input required type="email" placeholder="Email *" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} className="w-full border-b border-gray-200 py-2 text-sm focus:outline-none focus:border-black" />
+                    <input required type="tel" placeholder="Телефон *" value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} className="w-full border-b border-gray-200 py-2 text-sm focus:outline-none focus:border-black" />
+                  </div>
+
+                  <div className="space-y-2">
+                    <p className="text-xs uppercase tracking-widest text-gray-400">Способ получения</p>
+                    {DELIVERY_OPTIONS.map(opt => (
+                      <label key={opt.key} className="flex items-center justify-between cursor-pointer group">
+                        <div className="flex items-center gap-3">
+                          <input type="radio" name="delivery" value={opt.key} checked={delivery === opt.key} onChange={e => setDelivery(e.target.value)} className="accent-black" />
+                          <span className="text-sm">{opt.label}</span>
+                        </div>
+                        <span className="text-sm text-gray-500">{opt.price === 0 ? 'бесплатно' : `${opt.price.toLocaleString()} ₽`}</span>
+                      </label>
+                    ))}
+                  </div>
+
+                  {delivery !== 'pickup' && (
+                    <input placeholder="Адрес доставки" value={form.address} onChange={e => setForm(p => ({ ...p, address: e.target.value }))} className="w-full border-b border-gray-200 py-2 text-sm focus:outline-none focus:border-black" />
+                  )}
+
+                  <textarea placeholder="Комментарий" value={form.comment} onChange={e => setForm(p => ({ ...p, comment: e.target.value }))} rows={2} className="w-full border-b border-gray-200 py-2 text-sm focus:outline-none focus:border-black resize-none" />
+
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input type="checkbox" checked={form.consent} onChange={e => setForm(p => ({ ...p, consent: e.target.checked }))} className="mt-0.5 accent-black" />
+                    <span className="text-xs text-gray-500 leading-relaxed">
+                      Согласен(а) на <Link href="/privacy" className="underline hover:text-black">обработку персональных данных</Link>
+                    </span>
+                  </label>
+
+                  <div className="border-t border-gray-100 pt-4 space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">Работы</span>
+                      <span>{subtotal.toLocaleString()} ₽</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">Доставка</span>
+                      <span>{deliveryPrice === 0 ? 'бесплатно' : `${deliveryPrice.toLocaleString()} ₽`}</span>
+                    </div>
+                    <div className="flex justify-between font-medium">
+                      <span>Итого</span>
+                      <span>{total.toLocaleString()} ₽</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-6 space-y-3 border-t border-gray-100">
+                  <button type="submit" disabled={sending} className="w-full bg-black text-white py-3 text-sm uppercase tracking-widest hover:bg-gray-900 transition-colors disabled:opacity-50">
+                    {sending ? 'Отправка...' : 'Оплатить'}
+                  </button>
+                  <button type="button" onClick={() => setCheckout(false)} className="w-full text-xs text-gray-400 hover:text-black transition-colors">
+                    Назад к корзине
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+    </>
+  )
+}

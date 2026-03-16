@@ -1,0 +1,143 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Artwork {
+  id           String   @id @default(cuid())
+  title        String
+  slug         String   @unique
+  artistName   String?
+  artistSlug   String?
+  exhibitionId String?
+  fairId       String?
+  price        Int?
+  status       String   @default("available")
+  medium       String?
+  technique    String?
+  materials    String?
+  dimensions   String?
+  year         Int?
+  series       String?
+  description  String?
+  imagePath    String?
+  theme        String?
+  colorTags    String?
+  isArchived   Boolean  @default(false)
+  orderIndex   Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Artist {
+  id                  String   @id @default(cuid())
+  name                String
+  slug                String   @unique
+  bio                 String?
+  artistStatement     String?
+  selectedExhibitions String?
+  imagePath           String?
+  isArchived          Boolean  @default(false)
+  orderIndex          Int      @default(0)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+model Exhibition {
+  id           String   @id @default(cuid())
+  title        String
+  slug         String   @unique
+  startDate    String?
+  endDate      String?
+  location     String?
+  description  String?
+  coverImage   String?
+  galleryImages String?
+  status       String   @default("current")
+  orderIndex   Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Event {
+  id              String   @id @default(cuid())
+  title           String
+  slug            String?  @unique
+  date            String?
+  time            String?
+  endTime         String?
+  format          String   @default("offline")
+  type            String?
+  price           Int?
+  location        String?
+  description     String?
+  coverImage      String?
+  ticketUrl       String?
+  registrationUrl String?
+  accessUrl       String?
+  orderIndex      Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model TeamMember {
+  id         String   @id @default(cuid())
+  name       String
+  role       String?
+  bio        String?
+  imagePath  String?
+  orderIndex Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Fair {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique
+  dates       String?
+  location    String?
+  booth       String?
+  description String?
+  coverImage  String?
+  status      String   @default("upcoming")
+  orderIndex  Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model HeroSlide {
+  id         String   @id @default(cuid())
+  title      String?
+  subtitle   String?
+  imagePath  String
+  linkUrl    String?
+  orderIndex Int      @default(0)
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+}
+
+model Collection {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique
+  description String?
+  coverImage  String?
+  artworkIds  String   @default("[]")
+  orderIndex  Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Announcement {
+  id        String    @id @default(cuid())
+  text      String
+  linkUrl   String?
+  isActive  Boolean   @default(true)
+  expiresAt DateTime?
+  createdAt DateTime  @default(now())
+}
