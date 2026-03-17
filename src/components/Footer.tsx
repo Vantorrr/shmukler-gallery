@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
+import Image from 'next/image'
 
 export function Footer() {
   const [email, setEmail] = useState('')
@@ -91,7 +92,10 @@ export function Footer() {
 
       <div className="max-w-[1600px] mx-auto mt-16 pt-8 border-t border-gray-50">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center text-[10px] uppercase tracking-widest text-gray-400 gap-4">
-          <p>&copy; {new Date().getFullYear()} Shmukler Gallery</p>
+          <div className="flex items-center gap-4">
+            <Image src="/logo.png" alt="Шмуклер Галерея" width={100} height={40} className="h-8 w-auto object-contain opacity-60" />
+            <p>&copy; {new Date().getFullYear()}</p>
+          </div>
           <div className="flex flex-wrap gap-5">
             <Link href="/offer" className="hover:text-black transition-colors">Публичная оферта</Link>
             <Link href="/privacy" className="hover:text-black transition-colors">Политика конфиденциальности</Link>

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { ChevronRight } from 'lucide-react'
+// logo-white.png used in hero overlay
 import { clsx } from 'clsx'
 
 const FALLBACK_SLIDES = [
@@ -50,6 +51,11 @@ export function HeroSlider() {
 
   return (
     <div className="relative h-[90vh] w-full overflow-hidden bg-gray-900">
+      {/* White logo top-left on hero */}
+      <div className="absolute top-6 left-6 md:left-16 z-40 pointer-events-none">
+        <Image src="/logo-white.png" alt="Шмуклер Галерея" width={160} height={64} className="h-12 w-auto object-contain" priority />
+      </div>
+
       {list.map((slide, index) => (
         <div
           key={slide.id}
