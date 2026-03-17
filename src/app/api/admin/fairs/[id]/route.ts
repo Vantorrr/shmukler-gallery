@@ -4,7 +4,8 @@ import { prisma } from '@/lib/prisma'
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
-    const data = await req.json()
+    const raw = await req.json()
+    const { id: _id, createdAt, updatedAt, ...data } = raw
     const item = await prisma.fair.update({ where: { id }, data })
     return NextResponse.json(item)
   } catch (error) {

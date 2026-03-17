@@ -13,8 +13,16 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
-    const data = await req.json()
-    const item = await prisma.artwork.create({ data })
+    const raw = await req.json()
+    const { id: _id, createdAt, updatedAt, ...data } = raw
+    // Normalize numeric fields
+    const normalized = {
+      ...data,
+      price: data.price !== '' && data.price != null ? Number(data.price) : null,
+      year: data.year !== '' && data.year != null ? Number(data.year) : null,
+      orderIndex: Number(data.orderIndex) || 0,
+    }
+    const item = await prisma.artwork.create({ data: normalized })
     return NextResponse.json(item, { status: 201 })
   } catch (error) {
     console.error('POST /api/admin/artworks failed:', error)

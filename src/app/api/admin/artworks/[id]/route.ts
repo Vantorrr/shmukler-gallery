@@ -4,8 +4,15 @@ import { prisma } from '@/lib/prisma'
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
-    const data = await req.json()
-    const item = await prisma.artwork.update({ where: { id }, data })
+    const raw = await req.json()
+    const { id: _id, createdAt, updatedAt, ...data } = raw
+    const normalized = {
+      ...data,
+      price: data.price !== '' && data.price != null ? Number(data.price) : null,
+      year: data.year !== '' && data.year != null ? Number(data.year) : null,
+      orderIndex: Number(data.orderIndex) || 0,
+    }
+    const item = await prisma.artwork.update({ where: { id }, data: normalized })
     return NextResponse.json(item)
   } catch (error) {
     console.error('PUT /api/admin/artworks/[id] failed:', error)

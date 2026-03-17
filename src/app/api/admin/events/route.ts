@@ -13,8 +13,14 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
-    const data = await req.json()
-    const item = await prisma.event.create({ data })
+    const raw = await req.json()
+    const { id: _id, createdAt, updatedAt, ...data } = raw
+    const normalized = {
+      ...data,
+      price: data.price !== '' && data.price != null ? Number(data.price) : null,
+      orderIndex: Number(data.orderIndex) || 0,
+    }
+    const item = await prisma.event.create({ data: normalized })
     return NextResponse.json(item, { status: 201 })
   } catch (error) {
     console.error('POST /api/admin/events failed:', error)

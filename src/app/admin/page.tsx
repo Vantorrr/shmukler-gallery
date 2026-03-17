@@ -80,8 +80,8 @@ function Input({ ...props }: React.InputHTMLAttributes<HTMLInputElement>) {
   return <input {...props} className="w-full border border-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-black" />
 }
 
-function Textarea({ ...props }: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
-  return <textarea {...props} rows={3} className="w-full border border-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-black resize-none" />
+function Textarea({ rows = 3, ...props }: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
+  return <textarea rows={rows} {...props} className="w-full border border-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-black resize-none" />
 }
 
 function Select({ children, ...props }: React.SelectHTMLAttributes<HTMLSelectElement> & { children: React.ReactNode }) {
@@ -488,22 +488,48 @@ function Section({ tab }: { tab: Tab }) {
       const method = editId ? 'PUT' : 'POST'
       const url = editId ? `${api}/${editId}` : api
       const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
-      if (!res.ok) { const e = await res.json(); alert(e.error || 'Ошибка'); return }
-      setShowForm(false); setEditId(null); load()
-    } catch { alert('Ошибка сети') }
+      if (!res.ok) {
+        const e = await res.json().catch(() => ({}))
+        alert(e.error || `Ошибка ${res.status}`)
+        return
+      }
+      setShowForm(false)
+      setEditId(null)
+      await load()
+    } catch (err) {
+      alert('Ошибка сети: ' + String(err))
+    }
   }
 
   async function handleDelete(id: string) {
-    if (!confirm('Удалить?')) return
-    await fetch(`${api}/${id}`, { method: 'DELETE' })
-    load()
+    if (!confirm('Удалить запись? Это действие нельзя отменить.')) return
+    try {
+      const res = await fetch(`${api}/${id}`, { method: 'DELETE' })
+      if (!res.ok) {
+        const e = await res.json().catch(() => ({}))
+        alert(e.error || `Ошибка удаления: ${res.status}`)
+        return
+      }
+      await load()
+    } catch {
+      alert('Ошибка сети при удалении')
+    }
   }
 
   async function toggleArchive(item: any) {
-    const field = 'isArchived' in item ? 'isArchived' : null
+    const field = 'isArchived' in item ? 'isArchived' : 'isActive' in item ? 'isActive' : null
     if (!field) return
-    await fetch(`${api}/${item.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ [field]: !item[field] }) })
-    load()
+    try {
+      const newVal = field === 'isArchived' ? !item.isArchived : !item.isActive
+      await fetch(`${api}/${item.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ [field]: newVal }),
+      })
+      await load()
+    } catch {
+      alert('Ошибка при изменении статуса')
+    }
   }
 
   function cellVal(item: any, col: string) {
@@ -520,8 +546,12 @@ function Section({ tab }: { tab: Tab }) {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
-        <button onClick={() => { setShowForm(true); setEditId(null) }} className="flex items-center gap-1 bg-black text-white px-3 py-2 text-sm rounded hover:bg-gray-800">
-          <Plus className="w-4 h-4" /> Добавить
+        <button
+          onClick={() => { setEditId(null); setShowForm(v => !v) }}
+          className={`flex items-center gap-1 px-3 py-2 text-sm rounded transition-colors ${showForm && !editId ? 'bg-gray-200 text-black' : 'bg-black text-white hover:bg-gray-800'}`}
+        >
+          {showForm && !editId ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+          {showForm && !editId ? 'Отмена' : 'Добавить'}
         </button>
         <button onClick={load} className="flex items-center gap-1 border border-gray-300 px-3 py-2 text-sm rounded hover:bg-gray-50">
           <RefreshCw className="w-4 h-4" /> Обновить
@@ -563,9 +593,19 @@ function Section({ tab }: { tab: Tab }) {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <button onClick={() => { setEditId(item.id); setShowForm(true) }} className="text-gray-500 hover:text-black"><Pencil className="w-4 h-4" /></button>
-                        {'isArchived' in item && (
-                          <button onClick={() => toggleArchive(item)} className="text-gray-500 hover:text-black" title={item.isArchived ? 'Восстановить' : 'В архив'}>
-                            {item.isArchived ? <ArchiveRestore className="w-4 h-4" /> : <Archive className="w-4 h-4" />}
+                        {('isArchived' in item || 'isActive' in item) && (
+                          <button
+                            onClick={() => toggleArchive(item)}
+                            className="text-gray-500 hover:text-black"
+                            title={
+                              'isArchived' in item
+                                ? (item.isArchived ? 'Восстановить из архива' : 'В архив')
+                                : (item.isActive ? 'Деактивировать' : 'Активировать')
+                            }
+                          >
+                            {('isArchived' in item ? item.isArchived : !item.isActive)
+                              ? <ArchiveRestore className="w-4 h-4" />
+                              : <Archive className="w-4 h-4" />}
                           </button>
                         )}
                         <button onClick={() => handleDelete(item.id)} className="text-red-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
