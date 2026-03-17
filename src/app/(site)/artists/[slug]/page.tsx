@@ -14,11 +14,10 @@ export default function ArtistPage({ params }: { params: Promise<{ slug: string 
 
   useEffect(() => {
     Promise.all([
-      fetch('/api/artists').then(r => r.json()),
-      fetch(`/api/artworks?artist=${slug}&limit=50`).then(r => r.json()),
-    ]).then(([artists, artworksData]) => {
-      const found = Array.isArray(artists) ? artists.find((a: any) => a.slug === slug || a.slug?.current === slug) : null
-      if (found) {
+      fetch(`/api/artists?slug=${encodeURIComponent(slug)}`).then(r => r.json()),
+      fetch(`/api/artworks?artist=${encodeURIComponent(slug)}&limit=200`).then(r => r.json()),
+    ]).then(([found, artworksData]) => {
+      if (found && found.id) {
         setArtist(found)
         setArtworksState(artworksData.items || [])
       } else {

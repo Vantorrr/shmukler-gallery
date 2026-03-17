@@ -7,6 +7,8 @@ export async function GET(req: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '20')
     const artistSlug = searchParams.get('artist') || undefined
+    const slugFilter = searchParams.get('slug') || undefined
+    const exhibitionId = searchParams.get('exhibitionId') || undefined
     const technique = searchParams.get('technique') || undefined
     const theme = searchParams.get('theme') || undefined
     const color = searchParams.get('color') || undefined
@@ -15,6 +17,8 @@ export async function GET(req: NextRequest) {
 
     const where: any = { isArchived: false }
     if (artistSlug) where.artistSlug = artistSlug
+    if (slugFilter) where.slug = slugFilter
+    if (exhibitionId) where.exhibitionId = exhibitionId
     if (technique) where.medium = { contains: technique, mode: 'insensitive' }
     if (theme) where.theme = { contains: theme, mode: 'insensitive' }
     if (color) where.colorTags = { contains: color, mode: 'insensitive' }

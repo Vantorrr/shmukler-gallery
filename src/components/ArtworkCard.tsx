@@ -20,6 +20,8 @@ export function ArtworkCard({ artwork }: { artwork: Artwork }) {
   const imageUrl = artwork.imagePath || artwork.mainImage?.asset?.url
   const artist = artwork.artistName || artwork.artist
 
+  if (!slug) return null
+
   return (
     <Link href={`/artwork/${slug}`} className="group block">
       <div className="relative bg-gray-50 overflow-hidden mb-4" style={{ aspectRatio: '3/4' }}>

@@ -21,8 +21,8 @@ export default function ExhibitionPage({ params }: { params: Promise<{ slug: str
         const found = Array.isArray(d) ? d.find((e: any) => e.slug === slug || e.slug?.current === slug) : null
         if (found) {
           setExhibition(found)
-          return fetch(`/api/artworks?limit=50`).then(r => r.json()).then(aw => {
-            setArtworks(aw.items?.filter((a: any) => a.exhibitionId === found.id) || [])
+          return fetch(`/api/artworks?exhibitionId=${found.id}&limit=100`).then(r => r.json()).then(aw => {
+            setArtworks(aw.items || [])
           })
         } else {
           const mock = MOCK_EXHIBITIONS.find(e => e.slug?.current === slug)

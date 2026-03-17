@@ -334,10 +334,16 @@ function FairForm({ initial, onSave, onCancel }: { initial: any; onSave: (d: any
 function SlideForm({ initial, onSave, onCancel }: { initial: any; onSave: (d: any) => void; onCancel: () => void }) {
   const slideDefaults = { title: '', subtitle: '', imagePath: '', linkUrl: '', orderIndex: 0, isActive: true }
   const [d, setD] = useState({ ...slideDefaults, ...initial, orderIndex: initial?.orderIndex ?? 0 })
+  const [err, setErr] = useState('')
   const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement>) => setD((prev: any) => ({ ...prev, [k]: e.target.value }))
 
   return (
-    <form onSubmit={e => { e.preventDefault(); if (!d.imagePath) return; onSave({ ...d, orderIndex: parseInt(String(d.orderIndex)) || 0 }) }} className="space-y-4 p-4 bg-gray-50 rounded-lg border">
+    <form onSubmit={e => {
+      e.preventDefault()
+      if (!d.imagePath) { setErr('Необходимо добавить изображение'); return }
+      setErr('')
+      onSave({ ...d, orderIndex: parseInt(String(d.orderIndex)) || 0 })
+    }} className="space-y-4 p-4 bg-gray-50 rounded-lg border">
       <div className="grid grid-cols-2 gap-4">
         <Field label="Заголовок"><Input value={d.title} onChange={set('title')} /></Field>
         <Field label="Подзаголовок"><Input value={d.subtitle} onChange={set('subtitle')} /></Field>
@@ -351,6 +357,7 @@ function SlideForm({ initial, onSave, onCancel }: { initial: any; onSave: (d: an
         </Field>
       </div>
       <Field label="Изображение *"><ImageUpload value={d.imagePath || ''} onChange={v => setD((p: any) => ({ ...p, imagePath: v }))} /></Field>
+      {err && <p className="text-red-600 text-sm">{err}</p>}
       <div className="flex gap-2 pt-2">
         <button type="submit" className="flex items-center gap-1 bg-black text-white px-4 py-2 text-sm rounded hover:bg-gray-800"><Check className="w-4 h-4" /> Сохранить</button>
         <button type="button" onClick={onCancel} className="flex items-center gap-1 border border-gray-300 px-4 py-2 text-sm rounded hover:bg-gray-50"><X className="w-4 h-4" /> Отмена</button>
@@ -360,7 +367,9 @@ function SlideForm({ initial, onSave, onCancel }: { initial: any; onSave: (d: an
 }
 
 function AnnouncementForm({ initial, onSave, onCancel }: { initial: any; onSave: (d: any) => void; onCancel: () => void }) {
-  const [d, setD] = useState({ text: '', linkUrl: '', isActive: true, expiresAt: '', ...initial })
+  const initExpiresAt = initial?.expiresAt ? (() => { try { return new Date(initial.expiresAt).toISOString().slice(0, 16) } catch { return '' } })() : ''
+  const { expiresAt: _ea, ...restInitial } = initial || {}
+  const [d, setD] = useState({ text: '', linkUrl: '', isActive: true, ...restInitial, expiresAt: initExpiresAt })
   const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement>) => setD((prev: any) => ({ ...prev, [k]: e.target.value }))
 
   return (
@@ -452,6 +461,7 @@ function Section({ tab }: { tab: Tab }) {
   const [error, setError] = useState('')
   const [editId, setEditId] = useState<string | null>(null)
   const [showForm, setShowForm] = useState(false)
+  const [savedMsg, setSavedMsg] = useState('')
   const [sortCol, setSortCol] = useState(TAB_COLS[tab][0])
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
 
@@ -496,6 +506,8 @@ function Section({ tab }: { tab: Tab }) {
       setShowForm(false)
       setEditId(null)
       await load()
+      setSavedMsg('Сохранено ✓')
+      setTimeout(() => setSavedMsg(''), 3000)
     } catch (err) {
       alert('Ошибка сети: ' + String(err))
     }
@@ -557,6 +569,7 @@ function Section({ tab }: { tab: Tab }) {
           <RefreshCw className="w-4 h-4" /> Обновить
         </button>
         {error && <span className="text-red-500 text-sm">{error}</span>}
+        {savedMsg && <span className="text-green-600 text-sm font-medium">{savedMsg}</span>}
       </div>
 
       {showForm && !editId && (

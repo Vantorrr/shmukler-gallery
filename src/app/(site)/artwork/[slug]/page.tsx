@@ -16,10 +16,10 @@ export default function ArtworkPage({ params }: { params: Promise<{ slug: string
   const inCart = artwork && items.find(i => i.id === artwork.id)
 
   useEffect(() => {
-    fetch(`/api/artworks?limit=100`)
+    fetch(`/api/artworks?slug=${encodeURIComponent(slug)}&limit=1`)
       .then(r => r.json())
       .then(d => {
-        const found = d.items?.find((a: any) => a.slug === slug)
+        const found = d.items?.[0]
         if (found) { setArtwork(found); return }
         const mock = MOCK_ARTWORKS.find(a => (typeof a.slug === 'string' ? a.slug : a.slug?.current) === slug)
         if (mock) setArtwork({

@@ -56,6 +56,7 @@ export async function POST() {
 
       if (MOCK_ARTISTS.length) {
         await tx.artist.createMany({
+          skipDuplicates: true,
           data: MOCK_ARTISTS.map((a: any, i: number) => ({
             name: a.name,
             slug: a.slug?.current || a.name.toLowerCase().replace(/\s+/g, '-'),
@@ -68,6 +69,7 @@ export async function POST() {
 
       if (MOCK_ARTWORKS.length) {
         await tx.artwork.createMany({
+          skipDuplicates: true,
           data: MOCK_ARTWORKS.map((a: any, i: number) => ({
             title: a.title,
             slug: a.slug?.current || a.title.toLowerCase().replace(/\s+/g, '-'),
@@ -86,6 +88,7 @@ export async function POST() {
 
       if (MOCK_EXHIBITIONS.length) {
         await tx.exhibition.createMany({
+          skipDuplicates: true,
           data: MOCK_EXHIBITIONS.map((e: any, i: number) => ({
             title: e.title,
             slug: e.slug?.current || e.title.toLowerCase().replace(/\s+/g, '-'),
@@ -101,6 +104,7 @@ export async function POST() {
 
       if (MOCK_EVENTS.length) {
         await tx.event.createMany({
+          skipDuplicates: true,
           data: MOCK_EVENTS.map((e: any, i: number) => ({
             title: e.title,
             slug: e.slug?.current || e.title.toLowerCase().replace(/\s+/g, '-'),
@@ -120,6 +124,7 @@ export async function POST() {
 
       if (MOCK_TEAM.length) {
         await tx.teamMember.createMany({
+          skipDuplicates: true,
           data: MOCK_TEAM.map((t: any, i: number) => ({
             name: t.name,
             role: t.role || null,
@@ -131,10 +136,10 @@ export async function POST() {
       }
 
       if (SEED_FAIRS.length) {
-        await tx.fair.createMany({ data: SEED_FAIRS })
+        await tx.fair.createMany({ skipDuplicates: true, data: SEED_FAIRS })
       }
 
-      await tx.heroSlide.createMany({ data: SEED_SLIDES })
+      await tx.heroSlide.createMany({ skipDuplicates: true, data: SEED_SLIDES })
     })
 
     return NextResponse.json({ ok: true, message: 'Данные успешно импортированы' })
