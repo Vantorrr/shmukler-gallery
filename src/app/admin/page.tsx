@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, Fragment } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   ChevronUp, ChevronDown, Pencil, Trash2, Plus, X, Check,
@@ -555,8 +555,8 @@ function Section({ tab }: { tab: Tab }) {
             </thead>
             <tbody>
               {sorted.map(item => (
-                <>
-                  <tr key={item.id} className={`border-b border-gray-100 hover:bg-gray-50 ${item.isArchived ? 'opacity-50' : ''}`}>
+                <Fragment key={item.id}>
+                  <tr className={`border-b border-gray-100 hover:bg-gray-50 ${item.isArchived ? 'opacity-50' : ''}`}>
                     {cols.map(col => (
                       <td key={col} className="px-4 py-3 text-gray-700 max-w-[200px] truncate">{cellVal(item, col)}</td>
                     ))}
@@ -573,13 +573,13 @@ function Section({ tab }: { tab: Tab }) {
                     </td>
                   </tr>
                   {editId === item.id && showForm && (
-                    <tr key={`${item.id}-form`}>
+                    <tr>
                       <td colSpan={cols.length + 1} className="p-2">
                         <Form initial={editItem} onSave={handleSave} onCancel={() => { setShowForm(false); setEditId(null) }} />
                       </td>
                     </tr>
                   )}
-                </>
+                </Fragment>
               ))}
             </tbody>
           </table>

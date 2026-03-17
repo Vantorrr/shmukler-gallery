@@ -43,11 +43,17 @@ export default function ExhibitionPage({ params }: { params: Promise<{ slug: str
   if (!exhibition) return <div className="min-h-[50vh] flex items-center justify-center"><h1 className="text-2xl font-light text-gray-400">Выставка не найдена</h1></div>
 
   const galleryImages: string[] = (() => {
+    if (!exhibition.galleryImages) {
+      return exhibition.coverImage ? [exhibition.coverImage] : []
+    }
     try {
-      if (exhibition.galleryImages) return JSON.parse(exhibition.galleryImages)
+      const parsed = JSON.parse(exhibition.galleryImages)
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed.filter(Boolean)
     } catch { /* ignore */ }
-    if (exhibition.coverImage) return [exhibition.coverImage]
-    return []
+    // also handle comma-separated URLs entered in admin
+    const split = exhibition.galleryImages.split(',').map((s: string) => s.trim()).filter(Boolean)
+    if (split.length > 0) return split
+    return exhibition.coverImage ? [exhibition.coverImage] : []
   })()
 
   return (

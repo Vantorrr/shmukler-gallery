@@ -13,7 +13,7 @@ export default function FairsPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch('/api/admin/fairs')
+    fetch('/api/fairs')
       .then(r => r.json())
       .then(d => { if (Array.isArray(d) && d.length > 0) setFairs(d); else setFairs(MOCK_FAIRS) })
       .catch(() => setFairs(MOCK_FAIRS))
