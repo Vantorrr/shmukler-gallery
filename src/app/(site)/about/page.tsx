@@ -1,69 +1,87 @@
+'use client'
+
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
-import { MOCK_TEAM } from '@/lib/mockData'
+import Link from 'next/link'
 
 export default function AboutPage() {
+  const [team, setTeam] = useState<any[]>([])
+
+  useEffect(() => {
+    fetch('/api/team')
+      .then(r => r.json())
+      .then(d => { if (Array.isArray(d) && d.length > 0) setTeam(d) })
+      .catch(() => {})
+  }, [])
+
   return (
-    <div className="pt-32 pb-24 px-6 md:px-12">
+    <div className="min-h-screen bg-white pt-12 pb-24 px-6 md:px-12">
       <div className="max-w-[1600px] mx-auto">
-        {/* Mission Statement */}
-        <section className="mb-24">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif italic mb-8 max-w-4xl">
-            Shmukler Gallery was founded by art historian and coach Olga Shmukler in 2022. Our goal is to create a space where various forms of art become a way of understanding oneself and the world around us.
+
+        {/* Миссия */}
+        <section className="mb-24 max-w-5xl">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif mb-10 leading-tight">
+            Галерея Шмуклер основана арт-историком и коучем Ольгой Шмуклер в 2022 году. Наша цель — создать пространство, где искусство становится способом познания себя и мира.
           </h1>
-          <p className="text-lg md:text-xl text-gray-600 font-light max-w-2xl leading-relaxed">
-            We believe art is not merely decoration—it is a dialogue between the viewer and the work, a path to deeper self-awareness and connection with the world.
+          <p className="text-lg md:text-xl text-gray-600 font-light leading-relaxed max-w-2xl">
+            Мы убеждены, что искусство — не просто украшение. Это диалог между зрителем и произведением, путь к более глубокому самопознанию и связи с окружающим миром.
           </p>
         </section>
 
-        {/* Team Section */}
-        <section className="py-24">
-          <h2 className="text-3xl md:text-4xl font-serif mb-16">Team</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12">
-            {MOCK_TEAM.map((member) => (
-              <article key={member._id} className="group">
-                <div className="relative aspect-[3/4] mb-6 overflow-hidden">
-                  <Image
-                    src={member.image.asset.url}
-                    alt={member.name}
-                    fill
-                    className="object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
-                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                  />
-                </div>
-                <h3 className="text-xl font-serif mb-1">{member.name}</h3>
-                <p className="text-gray-600 font-light text-sm">{member.role}</p>
-              </article>
-            ))}
-          </div>
-        </section>
+        {/* Команда */}
+        {team.length > 0 && (
+          <section className="py-24 border-t border-gray-100">
+            <h2 className="text-3xl md:text-4xl font-serif mb-16">Команда</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12">
+              {team.map((member) => (
+                <article key={member.id} className="group">
+                  {member.imagePath && (
+                    <div className="relative aspect-[3/4] mb-6 overflow-hidden bg-gray-50">
+                      <Image
+                        src={member.imagePath}
+                        alt={member.name}
+                        fill
+                        className="object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                      />
+                    </div>
+                  )}
+                  <h3 className="text-xl font-serif mb-1">{member.name}</h3>
+                  <p className="text-gray-500 font-light text-sm">{member.role}</p>
+                  {member.bio && <p className="text-gray-400 text-xs mt-2 leading-relaxed">{member.bio}</p>}
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
 
-        {/* For Collectors Section */}
+        {/* Для коллекционеров */}
         <section className="py-24 border-t border-gray-100">
-          <h2 className="text-3xl md:text-4xl font-serif mb-12">For Collectors</h2>
+          <h2 className="text-3xl md:text-4xl font-serif mb-12">Для коллекционеров</h2>
           <p className="text-lg text-gray-600 font-light max-w-2xl mb-12 leading-relaxed">
-            We offer art consulting to help you build a meaningful collection, art fitting to try works in your space before purchase, and art rental for photoshoots and interior projects.
+            Мы помогаем формировать коллекции, предлагаем арт-консалтинг, арт-примерку и аренду произведений для фотопроектов и интерьеров.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
             <div>
-              <h3 className="text-lg font-serif mb-3">Art Consulting</h3>
-              <p className="text-gray-600 font-light text-sm leading-relaxed">
-                Strategic guidance on collection development, style coherence, framing, and storage solutions.
-              </p>
+              <h3 className="text-lg font-serif mb-3">Арт-консалтинг</h3>
+              <p className="text-gray-600 font-light text-sm leading-relaxed">Стратегия формирования коллекции, выбор обрамления, рекомендации по хранению.</p>
             </div>
             <div>
-              <h3 className="text-lg font-serif mb-3">Art Fitting</h3>
-              <p className="text-gray-600 font-light text-sm leading-relaxed">
-                Experience artworks in your space before committing. Fitting fee waived upon purchase.
-              </p>
+              <h3 className="text-lg font-serif mb-3">Арт-примерка</h3>
+              <p className="text-gray-600 font-light text-sm leading-relaxed">Привезём и установим работу в вашем пространстве на несколько дней перед покупкой.</p>
             </div>
             <div>
-              <h3 className="text-lg font-serif mb-3">Art Rental</h3>
-              <p className="text-gray-600 font-light text-sm leading-relaxed">
-                Rent works for photoshoots, events, or interior design projects. Gallery credit available.
-              </p>
+              <h3 className="text-lg font-serif mb-3">Аренда произведений</h3>
+              <p className="text-gray-600 font-light text-sm leading-relaxed">Краткосрочная аренда для фотосъёмок, мероприятий и интерьерных проектов.</p>
             </div>
           </div>
+          <div className="mt-12">
+            <Link href="/services" className="text-sm uppercase tracking-widest border-b border-black pb-1 hover:opacity-50 transition-opacity">
+              Все услуги
+            </Link>
+          </div>
         </section>
+
       </div>
     </div>
   )

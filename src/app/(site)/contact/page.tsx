@@ -3,158 +3,94 @@
 import { useState } from 'react'
 
 export default function ContactPage() {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    message: '',
-  })
+  const [form, setForm] = useState({ name: '', email: '', phone: '', message: '' })
+  const [sent, setSent] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    // Form submission logic can be added here
+  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
+    setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))
   }
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    setFormData((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }))
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setSent(true)
   }
 
   return (
-    <div className="pt-32 pb-24 px-6 md:px-12">
+    <div className="min-h-screen bg-white pt-12 pb-24 px-6 md:px-12">
       <div className="max-w-[1600px] mx-auto">
-        {/* Heading */}
-        <h1 className="text-5xl md:text-7xl lg:text-8xl font-serif mb-24">
-          Contact
-        </h1>
+        <h1 className="text-5xl md:text-7xl font-serif mb-24">Контакты</h1>
 
-        {/* Two-column layout */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 mb-24">
-          {/* Left: Address & Info */}
+          {/* Контактная информация */}
           <div className="space-y-12">
             <div>
-              <h2 className="text-sm uppercase tracking-widest text-gray-500 mb-4">
-                Address
-              </h2>
-              <p className="text-lg font-light">
-                Novoslobodskaya 45B
-                <br />
-                Moscow
+              <h2 className="text-xs uppercase tracking-widest text-gray-400 mb-4">Адрес</h2>
+              <p className="text-lg font-light leading-relaxed">Новослободская 45Б<br />Москва, Россия</p>
+            </div>
+            <div>
+              <h2 className="text-xs uppercase tracking-widest text-gray-400 mb-4">Часы работы</h2>
+              <p className="text-lg font-light leading-relaxed">
+                Вт–Пт: 12:00–20:00<br />
+                Сб–Вс: 12:00–19:00<br />
+                Пн: выходной
               </p>
             </div>
             <div>
-              <h2 className="text-sm uppercase tracking-widest text-gray-500 mb-4">
-                Hours
-              </h2>
-              <p className="text-lg font-light">
-                Tue–Fri 12:00–20:00
-                <br />
-                Sat–Sun 12:00–19:00
-                <br />
-                Mon closed
-              </p>
-            </div>
-            <div>
-              <h2 className="text-sm uppercase tracking-widest text-gray-500 mb-4">
-                Phone
-              </h2>
-              <a
-                href="tel:+79895919112"
-                className="text-lg font-light hover:opacity-60 transition-opacity"
-              >
+              <h2 className="text-xs uppercase tracking-widest text-gray-400 mb-4">Телефон</h2>
+              <a href="tel:+79895919112" className="text-lg font-light hover:opacity-60 transition-opacity">
                 +7 989 59 19 112
               </a>
             </div>
             <div>
-              <h2 className="text-sm uppercase tracking-widest text-gray-500 mb-4">
-                Email
-              </h2>
-              <a
-                href="mailto:info@artishokcenter.ru"
-                className="text-lg font-light hover:opacity-60 transition-opacity"
-              >
+              <h2 className="text-xs uppercase tracking-widest text-gray-400 mb-4">Email</h2>
+              <a href="mailto:info@artishokcenter.ru" className="text-lg font-light hover:opacity-60 transition-opacity">
                 info@artishokcenter.ru
               </a>
             </div>
+            <div>
+              <h2 className="text-xs uppercase tracking-widest text-gray-400 mb-4">Социальные сети</h2>
+              <div className="space-y-2 text-lg font-light">
+                <p><a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="hover:opacity-60 transition-opacity">Instagram</a></p>
+                <p><a href="https://vk.com" target="_blank" rel="noopener noreferrer" className="hover:opacity-60 transition-opacity">ВКонтакте</a></p>
+                <p><a href="https://t.me" target="_blank" rel="noopener noreferrer" className="hover:opacity-60 transition-opacity">Telegram</a></p>
+              </div>
+            </div>
           </div>
 
-          {/* Right: Contact Form */}
-          <form onSubmit={handleSubmit} className="space-y-8">
-            <div>
-              <label htmlFor="name" className="sr-only">
-                Name
-              </label>
-              <input
-                type="text"
-                id="name"
-                name="name"
-                placeholder="Name"
-                value={formData.name}
-                onChange={handleChange}
-                className="w-full py-4 border-b border-gray-200 focus:border-black focus:outline-none transition-colors font-light placeholder:text-gray-400"
-              />
+          {/* Форма */}
+          {sent ? (
+            <div className="flex items-center">
+              <div>
+                <p className="text-2xl font-serif mb-3">Спасибо за сообщение!</p>
+                <p className="text-gray-500 font-light">Мы свяжемся с вами в ближайшее время.</p>
+                <button onClick={() => setSent(false)} className="mt-6 text-xs underline text-gray-400 hover:text-black">Отправить ещё одно</button>
+              </div>
             </div>
-            <div>
-              <label htmlFor="email" className="sr-only">
-                Email
-              </label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                placeholder="Email"
-                value={formData.email}
-                onChange={handleChange}
-                className="w-full py-4 border-b border-gray-200 focus:border-black focus:outline-none transition-colors font-light placeholder:text-gray-400"
-              />
-            </div>
-            <div>
-              <label htmlFor="phone" className="sr-only">
-                Phone
-              </label>
-              <input
-                type="tel"
-                id="phone"
-                name="phone"
-                placeholder="Phone"
-                value={formData.phone}
-                onChange={handleChange}
-                className="w-full py-4 border-b border-gray-200 focus:border-black focus:outline-none transition-colors font-light placeholder:text-gray-400"
-              />
-            </div>
-            <div>
-              <label htmlFor="message" className="sr-only">
-                Message
-              </label>
-              <textarea
-                id="message"
-                name="message"
-                placeholder="Message"
-                rows={5}
-                value={formData.message}
-                onChange={handleChange}
-                className="w-full py-4 border-b border-gray-200 focus:border-black focus:outline-none transition-colors font-light placeholder:text-gray-400 resize-none"
-              />
-            </div>
-            <button
-              type="submit"
-              className="bg-black text-white px-8 py-4 text-xs uppercase tracking-widest hover:opacity-70 transition-opacity"
-            >
-              Submit
-            </button>
-          </form>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-8">
+              <div>
+                <input type="text" name="name" placeholder="Имя" value={form.name} onChange={handleChange} required className="w-full py-4 border-b border-gray-200 focus:border-black focus:outline-none transition-colors font-light placeholder:text-gray-300" />
+              </div>
+              <div>
+                <input type="email" name="email" placeholder="Email" value={form.email} onChange={handleChange} required className="w-full py-4 border-b border-gray-200 focus:border-black focus:outline-none transition-colors font-light placeholder:text-gray-300" />
+              </div>
+              <div>
+                <input type="tel" name="phone" placeholder="Телефон" value={form.phone} onChange={handleChange} className="w-full py-4 border-b border-gray-200 focus:border-black focus:outline-none transition-colors font-light placeholder:text-gray-300" />
+              </div>
+              <div>
+                <textarea name="message" placeholder="Сообщение" rows={5} value={form.message} onChange={handleChange} required className="w-full py-4 border-b border-gray-200 focus:border-black focus:outline-none transition-colors font-light placeholder:text-gray-300 resize-none" />
+              </div>
+              <button type="submit" className="bg-black text-white px-8 py-4 text-xs uppercase tracking-widest hover:bg-gray-900 transition-colors">
+                Отправить
+              </button>
+            </form>
+          )}
         </div>
 
-        {/* Legal info */}
         <div className="pt-16 border-t border-gray-100">
-          <p className="text-sm text-gray-500 font-light">
-            IP Shmukler Olga Alexandrovna
-            <br />
-            INN 771370805407
+          <p className="text-sm text-gray-400 font-light">
+            ИП Шмуклер Ольга Александровна<br />
+            ИНН 771370805407
           </p>
         </div>
       </div>
