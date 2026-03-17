@@ -16,6 +16,33 @@ const SEED_FAIRS = [
   { title: 'Art Moscow 2024', slug: 'art-moscow-2024', dates: '24–28 апреля 2024', location: 'Москва, ЦВЗ «Манеж»', booth: 'Стенд 24', status: 'past', orderIndex: 1 },
 ]
 
+const SEED_SLIDES = [
+  {
+    title: 'Shmukler Gallery',
+    subtitle: 'Современное искусство в Москве',
+    imagePath: 'https://images.unsplash.com/photo-1531913764164-f85c3e01b2aa?q=80&w=2000&auto=format&fit=crop',
+    linkUrl: '/gallery',
+    orderIndex: 0,
+    isActive: true,
+  },
+  {
+    title: 'Текущие выставки',
+    subtitle: 'Откройте мир современного искусства',
+    imagePath: 'https://images.unsplash.com/photo-1574182245530-967d9b3831af?q=80&w=2000&auto=format&fit=crop',
+    linkUrl: '/exhibitions',
+    orderIndex: 1,
+    isActive: true,
+  },
+  {
+    title: 'Художники галереи',
+    subtitle: 'Резиденты и партнёры Shmukler Gallery',
+    imagePath: 'https://images.unsplash.com/photo-1482160549825-59d1b23cb208?q=80&w=2000&auto=format&fit=crop',
+    linkUrl: '/artists',
+    orderIndex: 2,
+    isActive: true,
+  },
+]
+
 export async function POST() {
   try {
     await prisma.$transaction(async (tx) => {
@@ -25,6 +52,7 @@ export async function POST() {
       await tx.event.deleteMany()
       await tx.teamMember.deleteMany()
       await tx.fair.deleteMany()
+      await tx.heroSlide.deleteMany()
 
       if (MOCK_ARTISTS.length) {
         await tx.artist.createMany({
@@ -105,6 +133,8 @@ export async function POST() {
       if (SEED_FAIRS.length) {
         await tx.fair.createMany({ data: SEED_FAIRS })
       }
+
+      await tx.heroSlide.createMany({ data: SEED_SLIDES })
     })
 
     return NextResponse.json({ ok: true, message: 'Данные успешно импортированы' })
