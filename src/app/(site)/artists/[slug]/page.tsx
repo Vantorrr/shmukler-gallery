@@ -62,6 +62,14 @@ export default function ArtistPage({ params }: { params: Promise<{ slug: string 
               </section>
             )}
 
+            {/* Образование */}
+            {artist.education && (
+              <section>
+                <h2 className="text-xs uppercase tracking-widest text-gray-400 mb-4">Образование</h2>
+                <RichText text={artist.education} className="text-gray-600 font-light" />
+              </section>
+            )}
+
             {/* AS — Artist Statement */}
             {artist.artistStatement && (
               <section>

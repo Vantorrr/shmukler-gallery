@@ -42,7 +42,7 @@ export default function Home() {
       {/* Сейчас в галерее */}
       <div className="max-w-[1600px] mx-auto px-4 md:px-12 py-16 md:py-20">
         <div className="flex items-end justify-between mb-8 md:mb-12">
-          <h2 className="text-3xl md:text-4xl font-serif">Сейчас в галерее</h2>
+          <h2 className="text-3xl md:text-4xl font-serif">Каталог</h2>
           <Link href="/gallery" className="text-xs uppercase tracking-widest border-b border-black pb-1 hover:opacity-50 transition-opacity hidden md:block">
             Весь каталог
           </Link>

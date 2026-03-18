@@ -7,7 +7,7 @@ import {
   Upload, LogOut, RefreshCw, Archive, ArchiveRestore
 } from 'lucide-react'
 
-type Tab = 'artworks' | 'artists' | 'exhibitions' | 'events' | 'team' | 'fairs' | 'slides' | 'announcements' | 'collections' | 'filters'
+type Tab = 'artworks' | 'artists' | 'exhibitions' | 'events' | 'team' | 'fairs' | 'slides' | 'announcements' | 'collections' | 'filters' | 'pages'
 
 const TABS: { key: Tab; label: string }[] = [
   { key: 'artworks', label: 'Работы' },
@@ -20,7 +20,62 @@ const TABS: { key: Tab; label: string }[] = [
   { key: 'announcements', label: 'Анонсы' },
   { key: 'collections', label: 'Подборки' },
   { key: 'filters', label: 'Фильтры' },
+  { key: 'pages', label: 'Страницы' },
 ]
+
+// Multi-image upload: stores as comma-separated paths
+function MultiImageUpload({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const ref = useRef<HTMLInputElement>(null)
+  const [uploading, setUploading] = useState(false)
+  const paths = value ? value.split(',').map(s => s.trim()).filter(Boolean) : []
+
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files || [])
+    if (!files.length) return
+    setUploading(true)
+    const uploaded: string[] = []
+    for (const file of files) {
+      const fd = new FormData()
+      fd.append('file', file)
+      try {
+        const res = await fetch('/api/admin/upload', { method: 'POST', body: fd })
+        const data = await res.json()
+        if (data.path) uploaded.push(data.path)
+      } catch { /* ignore */ }
+    }
+    onChange([...paths, ...uploaded].join(', '))
+    setUploading(false)
+    if (ref.current) ref.current.value = ''
+  }
+
+  function remove(idx: number) {
+    onChange(paths.filter((_, i) => i !== idx).join(', '))
+  }
+
+  return (
+    <div className="space-y-2">
+      <textarea
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        rows={2}
+        placeholder="URL1, URL2, URL3..."
+        className="w-full border border-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-black resize-none"
+      />
+      <div className="flex flex-wrap gap-2">
+        {paths.map((p, i) => (
+          <div key={i} className="relative group">
+            <img src={p} alt="" className="w-16 h-16 object-cover rounded border border-gray-200" />
+            <button type="button" onClick={() => remove(i)} className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 text-[10px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">×</button>
+          </div>
+        ))}
+        <button type="button" onClick={() => ref.current?.click()} disabled={uploading} className="w-16 h-16 border-2 border-dashed border-gray-200 rounded flex items-center justify-center text-gray-400 hover:border-gray-400 text-xs">
+          {uploading ? '...' : <Upload className="w-4 h-4" />}
+        </button>
+      </div>
+      <input ref={ref} type="file" accept="image/*" multiple className="hidden" onChange={handleFile} />
+    </div>
+  )
+}
 
 function ImageUpload({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const ref = useRef<HTMLInputElement>(null)
@@ -134,7 +189,8 @@ function ArtworkForm({ initial, onSave, onCancel }: { initial: any; onSave: (d: 
         <Field label="Серия"><Input value={d.series} onChange={set('series')} /></Field>
         <Field label="Тематика"><Input value={d.theme} onChange={set('theme')} /></Field>
         <Field label="Цвета (через запятую)"><Input value={d.colorTags} onChange={set('colorTags')} placeholder="красный, синий" /></Field>
-        <Field label="ID выставки"><Input value={d.exhibitionId || ''} onChange={set('exhibitionId')} /></Field>
+        <Field label="ID выставки"><Input value={d.exhibitionId || ''} onChange={set('exhibitionId')} placeholder="Или выберите через вкладку Выставки" /></Field>
+        <Field label="ID ярмарки"><Input value={d.fairId || ''} onChange={set('fairId')} placeholder="Или выберите через вкладку Ярмарки" /></Field>
         <Field label="Порядок показа"><Input type="number" value={d.orderIndex} onChange={set('orderIndex')} /></Field>
         <Field label="Архив">
           <label className="flex items-center gap-2 text-sm cursor-pointer">
@@ -154,7 +210,7 @@ function ArtworkForm({ initial, onSave, onCancel }: { initial: any; onSave: (d: 
 }
 
 function ArtistForm({ initial, onSave, onCancel }: { initial: any; onSave: (d: any) => void; onCancel: () => void }) {
-  const artistDefaults = { name: '', slug: '', bio: '', artistStatement: '', selectedExhibitions: '', imagePath: '', orderIndex: 0, isArchived: false }
+  const artistDefaults = { name: '', slug: '', bio: '', education: '', artistStatement: '', selectedExhibitions: '', imagePath: '', orderIndex: 0, isArchived: false }
   const [d, setD] = useState({ ...artistDefaults, ...initial, orderIndex: initial?.orderIndex ?? 0 })
   const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setD((prev: any) => ({ ...prev, [k]: e.target.value }))
 
@@ -179,6 +235,7 @@ function ArtistForm({ initial, onSave, onCancel }: { initial: any; onSave: (d: a
         </Field>
       </div>
       <Field label="Биография (BIO)"><Textarea value={d.bio} onChange={set('bio')} rows={4} /></Field>
+      <Field label="Образование"><Textarea value={d.education || ''} onChange={set('education')} rows={3} /></Field>
       <Field label="Artist Statement (AS)"><Textarea value={d.artistStatement || ''} onChange={set('artistStatement')} rows={3} /></Field>
       <Field label="Избранные выставки (текст)"><Textarea value={d.selectedExhibitions || ''} onChange={set('selectedExhibitions')} rows={3} /></Field>
       <Field label="Фото"><ImageUpload value={d.imagePath || ''} onChange={v => setD((p: any) => ({ ...p, imagePath: v }))} /></Field>
@@ -221,7 +278,10 @@ function ExhibitionForm({ initial, onSave, onCancel }: { initial: any; onSave: (
       </div>
       <Field label="Описание"><Textarea value={d.description} onChange={set('description')} /></Field>
       <Field label="Обложка"><ImageUpload value={d.coverImage || ''} onChange={v => setD((p: any) => ({ ...p, coverImage: v }))} /></Field>
-      <Field label="Фото галереи (URL через запятую)"><Textarea value={d.galleryImages || ''} onChange={set('galleryImages')} rows={2} /></Field>
+      <Field label="Фото галереи (загрузите или вставьте URL через запятую)">
+        <MultiImageUpload value={d.galleryImages || ''} onChange={v => setD((p: any) => ({ ...p, galleryImages: v }))} />
+      </Field>
+      {initial?.id && <ArtworkLinker type="exhibition" parentId={initial.id} parentTitle={d.title} />}
       <div className="flex gap-2 pt-2">
         <button type="submit" className="flex items-center gap-1 bg-black text-white px-4 py-2 text-sm rounded hover:bg-gray-800"><Check className="w-4 h-4" /> Сохранить</button>
         <button type="button" onClick={onCancel} className="flex items-center gap-1 border border-gray-300 px-4 py-2 text-sm rounded hover:bg-gray-50"><X className="w-4 h-4" /> Отмена</button>
@@ -329,6 +389,10 @@ function FairForm({ initial, onSave, onCancel }: { initial: any; onSave: (d: any
       </div>
       <Field label="Описание"><Textarea value={d.description} onChange={set('description')} /></Field>
       <Field label="Обложка"><ImageUpload value={d.coverImage || ''} onChange={v => setD((p: any) => ({ ...p, coverImage: v }))} /></Field>
+      <Field label="Дополнительные фото (загрузите или вставьте URL через запятую)">
+        <MultiImageUpload value={d.galleryImages || ''} onChange={v => setD((p: any) => ({ ...p, galleryImages: v }))} />
+      </Field>
+      {initial?.id && <ArtworkLinker type="fair" parentId={initial.id} parentTitle={d.title} />}
       <div className="flex gap-2 pt-2">
         <button type="submit" className="flex items-center gap-1 bg-black text-white px-4 py-2 text-sm rounded hover:bg-gray-800"><Check className="w-4 h-4" /> Сохранить</button>
         <button type="button" onClick={onCancel} className="flex items-center gap-1 border border-gray-300 px-4 py-2 text-sm rounded hover:bg-gray-50"><X className="w-4 h-4" /> Отмена</button>
@@ -437,7 +501,7 @@ const TAB_API: Record<Tab, string> = {
 }
 
 const TAB_COLS: Record<Tab, string[]> = {
-  artworks: ['title', 'artistName', 'medium', 'price', 'status', 'orderIndex'],
+  artworks: ['_img', 'title', 'artistName', 'medium', 'price', 'status', 'orderIndex'],
   artists: ['name', 'orderIndex', 'isArchived'],
   exhibitions: ['title', 'startDate', 'status', 'orderIndex'],
   events: ['title', 'date', 'format', 'price', 'orderIndex'],
@@ -449,7 +513,7 @@ const TAB_COLS: Record<Tab, string[]> = {
 }
 
 const COL_LABELS: Record<string, string> = {
-  title: 'Название', artistName: 'Художник', medium: 'Техника', price: 'Цена',
+  _img: 'Фото', title: 'Название', artistName: 'Художник', medium: 'Техника', price: 'Цена',
   status: 'Статус', orderIndex: '№', name: 'Имя', role: 'Роль',
   startDate: 'Начало', format: 'Формат', date: 'Дата', dates: 'Даты',
   isArchived: 'Архив', isActive: 'Активен', expiresAt: 'До', text: 'Текст',
@@ -551,6 +615,11 @@ function Section({ tab }: { tab: Tab }) {
   }
 
   function cellVal(item: any, col: string) {
+    if (col === '_img') {
+      return item.imagePath
+        ? <img src={item.imagePath} alt="" style={{ width: 40, height: 40, objectFit: 'contain', background: '#f5f5f5', borderRadius: 4 }} />
+        : <div style={{ width: 40, height: 40, background: '#f5f5f5', borderRadius: 4 }} />
+    }
     const v = item[col]
     if (v === null || v === undefined) return '—'
     if (typeof v === 'boolean') return v ? '✓' : '✗'
@@ -607,7 +676,7 @@ function Section({ tab }: { tab: Tab }) {
                 <Fragment key={item.id}>
                   <tr className={`border-b border-gray-100 hover:bg-gray-50 ${item.isArchived ? 'opacity-50' : ''}`}>
                     {cols.map(col => (
-                      <td key={col} className="px-4 py-3 text-gray-700 max-w-[200px] truncate">{cellVal(item, col)}</td>
+                      <td key={col} className={`px-4 py-3 text-gray-700 ${col === '_img' ? '' : 'max-w-[200px] truncate'}`}>{cellVal(item, col)}</td>
                     ))}
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
@@ -704,7 +773,7 @@ export default function AdminPage() {
           ))}
         </div>
 
-        {tab === 'filters' ? <FiltersSection /> : <Section key={tab} tab={tab} />}
+        {tab === 'filters' ? <FiltersSection /> : tab === 'pages' ? <PagesSection /> : <Section key={tab} tab={tab} />}
       </div>
     </div>
   )
@@ -779,6 +848,173 @@ function FiltersSection() {
           </div>
         ))}
       </div>
+    </div>
+  )
+}
+
+// ─── Pages Section ────────────────────────────────────────────────────────────
+
+const PAGE_DEFAULTS = {
+  about_mission: 'Галерея Шмуклер основана арт-историком и коучем Ольгой Шмуклер в 2022 году. Наша цель — создать пространство, где искусство становится способом познания себя и мира.',
+  about_description: 'Мы убеждены, что искусство — не просто украшение. Это диалог между зрителем и произведением, путь к более глубокому самопознанию и связи с окружающим миром.',
+  services_subtitle: 'Для коллекционеров и дизайнеров',
+}
+
+function PagesSection() {
+  const [content, setContent] = useState<Record<string, string>>(PAGE_DEFAULTS)
+  const [saving, setSaving] = useState(false)
+  const [msg, setMsg] = useState('')
+
+  useEffect(() => {
+    fetch('/api/admin/page-content').then(r => r.json()).then(d => setContent({ ...PAGE_DEFAULTS, ...d })).catch(() => {})
+  }, [])
+
+  async function save() {
+    setSaving(true)
+    try {
+      const res = await fetch('/api/admin/page-content', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(content),
+      })
+      const data = await res.json()
+      setMsg(data.ok ? 'Сохранено ✓' : (data.error || 'Ошибка'))
+      setTimeout(() => setMsg(''), 3000)
+    } catch { setMsg('Ошибка') }
+    finally { setSaving(false) }
+  }
+
+  const fields = [
+    { key: 'about_mission', label: 'О нас — заголовок/миссия', rows: 4 },
+    { key: 'about_description', label: 'О нас — описание', rows: 4 },
+    { key: 'services_subtitle', label: 'Услуги — подзаголовок', rows: 2 },
+  ]
+
+  return (
+    <div className="bg-white rounded-lg border border-gray-200 p-6 max-w-3xl">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-lg font-medium">Тексты страниц</h2>
+          <p className="text-sm text-gray-500 mt-1">Поддерживается: **жирный** · *курсив* · пустая строка = абзац</p>
+        </div>
+        <div className="flex items-center gap-3">
+          {msg && <span className="text-sm text-green-600">{msg}</span>}
+          <button onClick={save} disabled={saving} className="bg-black text-white px-4 py-2 text-sm rounded hover:bg-gray-800 disabled:opacity-50">
+            {saving ? 'Сохранение...' : 'Сохранить'}
+          </button>
+        </div>
+      </div>
+      <div className="space-y-6">
+        {fields.map(f => (
+          <div key={f.key}>
+            <label className="block text-sm font-medium mb-2">{f.label}</label>
+            <textarea
+              className="w-full border border-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-black resize-none"
+              rows={f.rows}
+              value={content[f.key] || ''}
+              onChange={e => setContent(prev => ({ ...prev, [f.key]: e.target.value }))}
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ─── Artwork Linker ───────────────────────────────────────────────────────────
+
+export function ArtworkLinker({ type, parentId, parentTitle }: { type: 'exhibition' | 'fair'; parentId: string; parentTitle: string }) {
+  const [open, setOpen] = useState(false)
+  const [allArtworks, setAllArtworks] = useState<any[]>([])
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [search, setSearch] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [msg, setMsg] = useState('')
+  const field = type === 'fair' ? 'fairId' : 'exhibitionId'
+
+  function load() {
+    fetch('/api/artworks?limit=500').then(r => r.json()).then(d => {
+      const items = d.items || []
+      setAllArtworks(items)
+      setSelected(new Set(items.filter((a: any) => a[field] === parentId).map((a: any) => a.id)))
+    }).catch(() => {})
+  }
+
+  function toggle(id: string) {
+    setSelected(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+
+  async function applySelection() {
+    setSaving(true)
+    try {
+      const res = await fetch('/api/admin/artworks-bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type, parentId, artworkIds: Array.from(selected) }),
+      })
+      const data = await res.json()
+      setMsg(data.ok ? `Привязано ${data.linked} работ ✓` : (data.error || 'Ошибка'))
+      setTimeout(() => setMsg(''), 4000)
+    } catch { setMsg('Ошибка сети') }
+    finally { setSaving(false) }
+  }
+
+  const filtered = allArtworks.filter(a =>
+    !search || a.title?.toLowerCase().includes(search.toLowerCase()) || a.artistName?.toLowerCase().includes(search.toLowerCase())
+  )
+
+  return (
+    <div className="mt-4 border-t border-gray-200 pt-4">
+      <button
+        type="button"
+        onClick={() => { setOpen(o => !o); if (!open) load() }}
+        className="text-xs uppercase tracking-widest border-b border-black pb-0.5 hover:opacity-60 transition-opacity"
+      >
+        {open ? 'Скрыть список работ' : `Управление работами (${type === 'fair' ? 'ярмарка' : 'выставка'})`}
+      </button>
+
+      {open && (
+        <div className="mt-4 space-y-3">
+          <div className="flex items-center gap-3">
+            <input
+              type="text"
+              placeholder="Поиск по названию или художнику..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="flex-1 border border-gray-200 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-black"
+            />
+            <span className="text-xs text-gray-500">{selected.size} выбрано</span>
+            <button
+              type="button"
+              onClick={applySelection}
+              disabled={saving}
+              className="bg-black text-white px-3 py-1.5 text-xs rounded hover:bg-gray-800 disabled:opacity-50"
+            >
+              {saving ? 'Сохранение...' : 'Применить выбор'}
+            </button>
+            {msg && <span className="text-xs text-green-600">{msg}</span>}
+          </div>
+          <div className="max-h-72 overflow-y-auto border border-gray-200 rounded divide-y divide-gray-100">
+            {filtered.length === 0 ? (
+              <p className="p-4 text-sm text-gray-400 text-center">Нет работ</p>
+            ) : filtered.map((a: any) => (
+              <label key={a.id} className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 cursor-pointer">
+                <input type="checkbox" checked={selected.has(a.id)} onChange={() => toggle(a.id)} className="accent-black" />
+                {a.imagePath && <img src={a.imagePath} alt="" className="w-8 h-8 object-contain bg-gray-50 rounded flex-shrink-0" />}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm truncate">{a.title}</p>
+                  {a.artistName && <p className="text-xs text-gray-400 truncate">{a.artistName}</p>}
+                </div>
+                {selected.has(a.id) && <span className="text-xs text-green-600 flex-shrink-0">✓ привязана</span>}
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

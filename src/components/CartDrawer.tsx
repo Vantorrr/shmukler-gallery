@@ -8,8 +8,8 @@ import Link from 'next/link'
 
 const DELIVERY_OPTIONS = [
   { key: 'pickup', label: 'Самовывоз', price: 0 },
-  { key: 'moscow', label: 'Доставка по Москве', price: 1500 },
-  { key: 'russia', label: 'Доставка по России', price: 3000 },
+  { key: 'moscow', label: 'Доставка по Москве', price: null },
+  { key: 'russia', label: 'Доставка по России / другой город', price: null },
 ]
 
 export function CartDrawer() {
@@ -28,8 +28,9 @@ export function CartDrawer() {
   }, [])
 
   const subtotal = items.reduce((s, i) => s + (i.price || 0), 0)
-  const deliveryPrice = DELIVERY_OPTIONS.find(o => o.key === delivery)?.price || 0
+  const deliveryPrice = DELIVERY_OPTIONS.find(o => o.key === delivery)?.price ?? 0
   const total = subtotal + deliveryPrice
+  const deliveryIndividual = DELIVERY_OPTIONS.find(o => o.key === delivery)?.price === null
 
   async function handleOrder(e: React.FormEvent) {
     e.preventDefault()
@@ -139,7 +140,7 @@ export function CartDrawer() {
                           <input type="radio" name="delivery" value={opt.key} checked={delivery === opt.key} onChange={e => setDelivery(e.target.value)} className="accent-black" />
                           <span className="text-sm">{opt.label}</span>
                         </div>
-                        <span className="text-sm text-gray-500">{opt.price === 0 ? 'бесплатно' : `${opt.price.toLocaleString()} ₽`}</span>
+                        <span className="text-sm text-gray-500">{opt.price === 0 ? 'бесплатно' : opt.price === null ? 'индивидуально' : `${opt.price.toLocaleString()} ₽`}</span>
                       </label>
                     ))}
                   </div>
@@ -164,7 +165,7 @@ export function CartDrawer() {
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-500">Доставка</span>
-                      <span>{deliveryPrice === 0 ? 'бесплатно' : `${deliveryPrice.toLocaleString()} ₽`}</span>
+                      <span>{deliveryIndividual ? 'индивидуально' : deliveryPrice === 0 ? 'бесплатно' : `${deliveryPrice.toLocaleString()} ₽`}</span>
                     </div>
                     <div className="flex justify-between font-medium">
                       <span>Итого</span>

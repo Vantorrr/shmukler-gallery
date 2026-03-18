@@ -48,6 +48,7 @@ function GalleryContent() {
   const router = useRouter()
   const [artworks, setArtworks] = useState<any[]>([])
   const [filterOptions, setFilterOptions] = useState({ techniques: DEFAULT_TECHNIQUES, themes: DEFAULT_THEMES, colors: DEFAULT_COLORS })
+  const [artists, setArtists] = useState<{ slug: string; name: string }[]>([])
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
   const [page, setPage] = useState(1)
@@ -58,12 +59,16 @@ function GalleryContent() {
 
   useEffect(() => {
     fetch('/api/filter-options').then(r => r.json()).then(d => setFilterOptions(d)).catch(() => {})
+    fetch('/api/artists').then(r => r.json()).then(d => {
+      if (Array.isArray(d)) setArtists(d.map((a: any) => ({ slug: a.slug, name: a.name })))
+    }).catch(() => {})
   }, [])
 
   const technique = searchParams.get('technique') || ''
   const theme = searchParams.get('theme') || ''
   const color = searchParams.get('color') || ''
   const series = searchParams.get('series') || ''
+  const artist = searchParams.get('artist') || ''
   const sortBy = searchParams.get('sortBy') || 'orderIndex'
 
   const buildUrl = useCallback((pg: number) => {
@@ -74,6 +79,7 @@ function GalleryContent() {
     if (theme) params.set('theme', theme)
     if (color) params.set('color', color)
     if (series) params.set('series', series)
+    if (artist) params.set('artist', artist)
     if (sortBy) params.set('sortBy', sortBy)
     return `/api/artworks?${params}`
   }, [technique, theme, color, series, sortBy])
@@ -110,7 +116,7 @@ function GalleryContent() {
     setPage(1)
     setArtworks([])
     load(1, true)
-  }, [technique, theme, color, series, sortBy, load])
+  }, [technique, theme, color, series, artist, sortBy, load])
 
   useEffect(() => {
     if (!observerRef.current || !hasMore || loadingMore) return
@@ -136,6 +142,7 @@ function GalleryContent() {
     theme ? { key: 'theme', label: `Тема: ${theme}` } : null,
     color ? { key: 'color', label: `Цвет: ${color}` } : null,
     series ? { key: 'series', label: `Серия: ${series}` } : null,
+    artist ? { key: 'artist', label: `Художник: ${artists.find(a => a.slug === artist)?.name || artist}` } : null,
   ].filter(Boolean)
 
   return (
@@ -166,6 +173,17 @@ function GalleryContent() {
             value={color}
             onChange={v => setFilter('color', v)}
           />
+          {artists.length > 0 && (
+            <ChipRow
+              label="Художник"
+              options={artists.map(a => a.name)}
+              value={artists.find(a => a.slug === artist)?.name || ''}
+              onChange={name => {
+                const found = artists.find(a => a.name === name)
+                setFilter('artist', found ? found.slug : '')
+              }}
+            />
+          )}
           <div className="flex items-center gap-4">
             <span className="text-xs uppercase tracking-widest text-gray-400 flex-shrink-0">Сортировка</span>
             <select

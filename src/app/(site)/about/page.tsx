@@ -4,13 +4,23 @@ import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 
+const ABOUT_DEFAULTS = {
+  about_mission: 'Галерея Шмуклер основана арт-историком и коучем Ольгой Шмуклер в 2022 году. Наша цель — создать пространство, где искусство становится способом познания себя и мира.',
+  about_description: 'Мы убеждены, что искусство — не просто украшение. Это диалог между зрителем и произведением, путь к более глубокому самопознанию и связи с окружающим миром.',
+}
+
 export default function AboutPage() {
   const [team, setTeam] = useState<any[]>([])
+  const [content, setContent] = useState(ABOUT_DEFAULTS)
 
   useEffect(() => {
     fetch('/api/team')
       .then(r => r.json())
       .then(d => { if (Array.isArray(d) && d.length > 0) setTeam(d) })
+      .catch(() => {})
+    fetch('/api/page-content')
+      .then(r => r.json())
+      .then(d => setContent({ ...ABOUT_DEFAULTS, ...d }))
       .catch(() => {})
   }, [])
 
@@ -21,10 +31,10 @@ export default function AboutPage() {
         {/* Миссия */}
         <section className="mb-24 max-w-5xl">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif mb-10 leading-tight">
-            Галерея Шмуклер основана арт-историком и коучем Ольгой Шмуклер в 2022 году. Наша цель — создать пространство, где искусство становится способом познания себя и мира.
+            {content.about_mission}
           </h1>
           <p className="text-lg md:text-xl text-gray-600 font-light leading-relaxed max-w-2xl">
-            Мы убеждены, что искусство — не просто украшение. Это диалог между зрителем и произведением, путь к более глубокому самопознанию и связи с окружающим миром.
+            {content.about_description}
           </p>
         </section>
 

@@ -37,6 +37,7 @@ model Artist {
   name                String
   slug                String   @unique
   bio                 String?
+  education           String?
   artistStatement     String?
   selectedExhibitions String?
   imagePath           String?
@@ -95,18 +96,19 @@ model TeamMember {
 }
 
 model Fair {
-  id          String   @id @default(cuid())
-  title       String
-  slug        String   @unique
-  dates       String?
-  location    String?
-  booth       String?
-  description String?
-  coverImage  String?
-  status      String   @default("upcoming")
-  orderIndex  Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id            String   @id @default(cuid())
+  title         String
+  slug          String   @unique
+  dates         String?
+  location      String?
+  booth         String?
+  description   String?
+  coverImage    String?
+  galleryImages String?
+  status        String   @default("upcoming")
+  orderIndex    Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 model HeroSlide {
