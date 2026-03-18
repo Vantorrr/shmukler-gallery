@@ -1,11 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import fs from 'fs'
-import { readConfig, DEFAULT_FILTERS } from '@/app/api/filter-options/route'
-
-const CONFIG_PATH = process.env.NODE_ENV === 'production'
-  ? '/uploads/filter-config.json'
-  : `${process.cwd()}/filter-config.json`
+import { CONFIG_PATH, DEFAULT_FILTERS, readFilterConfig } from '@/lib/filterConfig'
 
 async function checkAdmin() {
   const store = await cookies()
@@ -14,7 +10,7 @@ async function checkAdmin() {
 
 export async function GET() {
   if (!(await checkAdmin())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  return NextResponse.json(readConfig())
+  return NextResponse.json(readFilterConfig())
 }
 
 export async function POST(req: NextRequest) {
