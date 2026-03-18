@@ -133,31 +133,37 @@ function GalleryContent() {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-4">
-            <span className="text-xs uppercase tracking-widest text-gray-400 w-20">Тематика</span>
-            <input
-              type="text"
-              value={theme}
-              onChange={e => setFilter('theme', e.target.value)}
-              placeholder="Введите тему..."
-              className="border-b border-gray-200 py-1 text-sm focus:outline-none focus:border-black w-48"
-            />
-            <span className="text-xs uppercase tracking-widest text-gray-400 ml-4">Цвет</span>
-            <input
-              type="text"
-              value={color}
-              onChange={e => setFilter('color', e.target.value)}
-              placeholder="Введите цвет..."
-              className="border-b border-gray-200 py-1 text-sm focus:outline-none focus:border-black w-36"
-            />
-            <span className="text-xs uppercase tracking-widest text-gray-400 ml-4">Сортировка</span>
-            <select
-              value={sortBy}
-              onChange={e => setFilter('sortBy', e.target.value)}
-              className="text-sm border-b border-gray-200 py-1 focus:outline-none focus:border-black bg-transparent"
-            >
-              {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </select>
+          <div className="space-y-3">
+            <div className="flex items-center gap-4">
+              <span className="text-xs uppercase tracking-widest text-gray-400 w-24 flex-shrink-0">Тематика</span>
+              <input
+                type="text"
+                value={theme}
+                onChange={e => setFilter('theme', e.target.value)}
+                placeholder="Введите тему..."
+                className="border-b border-gray-200 py-1 text-sm focus:outline-none focus:border-black flex-1 max-w-xs"
+              />
+            </div>
+            <div className="flex items-center gap-4">
+              <span className="text-xs uppercase tracking-widest text-gray-400 w-24 flex-shrink-0">Цвет</span>
+              <input
+                type="text"
+                value={color}
+                onChange={e => setFilter('color', e.target.value)}
+                placeholder="Введите цвет..."
+                className="border-b border-gray-200 py-1 text-sm focus:outline-none focus:border-black flex-1 max-w-xs"
+              />
+            </div>
+            <div className="flex items-center gap-4">
+              <span className="text-xs uppercase tracking-widest text-gray-400 w-24 flex-shrink-0">Сортировка</span>
+              <select
+                value={sortBy}
+                onChange={e => setFilter('sortBy', e.target.value)}
+                className="text-sm border-b border-gray-200 py-1 focus:outline-none focus:border-black bg-transparent flex-1 max-w-xs"
+              >
+                {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+            </div>
           </div>
 
           {activeFilters.length > 0 && (
