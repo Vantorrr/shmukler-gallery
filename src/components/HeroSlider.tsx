@@ -10,17 +10,10 @@ import { clsx } from 'clsx'
 const FALLBACK_SLIDES = [
   {
     id: 'f1',
-    imagePath: 'https://images.unsplash.com/photo-1531913764164-f85c3e01b2aa?q=80&w=2000&auto=format&fit=crop',
-    title: 'Shmukler Gallery',
+    imagePath: null,
+    title: '',
     subtitle: 'Современное искусство в Москве',
     linkUrl: '/gallery',
-  },
-  {
-    id: 'f2',
-    imagePath: 'https://images.unsplash.com/photo-1574182245530-967d9b3831af?q=80&w=2000&auto=format&fit=crop',
-    title: 'Текущие выставки',
-    subtitle: 'Откройте мир современного искусства',
-    linkUrl: '/exhibitions',
   },
 ]
 
@@ -51,10 +44,6 @@ export function HeroSlider() {
 
   return (
     <div className="relative h-[90vh] w-full overflow-hidden bg-gray-900">
-      {/* White logo top-left on hero */}
-      <div className="absolute top-6 left-6 md:left-16 z-40 pointer-events-none">
-        <Image src="/logo-white.png" alt="Шмуклер Галерея" width={160} height={64} className="h-12 w-auto object-contain" priority />
-      </div>
 
       {list.map((slide, index) => (
         <div
@@ -64,32 +53,51 @@ export function HeroSlider() {
             index === current ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
           )}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={slide.imagePath}
-            alt={slide.title || ''}
-            className="absolute inset-0 w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-black/35" />
+          {slide.imagePath && (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={slide.imagePath}
+              alt={slide.title || ''}
+              className="absolute inset-0 w-full h-full object-cover"
+              onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+            />
+          )}
+          <div className="absolute inset-0 bg-black/40" />
 
-          <div className="absolute bottom-16 left-6 md:left-16 text-white max-w-2xl z-20">
-            {slide.title && (
-              <h2 className="text-4xl md:text-6xl lg:text-7xl font-serif mb-4 leading-tight">
-                {slide.title}
-              </h2>
-            )}
+          {/* Centered logo */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center z-20 pointer-events-none">
+            <Image
+              src="/logo-white.png"
+              alt="Шмуклер Галерея"
+              width={320}
+              height={128}
+              className="h-20 md:h-28 lg:h-32 w-auto object-contain mb-6"
+              priority
+            />
             {slide.subtitle && (
-              <p className="text-lg md:text-xl font-light mb-8 opacity-90">{slide.subtitle}</p>
-            )}
-            {slide.linkUrl && (
-              <Link
-                href={slide.linkUrl}
-                className="inline-flex items-center gap-2 text-sm uppercase tracking-widest hover:opacity-70 transition-opacity border-b border-white/60 pb-1"
-              >
-                Смотреть <ChevronRight className="w-4 h-4" />
-              </Link>
+              <p className="text-white/80 text-base md:text-lg font-light tracking-widest text-center px-6">
+                {slide.subtitle}
+              </p>
             )}
           </div>
+
+          {(slide.title || slide.linkUrl) && (
+            <div className="absolute bottom-16 left-6 md:left-16 text-white max-w-2xl z-20">
+              {slide.title && (
+                <h2 className="text-3xl md:text-5xl lg:text-6xl font-serif mb-4 leading-tight">
+                  {slide.title}
+                </h2>
+              )}
+              {slide.linkUrl && (
+                <Link
+                  href={slide.linkUrl}
+                  className="inline-flex items-center gap-2 text-sm uppercase tracking-widest hover:opacity-70 transition-opacity border-b border-white/60 pb-1"
+                >
+                  Смотреть <ChevronRight className="w-4 h-4" />
+                </Link>
+              )}
+            </div>
+          )}
         </div>
       ))}
 
