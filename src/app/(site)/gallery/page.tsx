@@ -6,7 +6,9 @@ import { MOCK_ARTWORKS } from '@/lib/mockData'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Suspense } from 'react'
 
-const TECHNIQUES = ['Все', 'Живопись', 'Акварель', 'Графика', 'Смешанная техника', 'Скульптура', 'Фотография', 'Керамика', 'Фреска']
+const DEFAULT_TECHNIQUES = ['Живопись', 'Графика', 'Смешанная техника', 'Скульптура', 'Фотография', 'Керамика', 'Фреска']
+const DEFAULT_THEMES = ['Пейзаж', 'Портрет', 'Натюрморт', 'Абстракция', 'Город', 'Природа', 'Цветы', 'Чувства', 'Любовь', 'Дружба', 'Море', 'Память', 'Тело', 'Детство', 'Дом']
+const DEFAULT_COLORS = ['Белый', 'Черный', 'Красный', 'Зеленый', 'Синий', 'Желтый', 'Коричневый', 'Розовый', 'Бежевый', 'Серый', 'Фиолетовый', 'Голубой']
 const SORT_OPTIONS = [
   { value: 'orderIndex', label: 'По умолчанию' },
   { value: 'newest', label: 'Новинки' },
@@ -14,10 +16,38 @@ const SORT_OPTIONS = [
   { value: 'price_desc', label: 'Цена: по убыванию' },
 ]
 
+function ChipRow({ label, options, value, onChange }: { label: string; options: string[]; value: string; onChange: (v: string) => void }) {
+  return (
+    <div className="space-y-2">
+      <span className="text-xs uppercase tracking-widest text-gray-400">{label}</span>
+      <div className="overflow-x-auto -mx-6 px-6 md:mx-0 md:px-0" style={{ scrollbarWidth: 'none' }}>
+        <div className="flex gap-2" style={{ width: 'max-content' }}>
+          <button
+            onClick={() => onChange('')}
+            className={`text-xs px-3 py-1.5 rounded-full border transition-colors whitespace-nowrap ${!value ? 'bg-black text-white border-black' : 'border-gray-200 text-gray-600 hover:border-gray-400'}`}
+          >
+            Все
+          </button>
+          {options.map(opt => (
+            <button
+              key={opt}
+              onClick={() => onChange(value === opt ? '' : opt)}
+              className={`text-xs px-3 py-1.5 rounded-full border transition-colors whitespace-nowrap ${value === opt ? 'bg-black text-white border-black' : 'border-gray-200 text-gray-600 hover:border-gray-400'}`}
+            >
+              {opt}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function GalleryContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const [artworks, setArtworks] = useState<any[]>([])
+  const [filterOptions, setFilterOptions] = useState({ techniques: DEFAULT_TECHNIQUES, themes: DEFAULT_THEMES, colors: DEFAULT_COLORS })
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
   const [page, setPage] = useState(1)
@@ -25,6 +55,10 @@ function GalleryContent() {
   const [total, setTotal] = useState(0)
   const observerRef = useRef<HTMLDivElement>(null)
   const useMock = useRef(false)
+
+  useEffect(() => {
+    fetch('/api/filter-options').then(r => r.json()).then(d => setFilterOptions(d)).catch(() => {})
+  }, [])
 
   const technique = searchParams.get('technique') || ''
   const theme = searchParams.get('theme') || ''
@@ -113,57 +147,34 @@ function GalleryContent() {
         </div>
 
         {/* Filters */}
-        <div className="border-b border-gray-100 pb-6 mb-10 space-y-4">
-          <div className="flex flex-wrap items-center gap-4">
-            <span className="text-xs uppercase tracking-widest text-gray-400 w-20">Техника</span>
-            <div className="flex flex-wrap gap-2">
-              {TECHNIQUES.map(t => (
-                <button
-                  key={t}
-                  onClick={() => setFilter('technique', t === 'Все' ? '' : t)}
-                  className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
-                    (technique === t) || (t === 'Все' && !technique)
-                      ? 'bg-black text-white border-black'
-                      : 'border-gray-200 text-gray-600 hover:border-gray-400'
-                  }`}
-                >
-                  {t}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <div className="flex items-center gap-4">
-              <span className="text-xs uppercase tracking-widest text-gray-400 w-24 flex-shrink-0">Тематика</span>
-              <input
-                type="text"
-                value={theme}
-                onChange={e => setFilter('theme', e.target.value)}
-                placeholder="Введите тему..."
-                className="border-b border-gray-200 py-1 text-sm focus:outline-none focus:border-black flex-1 max-w-xs"
-              />
-            </div>
-            <div className="flex items-center gap-4">
-              <span className="text-xs uppercase tracking-widest text-gray-400 w-24 flex-shrink-0">Цвет</span>
-              <input
-                type="text"
-                value={color}
-                onChange={e => setFilter('color', e.target.value)}
-                placeholder="Введите цвет..."
-                className="border-b border-gray-200 py-1 text-sm focus:outline-none focus:border-black flex-1 max-w-xs"
-              />
-            </div>
-            <div className="flex items-center gap-4">
-              <span className="text-xs uppercase tracking-widest text-gray-400 w-24 flex-shrink-0">Сортировка</span>
-              <select
-                value={sortBy}
-                onChange={e => setFilter('sortBy', e.target.value)}
-                className="text-sm border-b border-gray-200 py-1 focus:outline-none focus:border-black bg-transparent flex-1 max-w-xs"
-              >
-                {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
-            </div>
+        <div className="border-b border-gray-100 pb-6 mb-10 space-y-5">
+          <ChipRow
+            label="Техника"
+            options={filterOptions.techniques}
+            value={technique}
+            onChange={v => setFilter('technique', v)}
+          />
+          <ChipRow
+            label="Тематика"
+            options={filterOptions.themes}
+            value={theme}
+            onChange={v => setFilter('theme', v)}
+          />
+          <ChipRow
+            label="Цвет"
+            options={filterOptions.colors}
+            value={color}
+            onChange={v => setFilter('color', v)}
+          />
+          <div className="flex items-center gap-4">
+            <span className="text-xs uppercase tracking-widest text-gray-400 flex-shrink-0">Сортировка</span>
+            <select
+              value={sortBy}
+              onChange={e => setFilter('sortBy', e.target.value)}
+              className="text-sm border-b border-gray-200 py-1 focus:outline-none focus:border-black bg-transparent"
+            >
+              {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
           </div>
 
           {activeFilters.length > 0 && (

@@ -7,7 +7,7 @@ import {
   Upload, LogOut, RefreshCw, Archive, ArchiveRestore
 } from 'lucide-react'
 
-type Tab = 'artworks' | 'artists' | 'exhibitions' | 'events' | 'team' | 'fairs' | 'slides' | 'announcements' | 'collections'
+type Tab = 'artworks' | 'artists' | 'exhibitions' | 'events' | 'team' | 'fairs' | 'slides' | 'announcements' | 'collections' | 'filters'
 
 const TABS: { key: Tab; label: string }[] = [
   { key: 'artworks', label: 'Работы' },
@@ -19,6 +19,7 @@ const TABS: { key: Tab; label: string }[] = [
   { key: 'slides', label: 'Слайдер' },
   { key: 'announcements', label: 'Анонсы' },
   { key: 'collections', label: 'Подборки' },
+  { key: 'filters', label: 'Фильтры' },
 ]
 
 function ImageUpload({ value, onChange }: { value: string; onChange: (v: string) => void }) {
@@ -698,7 +699,80 @@ export default function AdminPage() {
           ))}
         </div>
 
-        <Section key={tab} tab={tab} />
+        {tab === 'filters' ? <FiltersSection /> : <Section key={tab} tab={tab} />}
+      </div>
+    </div>
+  )
+}
+
+// ─── Filters Section ──────────────────────────────────────────────────────────
+
+function FiltersSection() {
+  const [config, setConfig] = useState<{ techniques: string[]; themes: string[]; colors: string[] } | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [msg, setMsg] = useState('')
+
+  useEffect(() => {
+    fetch('/api/admin/filter-config').then(r => r.json()).then(setConfig).catch(() => {})
+  }, [])
+
+  async function save() {
+    if (!config) return
+    setSaving(true)
+    try {
+      const res = await fetch('/api/admin/filter-config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(config),
+      })
+      const data = await res.json()
+      setMsg(data.ok ? 'Сохранено ✓' : (data.error || 'Ошибка'))
+      setTimeout(() => setMsg(''), 3000)
+    } catch { setMsg('Ошибка') }
+    finally { setSaving(false) }
+  }
+
+  function updateList(key: 'techniques' | 'themes' | 'colors', raw: string) {
+    const arr = raw.split('\n').map(s => s.trim()).filter(Boolean)
+    setConfig(prev => prev ? { ...prev, [key]: arr } : prev)
+  }
+
+  if (!config) return <div className="py-12 text-center text-gray-400 text-sm">Загрузка...</div>
+
+  const fields: { key: 'techniques' | 'themes' | 'colors'; label: string; hint: string }[] = [
+    { key: 'techniques', label: 'Техника', hint: 'Каждое значение — с новой строки' },
+    { key: 'themes', label: 'Тематика', hint: 'Каждое значение — с новой строки' },
+    { key: 'colors', label: 'Цвет', hint: 'Каждое значение — с новой строки' },
+  ]
+
+  return (
+    <div className="bg-white rounded-lg border border-gray-200 p-6 max-w-3xl">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-lg font-medium">Значения фильтров</h2>
+          <p className="text-sm text-gray-500 mt-1">Изменяйте списки — они отразятся в фильтрах каталога</p>
+        </div>
+        <div className="flex items-center gap-3">
+          {msg && <span className="text-sm text-green-600">{msg}</span>}
+          <button onClick={save} disabled={saving} className="bg-black text-white px-4 py-2 text-sm rounded hover:bg-gray-800 disabled:opacity-50">
+            {saving ? 'Сохранение...' : 'Сохранить'}
+          </button>
+        </div>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {fields.map(f => (
+          <div key={f.key}>
+            <label className="block text-sm font-medium mb-1">{f.label}</label>
+            <p className="text-xs text-gray-400 mb-2">{f.hint}</p>
+            <textarea
+              className="w-full border border-gray-200 rounded px-3 py-2 text-sm font-mono resize-none focus:outline-none focus:border-black"
+              rows={12}
+              value={config[f.key].join('\n')}
+              onChange={e => updateList(f.key, e.target.value)}
+            />
+            <p className="text-xs text-gray-400 mt-1">{config[f.key].length} значений</p>
+          </div>
+        ))}
       </div>
     </div>
   )
