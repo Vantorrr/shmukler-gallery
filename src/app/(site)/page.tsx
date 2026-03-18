@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { ArtworkCard } from '@/components/ArtworkCard'
+import { HomeArtworkCard } from '@/components/HomeArtworkCard'
 import { HeroSlider } from '@/components/HeroSlider'
 import { MOCK_ARTWORKS, MOCK_EXHIBITIONS, MOCK_ARTISTS } from '@/lib/mockData'
 import Link from 'next/link'
@@ -40,8 +40,8 @@ export default function Home() {
       <HeroSlider />
 
       {/* Сейчас в галерее */}
-      <div className="max-w-[1600px] mx-auto px-6 md:px-12 py-20">
-        <div className="flex items-end justify-between mb-12">
+      <div className="max-w-[1600px] mx-auto px-4 md:px-12 py-16 md:py-20">
+        <div className="flex items-end justify-between mb-8 md:mb-12">
           <h2 className="text-3xl md:text-4xl font-serif">Сейчас в галерее</h2>
           <Link href="/gallery" className="text-xs uppercase tracking-widest border-b border-black pb-1 hover:opacity-50 transition-opacity hidden md:block">
             Весь каталог
@@ -49,11 +49,11 @@ export default function Home() {
         </div>
 
         {/* Mobile carousel */}
-        <div className="md:hidden overflow-x-auto snap-x snap-mandatory -mx-6 px-6 pb-4 scrollbar-hide">
-          <div className="flex gap-4" style={{ width: 'max-content' }}>
+        <div className="md:hidden overflow-x-auto snap-x snap-mandatory pb-4" style={{ scrollbarWidth: 'none' }}>
+          <div className="flex gap-3 pr-4">
             {artworks.map((artwork) => (
-              <div key={artwork.id || artwork._id} className="snap-start w-72 flex-shrink-0">
-                <ArtworkCard artwork={artwork} />
+              <div key={artwork.id || artwork._id} className="snap-start w-[220px] flex-shrink-0">
+                <HomeArtworkCard artwork={artwork} />
               </div>
             ))}
           </div>
@@ -62,7 +62,7 @@ export default function Home() {
         {/* Desktop grid */}
         <div className="hidden md:grid grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
           {artworks.map((artwork) => (
-            <ArtworkCard key={artwork.id || artwork._id} artwork={artwork} />
+            <HomeArtworkCard key={artwork.id || artwork._id} artwork={artwork} />
           ))}
         </div>
 

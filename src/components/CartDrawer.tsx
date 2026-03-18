@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { X, ShoppingBag, Trash2 } from 'lucide-react'
 import { useCart } from '@/lib/CartContext'
 import Image from 'next/image'
@@ -20,6 +20,12 @@ export function CartDrawer() {
   const [form, setForm] = useState({ name: '', email: '', phone: '', address: '', comment: '', consent: false })
   const [sent, setSent] = useState(false)
   const [sending, setSending] = useState(false)
+
+  useEffect(() => {
+    const handler = () => setOpen(true)
+    window.addEventListener('open-cart', handler)
+    return () => window.removeEventListener('open-cart', handler)
+  }, [])
 
   const subtotal = items.reduce((s, i) => s + (i.price || 0), 0)
   const deliveryPrice = DELIVERY_OPTIONS.find(o => o.key === delivery)?.price || 0
