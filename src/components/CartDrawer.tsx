@@ -51,16 +51,16 @@ export function CartDrawer() {
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-[80]">
+        <div className="fixed inset-0 z-[80] flex items-stretch justify-end">
           <div className="absolute inset-0 bg-black/40" onClick={() => { setOpen(false); setCheckout(false) }} />
-          <div className="absolute right-0 top-0 bottom-0 w-full max-w-md bg-white shadow-2xl flex flex-col">
-            <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
+          <div className="relative z-10 w-full max-w-md bg-white shadow-2xl flex flex-col" style={{ height: '100dvh', maxHeight: '100vh' }}>
+            <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 flex-shrink-0">
               <h2 className="text-lg font-medium">Корзина {count > 0 && `(${count})`}</h2>
               <button onClick={() => { setOpen(false); setCheckout(false) }}><X className="w-5 h-5" /></button>
             </div>
 
             {sent ? (
-              <div className="flex-1 flex flex-col items-center justify-center text-center px-8">
+              <div className="flex-1 flex flex-col items-center justify-center text-center px-8 min-h-0">
                 <div className="w-16 h-16 rounded-full bg-green-50 flex items-center justify-center mb-6">
                   <svg className="w-8 h-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 13l4 4L19 7" />
@@ -72,7 +72,7 @@ export function CartDrawer() {
               </div>
             ) : !checkout ? (
               <>
-                <div className="flex-1 overflow-y-auto">
+                <div className="flex-1 overflow-y-auto min-h-0">
                   {items.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-center px-8">
                       <ShoppingBag className="w-12 h-12 text-gray-200 mb-4" />
@@ -85,7 +85,7 @@ export function CartDrawer() {
                       {items.map(item => (
                         <div key={item.id} className="flex gap-4 p-5">
                           {item.imagePath && (
-                            <div className="relative w-20 h-20 bg-gray-50 flex-shrink-0 overflow-hidden">
+                            <div className="relative bg-gray-50 flex-shrink-0 overflow-hidden" style={{ width: 80, height: 80 }}>
                               <Image src={item.imagePath} alt={item.title} fill className="object-cover" sizes="80px" />
                             </div>
                           )}
@@ -103,7 +103,7 @@ export function CartDrawer() {
                   )}
                 </div>
                 {items.length > 0 && (
-                  <div className="border-t border-gray-100 p-6 space-y-4">
+                  <div className="border-t border-gray-100 p-6 space-y-4 flex-shrink-0">
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-500">Итого</span>
                       <span className="font-medium">{subtotal.toLocaleString()} ₽</span>
