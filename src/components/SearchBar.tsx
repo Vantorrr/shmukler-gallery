@@ -41,39 +41,44 @@ export function SearchBar() {
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-[100] flex flex-col">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={close} />
-          <div className="relative z-10 bg-white shadow-2xl w-full max-w-2xl mx-auto mt-20 rounded-xl overflow-hidden">
-            <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100">
-              <Search className="w-5 h-5 text-gray-400 flex-shrink-0" />
-              <input
-                ref={inputRef}
-                value={query}
-                onChange={e => setQuery(e.target.value)}
-                placeholder="Поиск по работам, художникам, выставкам..."
-                className="flex-1 text-base outline-none placeholder:text-gray-300"
-              />
-              <button onClick={close} className="text-gray-400 hover:text-black transition-colors">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+        <div className="fixed inset-0 z-[100] bg-white flex flex-col" style={{ height: '100dvh' }}>
+          {/* Header */}
+          <div className="flex items-center gap-3 px-4 py-4 border-b border-gray-100 flex-shrink-0">
+            <Search className="w-5 h-5 text-gray-400 flex-shrink-0" />
+            <input
+              ref={inputRef}
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              placeholder="Поиск по работам, художникам, выставкам..."
+              className="flex-1 text-base outline-none placeholder:text-gray-300 bg-transparent"
+            />
+            <button onClick={close} className="text-gray-500 hover:text-black transition-colors p-1 flex-shrink-0">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
 
-            {loading && <p className="text-center text-gray-400 text-sm py-8">Поиск...</p>}
+          {/* Results area */}
+          <div className="flex-1 overflow-y-auto min-h-0">
+            {loading && <p className="text-center text-gray-400 text-sm py-12">Поиск...</p>}
 
             {!loading && query.length >= 2 && !hasResults && (
-              <p className="text-center text-gray-400 text-sm py-8">Ничего не найдено</p>
+              <p className="text-center text-gray-400 text-sm py-12">Ничего не найдено</p>
+            )}
+
+            {!loading && query.length < 2 && (
+              <p className="text-center text-gray-300 text-sm py-16">Введите не менее 2 символов</p>
             )}
 
             {hasResults && (
-              <div className="overflow-y-auto max-h-[60vh] divide-y divide-gray-100">
+              <div className="divide-y divide-gray-100">
                 {results.artworks.length > 0 && (
                   <div className="p-4">
                     <p className="text-[10px] uppercase tracking-widest text-gray-400 mb-3">Работы</p>
-                    <div className="space-y-3">
+                    <div className="space-y-1">
                       {results.artworks.map(a => (
                         <Link key={a.id} href={`/artwork/${a.slug}`} onClick={close} className="flex items-center gap-3 hover:bg-gray-50 rounded-lg p-2 -mx-2 transition-colors">
                           {a.imagePath && (
-                            <div className="relative w-12 h-12 bg-gray-100 rounded overflow-hidden flex-shrink-0">
+                            <div className="relative flex-shrink-0 rounded overflow-hidden bg-gray-100" style={{ width: 48, height: 48 }}>
                               <Image src={a.imagePath} alt={a.title} fill className="object-cover" sizes="48px" />
                             </div>
                           )}
@@ -90,11 +95,11 @@ export function SearchBar() {
                 {results.artists.length > 0 && (
                   <div className="p-4">
                     <p className="text-[10px] uppercase tracking-widest text-gray-400 mb-3">Художники</p>
-                    <div className="space-y-3">
+                    <div className="space-y-1">
                       {results.artists.map(a => (
                         <Link key={a.id} href={`/artists/${a.slug}`} onClick={close} className="flex items-center gap-3 hover:bg-gray-50 rounded-lg p-2 -mx-2 transition-colors">
                           {a.imagePath && (
-                            <div className="relative w-12 h-12 bg-gray-100 rounded-full overflow-hidden flex-shrink-0">
+                            <div className="relative flex-shrink-0 rounded-full overflow-hidden bg-gray-100" style={{ width: 48, height: 48 }}>
                               <Image src={a.imagePath} alt={a.name} fill className="object-cover" sizes="48px" />
                             </div>
                           )}
@@ -108,7 +113,7 @@ export function SearchBar() {
                 {results.exhibitions.length > 0 && (
                   <div className="p-4">
                     <p className="text-[10px] uppercase tracking-widest text-gray-400 mb-3">Выставки</p>
-                    <div className="space-y-3">
+                    <div className="space-y-1">
                       {results.exhibitions.map(e => (
                         <Link key={e.id} href={`/exhibitions/${e.slug}`} onClick={close} className="flex items-center gap-3 hover:bg-gray-50 rounded-lg p-2 -mx-2 transition-colors">
                           <p className="text-sm font-medium">{e.title}</p>
