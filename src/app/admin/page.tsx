@@ -498,6 +498,7 @@ const TAB_API: Record<Tab, string> = {
   artworks: 'artworks', artists: 'artists', exhibitions: 'exhibitions',
   events: 'events', team: 'team-members', fairs: 'fairs',
   slides: 'hero-slides', announcements: 'announcements', collections: 'collections',
+  filters: '', pages: '',
 }
 
 const TAB_COLS: Record<Tab, string[]> = {
@@ -510,6 +511,7 @@ const TAB_COLS: Record<Tab, string[]> = {
   slides: ['title', 'orderIndex', 'isActive'],
   announcements: ['text', 'isActive', 'expiresAt'],
   collections: ['title', 'orderIndex', 'isActive'],
+  filters: [], pages: [],
 }
 
 const COL_LABELS: Record<string, string> = {
@@ -523,6 +525,7 @@ const FORMS: Record<Tab, any> = {
   artworks: ArtworkForm, artists: ArtistForm, exhibitions: ExhibitionForm,
   events: EventForm, team: TeamForm, fairs: FairForm,
   slides: SlideForm, announcements: AnnouncementForm, collections: CollectionForm,
+  filters: null, pages: null,
 }
 
 function Section({ tab }: { tab: Tab }) {
