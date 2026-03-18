@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { MOCK_EVENTS } from '@/lib/mockData'
 import { ChevronDown, ChevronUp } from 'lucide-react'
+import { RichText } from '@/components/RichText'
 
 function formatDate(dateStr: string) {
   if (!dateStr) return ''
@@ -94,7 +95,7 @@ function EventCard({ event }: { event: any }) {
                 Подробнее
               </button>
               {expanded && (
-                <p className="mt-3 text-sm text-gray-600 font-light leading-relaxed">{event.description}</p>
+                <RichText text={event.description} className="mt-3 text-sm text-gray-600 font-light" />
               )}
             </div>
           )}

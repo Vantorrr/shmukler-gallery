@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { MOCK_EXHIBITIONS, MOCK_ARTWORKS } from '@/lib/mockData'
 import { use } from 'react'
 import { clsx } from 'clsx'
+import { RichText } from '@/components/RichText'
 
 export default function ExhibitionPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params)
@@ -100,7 +101,7 @@ export default function ExhibitionPage({ params }: { params: Promise<{ slug: str
 
         {exhibition.description && (
           <div className="max-w-2xl mx-auto mb-20">
-            <p className="text-gray-600 font-light leading-relaxed whitespace-pre-line">{exhibition.description}</p>
+            <RichText text={exhibition.description} className="text-gray-600 font-light" />
           </div>
         )}
 

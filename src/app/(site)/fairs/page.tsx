@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
+import { RichText } from '@/components/RichText'
 
 const MOCK_FAIRS = [
   { id: '1', title: 'Cosmoscow 2024', dates: '13–15 сентября 2024', location: 'Москва, Гостиный двор', booth: 'Стенд B12', status: 'past', coverImage: 'https://images.unsplash.com/photo-1531913764164-f85c3e01b2aa?q=80&w=800' },
@@ -67,7 +68,7 @@ function FairCard({ fair }: { fair: any }) {
         <h3 className="text-2xl font-serif mb-2">{fair.title}</h3>
         {fair.location && <p className="text-sm text-gray-500 mb-1">{fair.location}</p>}
         {fair.booth && <p className="text-xs text-gray-400">{fair.booth}</p>}
-        {fair.description && <p className="mt-4 text-sm text-gray-600 font-light leading-relaxed">{fair.description}</p>}
+        {fair.description && <RichText text={fair.description} className="mt-4 text-sm text-gray-600 font-light" />}
       </div>
     </article>
   )

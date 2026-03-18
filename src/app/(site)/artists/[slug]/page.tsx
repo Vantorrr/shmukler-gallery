@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { ArtworkCard } from '@/components/ArtworkCard'
 import Image from 'next/image'
 import { MOCK_ARTISTS, MOCK_ARTWORKS } from '@/lib/mockData'
+import { RichText } from '@/components/RichText'
 import { use } from 'react'
 
 export default function ArtistPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -57,7 +58,7 @@ export default function ArtistPage({ params }: { params: Promise<{ slug: string 
             {artist.bio && (
               <section>
                 <h2 className="text-xs uppercase tracking-widest text-gray-400 mb-4">Биография</h2>
-                <p className="text-gray-600 font-light leading-relaxed whitespace-pre-line">{artist.bio}</p>
+                <RichText text={artist.bio} className="text-gray-600 font-light" />
               </section>
             )}
 
@@ -66,7 +67,7 @@ export default function ArtistPage({ params }: { params: Promise<{ slug: string 
               <section>
                 <h2 className="text-xs uppercase tracking-widest text-gray-400 mb-4">Artist Statement</h2>
                 <blockquote className="border-l-2 border-gray-200 pl-6">
-                  <p className="text-gray-600 font-light leading-relaxed whitespace-pre-line">{artist.artistStatement}</p>
+                  <RichText text={artist.artistStatement} className="text-gray-600 font-light" />
                 </blockquote>
               </section>
             )}
@@ -75,7 +76,7 @@ export default function ArtistPage({ params }: { params: Promise<{ slug: string 
             {artist.selectedExhibitions && (
               <section>
                 <h2 className="text-xs uppercase tracking-widest text-gray-400 mb-4">Избранные выставки</h2>
-                <p className="text-gray-600 font-light leading-relaxed whitespace-pre-line">{artist.selectedExhibitions}</p>
+                <RichText text={artist.selectedExhibitions} className="text-gray-600 font-light" />
               </section>
             )}
           </div>

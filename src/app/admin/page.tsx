@@ -82,7 +82,12 @@ function Input({ ...props }: React.InputHTMLAttributes<HTMLInputElement>) {
 }
 
 function Textarea({ rows = 3, ...props }: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
-  return <textarea rows={rows} {...props} className="w-full border border-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-black resize-none" />
+  return (
+    <div>
+      <textarea rows={rows} {...props} className="w-full border border-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-black resize-none" />
+      <p className="text-[10px] text-gray-400 mt-0.5">**жирный** · *курсив* · пустая строка = новый абзац</p>
+    </div>
+  )
 }
 
 function Select({ children, ...props }: React.SelectHTMLAttributes<HTMLSelectElement> & { children: React.ReactNode }) {
