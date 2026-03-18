@@ -923,7 +923,7 @@ function PagesSection() {
 
 // ─── Artwork Linker ───────────────────────────────────────────────────────────
 
-export function ArtworkLinker({ type, parentId, parentTitle }: { type: 'exhibition' | 'fair'; parentId: string; parentTitle: string }) {
+function ArtworkLinker({ type, parentId, parentTitle }: { type: 'exhibition' | 'fair'; parentId: string; parentTitle: string }) {
   const [open, setOpen] = useState(false)
   const [allArtworks, setAllArtworks] = useState<any[]>([])
   const [selected, setSelected] = useState<Set<string>>(new Set())
