@@ -1,15 +1,99 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { X, ShoppingBag, Trash2 } from 'lucide-react'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { X, ShoppingBag, Trash2, MapPin } from 'lucide-react'
 import { useCart } from '@/lib/CartContext'
 import Link from 'next/link'
 
 const DELIVERY_OPTIONS = [
   { key: 'pickup', label: 'Самовывоз', price: 0 },
   { key: 'moscow', label: 'Доставка по Москве', price: null },
-  { key: 'russia', label: 'Доставка по России / другой город', price: null },
+  { key: 'cdek', label: 'Доставка СДЭК', price: null },
+  { key: 'russia', label: 'Другой способ доставки', price: null },
 ]
+
+interface CdekInfo {
+  address: string
+  price: number
+  type: string
+}
+
+function CdekModal({ onClose, onSelect }: {
+  onClose: () => void
+  onSelect: (info: CdekInfo) => void
+}) {
+  const onSelectRef = useRef(onSelect)
+  const onCloseRef = useRef(onClose)
+  onSelectRef.current = onSelect
+  onCloseRef.current = onClose
+
+  useEffect(() => {
+    const initWidget = () => {
+      const W = (window as Record<string, unknown>).CDEKWidget as (new (opts: unknown) => void) | undefined
+      if (!W) { console.error('CDEKWidget not loaded'); return }
+      new W({
+        from: 'Москва',
+        root: 'cdek-widget-root',
+        apiKey: process.env.NEXT_PUBLIC_YANDEX_MAPS_KEY ?? '',
+        servicePath: '/api/cdek-service',
+        defaultLocation: 'Москва',
+        goods: [{ weight: 2, length: 50, width: 50, height: 10 }],
+        callbacks: {
+          onChoose: (delivery: {
+            delivery_type?: string
+            address?: string
+            office?: { address?: string; name?: string }
+            tariff?: { delivery_sum?: number; tariff_name?: string }
+            total_sum?: number
+          }) => {
+            const addr =
+              delivery.address ||
+              delivery.office?.address ||
+              delivery.office?.name ||
+              ''
+            const price =
+              delivery.tariff?.delivery_sum ??
+              delivery.total_sum ??
+              0
+            const type = delivery.delivery_type === 'door' ? 'Курьер' : 'ПВЗ'
+            onSelectRef.current({ address: addr, price, type })
+            onCloseRef.current()
+          },
+        },
+      })
+    }
+
+    const W = (window as Record<string, unknown>).CDEKWidget
+    if (W) {
+      initWidget()
+      return
+    }
+
+    const existing = document.getElementById('cdek-widget-script')
+    if (existing) {
+      existing.addEventListener('load', initWidget)
+      return () => existing.removeEventListener('load', initWidget)
+    }
+
+    const s = document.createElement('script')
+    s.id = 'cdek-widget-script'
+    s.src = 'https://cdn.jsdelivr.net/npm/@cdek-it/widget@3'
+    s.onload = initWidget
+    document.head.appendChild(s)
+  }, [])
+
+  return (
+    <div className="fixed inset-0 z-[110] flex flex-col bg-white">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-shrink-0">
+        <h3 className="font-medium text-base">Выбор пункта доставки СДЭК</h3>
+        <button onClick={onClose} className="text-gray-400 hover:text-black transition-colors">
+          <X className="w-5 h-5" />
+        </button>
+      </div>
+      <div id="cdek-widget-root" className="flex-1" style={{ minHeight: 500 }} />
+    </div>
+  )
+}
 
 export function CartDrawer() {
   const { items, count, remove, clear } = useCart()
@@ -19,6 +103,8 @@ export function CartDrawer() {
   const [form, setForm] = useState({ name: '', email: '', phone: '', address: '', comment: '', consent: false })
   const [sent, setSent] = useState(false)
   const [sending, setSending] = useState(false)
+  const [cdekInfo, setCdekInfo] = useState<CdekInfo | null>(null)
+  const [showCdekModal, setShowCdekModal] = useState(false)
 
   useEffect(() => {
     const handler = () => setOpen(true)
@@ -26,19 +112,34 @@ export function CartDrawer() {
     return () => window.removeEventListener('open-cart', handler)
   }, [])
 
+  // Reset cdek info when switching away from cdek
+  useEffect(() => {
+    if (delivery !== 'cdek') setCdekInfo(null)
+  }, [delivery])
+
   const subtotal = items.reduce((s, i) => s + (i.price || 0), 0)
-  const deliveryPrice = DELIVERY_OPTIONS.find(o => o.key === delivery)?.price ?? 0
+  const cdekDeliveryPrice = delivery === 'cdek' && cdekInfo ? cdekInfo.price : null
+  const fixedDeliveryPrice = DELIVERY_OPTIONS.find(o => o.key === delivery)?.price ?? null
+  const deliveryPrice = fixedDeliveryPrice ?? cdekDeliveryPrice ?? 0
+  const deliveryIndividual = fixedDeliveryPrice === null && cdekDeliveryPrice === null
   const total = subtotal + deliveryPrice
-  const deliveryIndividual = DELIVERY_OPTIONS.find(o => o.key === delivery)?.price === null
+
+  const handleCdekSelect = useCallback((info: CdekInfo) => {
+    setCdekInfo(info)
+    setShowCdekModal(false)
+  }, [])
 
   async function handleOrder(e: React.FormEvent) {
     e.preventDefault()
     if (!form.consent) { alert('Необходимо дать согласие на обработку персональных данных'); return }
+    if (delivery === 'cdek' && !cdekInfo) { alert('Пожалуйста, выберите пункт доставки СДЭК'); return }
     setSending(true)
     try {
       const itemsSummary = items.map(i => `${i.title} (${i.price?.toLocaleString() ?? '—'} ₽)`).join('; ')
-      const deliveryLabel = DELIVERY_OPTIONS.find(o => o.key === delivery)?.label ?? delivery
-      const amount = subtotal // delivery is individual, so only artwork price
+      const deliveryLabel = delivery === 'cdek' && cdekInfo
+        ? `СДЭК (${cdekInfo.type}): ${cdekInfo.address}`
+        : (DELIVERY_OPTIONS.find(o => o.key === delivery)?.label ?? delivery)
+      const amount = subtotal + (cdekDeliveryPrice ?? 0)
 
       const res = await fetch('/api/lifepay', {
         method: 'POST',
@@ -48,7 +149,7 @@ export function CartDrawer() {
           email: form.email,
           phone: form.phone,
           delivery: deliveryLabel,
-          address: form.address || '',
+          address: form.address || (cdekInfo?.address ?? ''),
           comment: form.comment || '',
           items: itemsSummary,
           amount,
@@ -72,6 +173,13 @@ export function CartDrawer() {
 
   return (
     <>
+      {showCdekModal && (
+        <CdekModal
+          onClose={() => setShowCdekModal(false)}
+          onSelect={handleCdekSelect}
+        />
+      )}
+
       <button
         onClick={() => setOpen(true)}
         className="relative p-1 text-black hover:opacity-70 transition-opacity"
@@ -174,12 +282,44 @@ export function CartDrawer() {
                           <input type="radio" name="delivery" value={opt.key} checked={delivery === opt.key} onChange={e => setDelivery(e.target.value)} className="accent-black" />
                           <span className="text-sm">{opt.label}</span>
                         </div>
-                        <span className="text-sm text-gray-500">{opt.price === 0 ? 'бесплатно' : opt.price === null ? 'индивидуально' : `${opt.price.toLocaleString()} ₽`}</span>
+                        <span className="text-sm text-gray-500">
+                          {opt.key === 'cdek'
+                            ? (cdekInfo ? `${cdekInfo.price.toLocaleString()} ₽` : 'выбрать ПВЗ')
+                            : opt.price === 0 ? 'бесплатно' : opt.price === null ? 'индивидуально' : `${opt.price.toLocaleString()} ₽`}
+                        </span>
                       </label>
                     ))}
                   </div>
 
-                  {delivery !== 'pickup' && (
+                  {/* CDEK selector */}
+                  {delivery === 'cdek' && (
+                    <div className="space-y-2">
+                      {cdekInfo ? (
+                        <div className="flex items-start gap-2 bg-green-50 rounded p-3">
+                          <MapPin className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-medium text-green-700">{cdekInfo.type} СДЭК</p>
+                            <p className="text-xs text-green-600 mt-0.5 leading-snug">{cdekInfo.address}</p>
+                            <p className="text-xs font-medium text-green-700 mt-1">{cdekInfo.price.toLocaleString()} ₽</p>
+                          </div>
+                          <button type="button" onClick={() => setShowCdekModal(true)} className="text-xs text-green-700 underline flex-shrink-0">
+                            Изменить
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setShowCdekModal(true)}
+                          className="w-full flex items-center justify-center gap-2 border border-gray-300 rounded py-2.5 text-sm hover:border-black transition-colors"
+                        >
+                          <MapPin className="w-4 h-4" />
+                          Выбрать пункт доставки СДЭК
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                  {delivery !== 'pickup' && delivery !== 'cdek' && (
                     <input placeholder="Адрес доставки" value={form.address} onChange={e => setForm(p => ({ ...p, address: e.target.value }))} className="w-full border-b border-gray-200 py-2 text-sm focus:outline-none focus:border-black" />
                   )}
 
@@ -199,7 +339,11 @@ export function CartDrawer() {
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-500">Доставка</span>
-                      <span>{deliveryIndividual ? 'индивидуально' : deliveryPrice === 0 ? 'бесплатно' : `${deliveryPrice.toLocaleString()} ₽`}</span>
+                      <span>
+                        {delivery === 'cdek' && cdekInfo
+                          ? `${cdekInfo.price.toLocaleString()} ₽`
+                          : deliveryIndividual ? 'индивидуально' : deliveryPrice === 0 ? 'бесплатно' : `${deliveryPrice.toLocaleString()} ₽`}
+                      </span>
                     </div>
                     <div className="flex justify-between font-medium">
                       <span>Итого</span>
