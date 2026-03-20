@@ -9,6 +9,8 @@ export async function GET(req: NextRequest) {
     const artistSlug = searchParams.get('artist') || undefined
     const slugFilter = searchParams.get('slug') || undefined
     const exhibitionId = searchParams.get('exhibitionId') || undefined
+    const fairId = searchParams.get('fairId') || undefined
+    const ids = searchParams.get('ids') || undefined
     const technique = searchParams.get('technique') || undefined
     const theme = searchParams.get('theme') || undefined
     const color = searchParams.get('color') || undefined
@@ -19,6 +21,8 @@ export async function GET(req: NextRequest) {
     if (artistSlug) where.artistSlug = artistSlug
     if (slugFilter) where.slug = slugFilter
     if (exhibitionId) where.exhibitionId = exhibitionId
+    if (fairId) where.fairId = fairId
+    if (ids) where.id = { in: ids.split(',') }
     if (technique) where.medium = { contains: technique, mode: 'insensitive' }
     if (theme) where.theme = { contains: theme, mode: 'insensitive' }
     if (color) where.colorTags = { contains: color, mode: 'insensitive' }

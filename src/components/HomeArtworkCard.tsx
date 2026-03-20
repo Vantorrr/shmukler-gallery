@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
+import { useRouter } from 'next/navigation'
 import { useCart } from '@/lib/CartContext'
 
 type Artwork = {
@@ -18,8 +19,9 @@ type Artwork = {
   mainImage?: { asset?: { url?: string } }
 }
 
-export function HomeArtworkCard({ artwork }: { artwork: Artwork }) {
+export function HomeArtworkCard({ artwork, cover = false }: { artwork: Artwork; cover?: boolean }) {
   const { add, items } = useCart()
+  const router = useRouter()
   const slug = typeof artwork.slug === 'string' ? artwork.slug : artwork.slug?.current
   const imageUrl = artwork.imagePath || artwork.mainImage?.asset?.url
   const artist = artwork.artistName || artwork.artist
@@ -56,7 +58,7 @@ export function HomeArtworkCard({ artwork }: { artwork: Artwork }) {
               src={imageUrl}
               alt={artwork.title}
               fill
-              className="object-contain transition-transform duration-500 group-hover:scale-[1.02]"
+              className={`${cover ? 'object-cover' : 'object-contain'} transition-transform duration-500 group-hover:scale-[1.02]`}
               sizes="(max-width: 768px) 280px, (max-width: 1200px) 50vw, 33vw"
             />
           )}
@@ -80,7 +82,9 @@ export function HomeArtworkCard({ artwork }: { artwork: Artwork }) {
         </div>
       </Link>
 
-      {!isSold && artwork.price ? (
+      {isSold ? (
+        <div className="h-[38px]" />
+      ) : artwork.price ? (
         <button
           onClick={handleBuy}
           className={`w-full text-[11px] uppercase tracking-widest py-2.5 border transition-colors ${
@@ -92,7 +96,12 @@ export function HomeArtworkCard({ artwork }: { artwork: Artwork }) {
           {inCart ? 'Перейти в корзину' : 'Купить'}
         </button>
       ) : (
-        <div className="h-[38px]" />
+        <button
+          onClick={() => router.push(`/artwork/${slug}`)}
+          className="w-full text-[11px] uppercase tracking-widest py-2.5 border border-gray-300 hover:border-black hover:bg-black hover:text-white transition-colors"
+        >
+          Узнать цену
+        </button>
       )}
     </div>
   )

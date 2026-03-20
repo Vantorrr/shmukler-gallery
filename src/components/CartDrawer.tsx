@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { X, ShoppingBag, Trash2 } from 'lucide-react'
 import { useCart } from '@/lib/CartContext'
-import Image from 'next/image'
 import Link from 'next/link'
 
 const DELIVERY_OPTIONS = [
@@ -36,10 +35,39 @@ export function CartDrawer() {
     e.preventDefault()
     if (!form.consent) { alert('Необходимо дать согласие на обработку персональных данных'); return }
     setSending(true)
-    await new Promise(r => setTimeout(r, 800))
-    setSent(true)
-    setSending(false)
-    clear()
+    try {
+      const itemsSummary = items.map(i => `${i.title} (${i.price?.toLocaleString() ?? '—'} ₽)`).join('; ')
+      const deliveryLabel = DELIVERY_OPTIONS.find(o => o.key === delivery)?.label ?? delivery
+      const amount = subtotal // delivery is individual, so only artwork price
+
+      const res = await fetch('/api/lifepay', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: form.name,
+          email: form.email,
+          phone: form.phone,
+          delivery: deliveryLabel,
+          address: form.address || '',
+          comment: form.comment || '',
+          items: itemsSummary,
+          amount,
+        }),
+      })
+      const data = await res.json()
+
+      if (data.ok && data.payUrl) {
+        clear()
+        window.location.href = data.payUrl
+      } else {
+        const errMsg = data.error || 'Ошибка платёжной системы'
+        alert(`Не удалось создать платёж: ${errMsg}\n\nПожалуйста, свяжитесь с нами напрямую:\ninfo@artishokcenter.ru\n8 989 591 91 12`)
+      }
+    } catch {
+      alert('Ошибка соединения. Попробуйте ещё раз или свяжитесь с нами:\ninfo@artishokcenter.ru\n8 989 591 91 12')
+    } finally {
+      setSending(false)
+    }
   }
 
   return (
@@ -73,7 +101,7 @@ export function CartDrawer() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-medium mb-3">Заявка отправлена!</h3>
+                <h3 className="text-xl font-medium mb-3">Заказ принят!</h3>
                 <p className="text-gray-500 text-sm leading-relaxed">Мы свяжемся с вами в ближайшее время для подтверждения заказа.</p>
                 <button onClick={() => { setOpen(false); setSent(false); setCheckout(false) }} className="mt-8 text-sm underline text-gray-500 hover:text-black">Закрыть</button>
               </div>
@@ -92,8 +120,14 @@ export function CartDrawer() {
                       {items.map(item => (
                         <div key={item.id} className="flex gap-4 p-5">
                           {item.imagePath && (
-                            <div className="relative bg-gray-50 flex-shrink-0 overflow-hidden" style={{ width: 80, height: 80 }}>
-                              <Image src={item.imagePath} alt={item.title} fill className="object-cover" sizes="80px" />
+                            <div className="bg-gray-50 flex-shrink-0 overflow-hidden" style={{ width: 80, height: 80 }}>
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={item.imagePath}
+                                alt={item.title}
+                                className="w-full h-full object-cover"
+                                onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
+                              />
                             </div>
                           )}
                           <div className="flex-1 min-w-0">

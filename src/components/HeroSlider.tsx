@@ -1,17 +1,16 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { ChevronRight } from 'lucide-react'
-// logo-white.png used in hero overlay
 import { clsx } from 'clsx'
 
 const FALLBACK_SLIDES = [
   {
     id: 'f1',
     imagePath: null,
-    title: '',
+    title: 'Шмуклер Галерея',
     subtitle: 'Современное искусство в Москве',
     linkUrl: '/gallery',
   },
@@ -20,6 +19,8 @@ const FALLBACK_SLIDES = [
 export function HeroSlider() {
   const [slides, setSlides] = useState<any[]>([])
   const [current, setCurrent] = useState(0)
+  const touchStartX = useRef<number | null>(null)
+  const touchStartY = useRef<number | null>(null)
 
   useEffect(() => {
     fetch('/api/hero-slides')
@@ -34,22 +35,44 @@ export function HeroSlider() {
       .catch(() => setSlides(FALLBACK_SLIDES))
   }, [])
 
-  useEffect(() => {
-    if (slides.length < 2) return
-    const timer = setInterval(() => setCurrent(prev => (prev + 1) % slides.length), 6000)
-    return () => clearInterval(timer)
-  }, [slides.length])
-
   const list = slides.length ? slides : FALLBACK_SLIDES
 
-  return (
-    <div className="relative h-[90vh] w-full overflow-hidden bg-gray-900">
+  useEffect(() => {
+    if (list.length < 2) return
+    const timer = setInterval(() => setCurrent(prev => (prev + 1) % list.length), 6000)
+    return () => clearInterval(timer)
+  }, [list.length])
 
+  const prev = useCallback(() => setCurrent(c => (c - 1 + list.length) % list.length), [list.length])
+  const next = useCallback(() => setCurrent(c => (c + 1) % list.length), [list.length])
+
+  function handleTouchStart(e: React.TouchEvent) {
+    touchStartX.current = e.touches[0].clientX
+    touchStartY.current = e.touches[0].clientY
+  }
+
+  function handleTouchEnd(e: React.TouchEvent) {
+    if (touchStartX.current === null || touchStartY.current === null) return
+    const dx = e.changedTouches[0].clientX - touchStartX.current
+    const dy = e.changedTouches[0].clientY - touchStartY.current
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40) {
+      if (dx < 0) next(); else prev()
+    }
+    touchStartX.current = null
+    touchStartY.current = null
+  }
+
+  return (
+    <div
+      className="relative h-[90vh] w-full overflow-hidden bg-gray-900 select-none"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
       {list.map((slide, index) => (
         <div
           key={slide.id}
           className={clsx(
-            'absolute inset-0 transition-opacity duration-1200 ease-in-out',
+            'absolute inset-0 transition-opacity duration-1000 ease-in-out',
             index === current ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
           )}
         >
@@ -64,29 +87,30 @@ export function HeroSlider() {
           )}
           <div className="absolute inset-0 bg-black/40" />
 
-          {/* Centered logo */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center z-20 pointer-events-none">
+          {/* Centered logo — always visible, no subtitle here */}
+          <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
             <Image
               src="/logo-white.png"
               alt="Шмуклер Галерея"
               width={320}
               height={128}
-              className="h-20 md:h-28 lg:h-32 w-auto object-contain mb-6"
+              className="h-20 md:h-28 lg:h-32 w-auto object-contain"
               priority
             />
-            {slide.subtitle && (
-              <p className="text-white/80 text-base md:text-lg font-light tracking-widest text-center px-6">
-                {slide.subtitle}
-              </p>
-            )}
           </div>
 
-          {(slide.title || slide.linkUrl) && (
+          {/* Slide info — bottom left */}
+          {(slide.title || slide.subtitle || slide.linkUrl) && (
             <div className="absolute bottom-16 left-6 md:left-16 text-white max-w-2xl z-20">
               {slide.title && (
-                <h2 className="text-3xl md:text-5xl lg:text-6xl font-serif mb-4 leading-tight">
+                <h2 className="text-3xl md:text-5xl lg:text-6xl font-serif mb-3 leading-tight">
                   {slide.title}
                 </h2>
+              )}
+              {slide.subtitle && (
+                <p className="text-white/75 text-sm md:text-base font-light tracking-wide mb-4">
+                  {slide.subtitle}
+                </p>
               )}
               {slide.linkUrl && (
                 <Link

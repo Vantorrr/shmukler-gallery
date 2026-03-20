@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { MOCK_EXHIBITIONS } from '@/lib/mockData'
 
 export default function ExhibitionsPage() {
   const [exhibitions, setExhibitions] = useState<any[]>([])
@@ -12,11 +11,8 @@ export default function ExhibitionsPage() {
   useEffect(() => {
     fetch('/api/exhibitions')
       .then(r => r.json())
-      .then(d => {
-        if (Array.isArray(d) && d.length > 0) setExhibitions(d)
-        else setExhibitions(MOCK_EXHIBITIONS.map(e => ({ id: e._id, title: e.title, slug: e.slug?.current, startDate: e.startDate, endDate: e.endDate, location: e.location, coverImage: e.coverImage?.asset?.url })))
-      })
-      .catch(() => setExhibitions(MOCK_EXHIBITIONS.map(e => ({ id: e._id, title: e.title, slug: e.slug?.current, startDate: e.startDate, endDate: e.endDate, location: e.location, coverImage: e.coverImage?.asset?.url }))))
+      .then(d => { if (Array.isArray(d)) setExhibitions(d) })
+      .catch(() => {})
       .finally(() => setLoading(false))
   }, [])
 

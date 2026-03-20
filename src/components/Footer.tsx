@@ -10,10 +10,24 @@ export function Footer() {
   const [consent, setConsent] = useState(false)
   const [sent, setSent] = useState(false)
 
-  function handleSubscribe(e: React.FormEvent) {
+  const [sending, setSending] = useState(false)
+
+  async function handleSubscribe(e: React.FormEvent) {
     e.preventDefault()
     if (!consent) { alert('Необходимо дать согласие на рассылку'); return }
-    setSent(true)
+    setSending(true)
+    try {
+      await fetch('/api/inquiries', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'subscribe', name, email }),
+      })
+      setSent(true)
+    } catch {
+      alert('Ошибка. Попробуйте ещё раз.')
+    } finally {
+      setSending(false)
+    }
   }
 
   return (
@@ -72,10 +86,10 @@ export function Footer() {
         <div className="md:col-span-3 space-y-6">
           <h4 className="text-xs font-medium uppercase tracking-[0.2em] text-gray-400">Галерея</h4>
           <div className="space-y-4 text-sm font-light leading-relaxed text-gray-600">
-            <p>Новослободская 45Б<br />Москва, Россия</p>
+            <p>Большой Краснопрудный тупик, 8/12<br />Москва, Россия</p>
             <p>
-              <a href="mailto:info@shmuklergallery.com" className="hover:text-black transition-colors">info@shmuklergallery.com</a><br />
-              <a href="tel:+79990000000" className="hover:text-black transition-colors">+7 (999) 000-00-00</a>
+              <a href="mailto:info@artishokcenter.ru" className="hover:text-black transition-colors">info@artishokcenter.ru</a><br />
+              <a href="tel:+78989591912" className="hover:text-black transition-colors">8 989 591 91 12</a>
             </p>
           </div>
         </div>
@@ -83,9 +97,8 @@ export function Footer() {
         <div className="md:col-span-2 space-y-6">
           <h4 className="text-xs font-medium uppercase tracking-[0.2em] text-gray-400">Соцсети</h4>
           <ul className="space-y-3 text-sm font-light text-gray-600">
-            <li><a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="hover:text-black transition-colors">Instagram</a></li>
-            <li><a href="https://vk.com" target="_blank" rel="noopener noreferrer" className="hover:text-black transition-colors">ВКонтакте</a></li>
-            <li><a href="https://t.me" target="_blank" rel="noopener noreferrer" className="hover:text-black transition-colors">Telegram</a></li>
+            <li><a href="https://www.instagram.com/shmukler_gallery" target="_blank" rel="noopener noreferrer" className="hover:text-black transition-colors">Instagram</a></li>
+            <li><a href="https://t.me/shmuklergallery" target="_blank" rel="noopener noreferrer" className="hover:text-black transition-colors">Telegram</a></li>
           </ul>
         </div>
       </div>

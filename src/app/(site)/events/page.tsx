@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
-import { MOCK_EVENTS } from '@/lib/mockData'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 import { RichText } from '@/components/RichText'
 
@@ -112,11 +111,8 @@ export default function EventsPage() {
   useEffect(() => {
     fetch('/api/events')
       .then(r => r.json())
-      .then(d => {
-        if (Array.isArray(d) && d.length > 0) setEvents(d)
-        else setEvents(MOCK_EVENTS.map(e => ({ id: e._id, title: e.title, date: e.date, time: e.time, endTime: e.endTime, format: e.format, type: e.type, price: e.price, location: e.location, description: e.description, coverImage: e.coverImage?.asset?.url })))
-      })
-      .catch(() => setEvents(MOCK_EVENTS.map(e => ({ id: e._id, title: e.title, date: e.date, time: e.time, format: e.format, type: e.type, price: e.price, location: e.location }))))
+      .then(d => { if (Array.isArray(d)) setEvents(d) })
+      .catch(() => {})
       .finally(() => setLoading(false))
   }, [])
 

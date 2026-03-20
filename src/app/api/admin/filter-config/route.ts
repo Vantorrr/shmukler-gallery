@@ -5,7 +5,8 @@ import { CONFIG_PATH, DEFAULT_FILTERS, readFilterConfig } from '@/lib/filterConf
 
 async function checkAdmin() {
   const store = await cookies()
-  return store.get('admin_token')?.value === process.env.ADMIN_PASSWORD
+  const secret = process.env.ADMIN_SECRET || 'shmukler-admin-secret'
+  return store.get('admin_token')?.value === secret
 }
 
 export async function GET() {

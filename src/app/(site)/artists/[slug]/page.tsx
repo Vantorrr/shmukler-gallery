@@ -1,9 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { ArtworkCard } from '@/components/ArtworkCard'
+import { HomeArtworkCard } from '@/components/HomeArtworkCard'
 import Image from 'next/image'
-import { MOCK_ARTISTS, MOCK_ARTWORKS } from '@/lib/mockData'
 import { RichText } from '@/components/RichText'
 import { use } from 'react'
 
@@ -21,17 +20,8 @@ export default function ArtistPage({ params }: { params: Promise<{ slug: string 
       if (found && found.id) {
         setArtist(found)
         setArtworksState(artworksData.items || [])
-      } else {
-        const mock = MOCK_ARTISTS.find(a => a.slug?.current === slug)
-        if (mock) {
-          setArtist({ id: mock._id, name: mock.name, bio: mock.bio, slug: mock.slug?.current, imagePath: mock.portrait?.asset?.url })
-          setArtworksState(MOCK_ARTWORKS.filter(a => a.artistSlug === slug).map(a => ({ id: a._id, title: a.title, slug: a.slug?.current, artistName: a.artist, price: a.price, status: a.status, medium: a.medium, imagePath: a.mainImage?.asset?.url })))
-        }
       }
-    }).catch(() => {
-      const mock = MOCK_ARTISTS.find(a => a.slug?.current === slug)
-      if (mock) setArtist({ id: mock._id, name: mock.name, bio: mock.bio, slug: mock.slug?.current, imagePath: mock.portrait?.asset?.url })
-    }).finally(() => setLoading(false))
+    }).catch(() => {}).finally(() => setLoading(false))
   }, [slug])
 
   if (loading) return <div className="min-h-screen flex items-center justify-center text-gray-400">Загрузка...</div>
@@ -96,7 +86,7 @@ export default function ArtistPage({ params }: { params: Promise<{ slug: string 
             <h2 className="text-xs uppercase tracking-widest text-gray-400 mb-10 border-t border-gray-100 pt-10">Произведения</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-8 gap-y-14">
               {artworks.map(artwork => (
-                <ArtworkCard key={artwork.id || artwork._id} artwork={artwork} />
+                <HomeArtworkCard key={artwork.id || artwork._id} artwork={artwork} cover />
               ))}
             </div>
           </section>

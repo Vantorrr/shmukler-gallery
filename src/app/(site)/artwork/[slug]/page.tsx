@@ -4,14 +4,15 @@ import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useCart } from '@/lib/CartContext'
-import { MOCK_ARTWORKS } from '@/lib/mockData'
 import { use } from 'react'
+import { RichText } from '@/components/RichText'
 
 export default function ArtworkPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params)
   const [artwork, setArtwork] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [deliveryOpen, setDeliveryOpen] = useState(false)
+  const [activeImage, setActiveImage] = useState(0)
   const { add, items } = useCart()
   const inCart = artwork && items.find(i => i.id === artwork.id)
 
@@ -20,19 +21,9 @@ export default function ArtworkPage({ params }: { params: Promise<{ slug: string
       .then(r => r.json())
       .then(d => {
         const found = d.items?.[0]
-        if (found) { setArtwork(found); return }
-        const mock = MOCK_ARTWORKS.find(a => (typeof a.slug === 'string' ? a.slug : a.slug?.current) === slug)
-        if (mock) setArtwork({
-          id: mock._id, title: mock.title, slug: typeof mock.slug === 'string' ? mock.slug : mock.slug?.current,
-          artistName: mock.artist, artistSlug: (mock as any).artistSlug, price: mock.price, status: mock.status,
-          medium: mock.medium, dimensions: mock.dimensions, imagePath: mock.mainImage?.asset?.url,
-          description: Array.isArray(mock.description) ? mock.description.map((b: any) => b?.children?.map((c: any) => c?.text).join('')).join('\n') : '',
-        })
+        if (found) setArtwork(found)
       })
-      .catch(() => {
-        const mock = MOCK_ARTWORKS.find(a => a.slug?.current === slug)
-        if (mock) setArtwork({ id: mock._id, title: mock.title, artistName: mock.artist, price: mock.price, status: mock.status, medium: mock.medium, dimensions: mock.dimensions, imagePath: mock.mainImage?.asset?.url })
-      })
+      .catch(() => {})
       .finally(() => setLoading(false))
   }, [slug])
 
@@ -43,20 +34,41 @@ export default function ArtworkPage({ params }: { params: Promise<{ slug: string
     add({ id: artwork.id, title: artwork.title, artistName: artwork.artistName, price: artwork.price, imagePath: artwork.imagePath, slug: artwork.slug })
   }
 
+  let allImages: string[] = []
+  if (artwork.imagePath) allImages.push(artwork.imagePath)
+  if (artwork.images) {
+    try {
+      const parsed = JSON.parse(artwork.images)
+      if (Array.isArray(parsed)) allImages = [...allImages, ...parsed.filter((u: string) => u && !allImages.includes(u))]
+    } catch { /* ignore */ }
+  }
+
   return (
     <div className="min-h-screen bg-white pt-12 pb-24 px-6 md:px-12">
       <div className="max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20">
 
-        {/* Image */}
         <div className="lg:col-span-7">
           <div className="relative w-full bg-gray-50" style={{ aspectRatio: '3/4' }}>
-            {artwork.imagePath && (
-              <Image src={artwork.imagePath} alt={artwork.title} fill className="object-contain" priority sizes="(max-width: 768px) 100vw, 60vw" />
+            {allImages[activeImage] && (
+              <Image src={allImages[activeImage]} alt={artwork.title} fill className="object-contain" priority sizes="(max-width: 768px) 100vw, 60vw" />
             )}
           </div>
+
+          {allImages.length > 1 && (
+            <div className="flex gap-3 mt-4 overflow-x-auto pb-2">
+              {allImages.map((src, i) => (
+                <button
+                  key={i}
+                  onClick={() => setActiveImage(i)}
+                  className={`relative flex-shrink-0 w-20 h-20 bg-gray-50 border-2 transition-colors ${i === activeImage ? 'border-black' : 'border-transparent hover:border-gray-300'}`}
+                >
+                  <Image src={src} alt={`${artwork.title} — фото ${i + 1}`} fill className="object-cover" sizes="80px" />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* Details */}
         <div className="lg:col-span-5 lg:sticky lg:top-32 h-fit space-y-8">
           <div className="space-y-3">
             {artwork.artistName && (
@@ -80,7 +92,9 @@ export default function ArtworkPage({ params }: { params: Promise<{ slug: string
           </div>
 
           {artwork.description && (
-            <p className="text-sm text-gray-600 font-light leading-relaxed">{artwork.description}</p>
+            <div className="text-sm text-gray-600 font-light leading-relaxed">
+              <RichText text={artwork.description} />
+            </div>
           )}
 
           <p className="text-xs text-gray-400">Сертификат подлинности включён.</p>
@@ -92,8 +106,8 @@ export default function ArtworkPage({ params }: { params: Promise<{ slug: string
             {deliveryOpen && (
               <div className="mt-3 text-sm text-gray-600 font-light space-y-1 bg-gray-50 p-4 rounded-lg">
                 <p>Самовывоз из галереи — бесплатно</p>
-                <p>Доставка по Москве — 1 500 ₽</p>
-                <p>Доставка по России — от 3 000 ₽</p>
+                <p>Доставка по Москве — индивидуально</p>
+                <p>Доставка по России — индивидуально</p>
                 <p>Международная доставка — по запросу</p>
               </div>
             )}

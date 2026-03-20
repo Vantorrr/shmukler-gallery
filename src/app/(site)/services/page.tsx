@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ChevronDown, ChevronUp, X } from 'lucide-react'
+import { RichText } from '@/components/RichText'
 
-const SERVICES = [
+const DEFAULT_SERVICES = [
   {
     id: 1,
     title: 'Подбор искусства',
@@ -20,7 +21,7 @@ const SERVICES = [
     id: 3,
     title: 'Арт-примерка',
     shortDesc: 'Просмотр работы в вашем пространстве перед покупкой',
-    description: 'Привезём и установим выбранную работу в вашем доме или офисе на несколько дней, чтобы вы могли оценить, как она будет смотреться в реальном окружении. Стоимость услуги — 10 000 ₽ (засчитывается при покупке). ',
+    description: 'Привезём и установим выбранную работу в вашем доме или офисе на несколько дней, чтобы вы могли оценить, как она будет смотреться в реальном окружении. Стоимость услуги — 10 000 ₽ (засчитывается при покупке).',
   },
   {
     id: 4,
@@ -29,14 +30,16 @@ const SERVICES = [
     description: 'Произведения из коллекции галереи доступны для краткосрочной аренды под фотосессии, кино- и видеопроизводство, а также оформление выставочных и корпоративных пространств. При наличии галерейного кредита — бесплатно.',
   },
   {
-    id: 6,
+    id: 5,
     title: 'Корпоративное искусство',
     shortDesc: 'Арт-оформление офисов, гостиниц и общественных пространств',
     description: 'Создаём концепцию арт-оформления коммерческих и общественных пространств: от подбора работ до монтажа и обслуживания. Постоянная ротация произведений по подписке.',
   },
 ]
 
-function ServiceCard({ service, onApply }: { service: typeof SERVICES[0]; onApply: (s: typeof SERVICES[0]) => void }) {
+type Service = { id: number; title: string; shortDesc: string; description: string }
+
+function ServiceCard({ service, onApply }: { service: Service; onApply: (s: Service) => void }) {
   const [open, setOpen] = useState(false)
 
   return (
@@ -50,7 +53,9 @@ function ServiceCard({ service, onApply }: { service: typeof SERVICES[0]; onAppl
       </button>
 
       {open && (
-        <p className="text-sm text-gray-600 font-light leading-relaxed mb-6">{service.description}</p>
+        <div className="text-sm text-gray-600 font-light leading-relaxed mb-6">
+          <RichText text={service.description} />
+        </div>
       )}
 
       <button
@@ -63,7 +68,7 @@ function ServiceCard({ service, onApply }: { service: typeof SERVICES[0]; onAppl
   )
 }
 
-function ApplicationModal({ service, onClose }: { service: typeof SERVICES[0]; onClose: () => void }) {
+function ApplicationModal({ service, onClose }: { service: Service; onClose: () => void }) {
   const [form, setForm] = useState({ name: '', email: '', phone: '', message: '', consent: false })
   const [sent, setSent] = useState(false)
   const [sending, setSending] = useState(false)
@@ -73,10 +78,19 @@ function ApplicationModal({ service, onClose }: { service: typeof SERVICES[0]; o
     e.preventDefault()
     if (!form.consent) { alert('Необходимо дать согласие на обработку данных'); return }
     setSending(true)
-    await new Promise(r => setTimeout(r, 600))
-    setSent(true)
-    setSending(false)
-    setShowContacts(true)
+    try {
+      await fetch('/api/inquiries', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'service', service: service.title, ...form }),
+      })
+      setSent(true)
+      setShowContacts(true)
+    } catch {
+      alert('Ошибка при отправке. Попробуйте ещё раз.')
+    } finally {
+      setSending(false)
+    }
   }
 
   return (
@@ -108,9 +122,9 @@ function ApplicationModal({ service, onClose }: { service: typeof SERVICES[0]; o
             {showContacts && (
               <div className="text-sm text-gray-600 space-y-2 text-left bg-gray-50 rounded-lg p-4">
                 <p className="font-medium text-xs uppercase tracking-widest text-gray-400 mb-3">Контакты</p>
-                <p><a href="mailto:info@shmuklergallery.com" className="hover:text-black">info@shmuklergallery.com</a></p>
-                <p><a href="tel:+79990000000" className="hover:text-black">+7 (999) 000-00-00</a></p>
-                <p className="text-gray-400 text-xs">Новослободская 45Б, Москва</p>
+                <p><a href="mailto:info@artishokcenter.ru" className="hover:text-black">info@artishokcenter.ru</a></p>
+                <p><a href="tel:+78989591912" className="hover:text-black">8 989 591 91 12</a></p>
+                <p className="text-gray-400 text-xs">Большой Краснопрудный тупик, 8/12, Москва</p>
               </div>
             )}
           </div>
@@ -121,25 +135,48 @@ function ApplicationModal({ service, onClose }: { service: typeof SERVICES[0]; o
 }
 
 export default function ServicesPage() {
-  const [applyService, setApplyService] = useState<typeof SERVICES[0] | null>(null)
+  const [services, setServices] = useState<Service[]>(DEFAULT_SERVICES)
+  const [subtitle, setSubtitle] = useState('Для коллекционеров и дизайнеров')
+  const [applyService, setApplyService] = useState<Service | null>(null)
+
+  useEffect(() => {
+    fetch('/api/page-content')
+      .then(r => r.json())
+      .then(d => {
+        if (d?.services_subtitle) setSubtitle(d.services_subtitle)
+        const loaded: Service[] = []
+        for (let n = 1; n <= 10; n++) {
+          const title = d?.[`service_${n}_title`]
+          if (!title) continue
+          loaded.push({
+            id: n,
+            title,
+            shortDesc: d?.[`service_${n}_short`] || '',
+            description: d?.[`service_${n}_desc`] || '',
+          })
+        }
+        if (loaded.length > 0) setServices(loaded)
+      })
+      .catch(() => {})
+  }, [])
 
   return (
     <div className="min-h-screen bg-white pt-12 pb-24 px-6 md:px-12">
       <div className="max-w-[1600px] mx-auto">
         <div className="mb-20">
           <h1 className="text-5xl md:text-7xl font-serif mb-4">Услуги</h1>
-          <p className="text-xl text-gray-500 font-light">Для коллекционеров и дизайнеров</p>
+          <p className="text-xl text-gray-500 font-light">{subtitle}</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {SERVICES.map(service => (
+          {services.map(service => (
             <ServiceCard key={service.id} service={service} onApply={setApplyService} />
           ))}
         </div>
 
         <div className="mt-20 text-center border-t border-gray-100 pt-16">
           <p className="text-lg text-gray-500 font-light mb-2">Оставьте ваш запрос и мы свяжемся с вами для уточнения деталей</p>
-          <p className="text-sm text-gray-400 mb-8">или напишите напрямую: <a href="mailto:info@shmuklergallery.com" className="underline hover:text-black">info@shmuklergallery.com</a></p>
+          <p className="text-sm text-gray-400 mb-8">или напишите напрямую: <a href="mailto:info@artishokcenter.ru" className="underline hover:text-black">info@artishokcenter.ru</a></p>
         </div>
       </div>
 

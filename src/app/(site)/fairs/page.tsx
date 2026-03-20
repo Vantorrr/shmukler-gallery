@@ -2,12 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
 import { RichText } from '@/components/RichText'
-
-const MOCK_FAIRS = [
-  { id: '1', title: 'Cosmoscow 2024', dates: '13–15 сентября 2024', location: 'Москва, Гостиный двор', booth: 'Стенд B12', status: 'past', coverImage: 'https://images.unsplash.com/photo-1531913764164-f85c3e01b2aa?q=80&w=800' },
-  { id: '2', title: 'Art Moscow 2024', dates: '24–28 апреля 2024', location: 'Москва, ЦВЗ «Манеж»', booth: 'Стенд 24', status: 'past', coverImage: 'https://images.unsplash.com/photo-1574182245530-967d9b3831af?q=80&w=800' },
-]
 
 export default function FairsPage() {
   const [fairs, setFairs] = useState<any[]>([])
@@ -16,8 +12,8 @@ export default function FairsPage() {
   useEffect(() => {
     fetch('/api/fairs')
       .then(r => r.json())
-      .then(d => { if (Array.isArray(d) && d.length > 0) setFairs(d); else setFairs(MOCK_FAIRS) })
-      .catch(() => setFairs(MOCK_FAIRS))
+      .then(d => { if (Array.isArray(d)) setFairs(d) })
+      .catch(() => {})
       .finally(() => setLoading(false))
   }, [])
 
@@ -56,20 +52,26 @@ export default function FairsPage() {
 }
 
 function FairCard({ fair }: { fair: any }) {
-  return (
-    <article className="border border-gray-100 overflow-hidden">
-      {fair.coverImage && (
-        <div className="relative aspect-[16/9] bg-gray-50">
-          <Image src={fair.coverImage} alt={fair.title} fill className="object-cover" sizes="(max-width: 768px) 100vw, 50vw" />
-        </div>
-      )}
+  const href = fair.slug ? `/fairs/${fair.slug}` : null
+
+  const inner = (
+    <article className="border border-gray-100 overflow-hidden group hover:border-gray-300 transition-colors cursor-pointer">
+      <div className="relative aspect-[16/9] bg-gray-50 overflow-hidden">
+        {fair.coverImage ? (
+          <Image src={fair.coverImage} alt={fair.title} fill className="object-cover transition-transform duration-500 group-hover:scale-[1.03]" sizes="(max-width: 768px) 100vw, 50vw" />
+        ) : (
+          <div className="absolute inset-0 bg-gray-100" />
+        )}
+      </div>
       <div className="p-8">
-        <p className="text-xs uppercase tracking-widest text-gray-400 mb-3">{fair.dates}</p>
-        <h3 className="text-2xl font-serif mb-2">{fair.title}</h3>
+        {fair.dates && <p className="text-xs uppercase tracking-widest text-gray-400 mb-3">{fair.dates}</p>}
+        <h3 className="text-2xl font-serif mb-2 group-hover:opacity-70 transition-opacity">{fair.title}</h3>
         {fair.location && <p className="text-sm text-gray-500 mb-1">{fair.location}</p>}
         {fair.booth && <p className="text-xs text-gray-400">{fair.booth}</p>}
-        {fair.description && <RichText text={fair.description} className="mt-4 text-sm text-gray-600 font-light" />}
+        {fair.description && <RichText text={fair.description} className="mt-4 text-sm text-gray-600 font-light line-clamp-3" />}
       </div>
     </article>
   )
+
+  return href ? <Link href={href}>{inner}</Link> : inner
 }

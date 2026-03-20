@@ -24,6 +24,7 @@ model Artwork {
   series       String?
   description  String?
   imagePath    String?
+  images       String?
   theme        String?
   colorTags    String?
   isArchived   Boolean  @default(false)
@@ -142,4 +143,17 @@ model Announcement {
   isActive  Boolean   @default(true)
   expiresAt DateTime?
   createdAt DateTime  @default(now())
+}
+
+model Inquiry {
+  id        String   @id @default(cuid())
+  type      String   @default("contact")
+  name      String
+  email     String
+  phone     String?
+  message   String?
+  service   String?
+  items     String?
+  status    String   @default("new")
+  createdAt DateTime @default(now())
 }

@@ -1,9 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { ArtworkCard } from '@/components/ArtworkCard'
+import { HomeArtworkCard } from '@/components/HomeArtworkCard'
 import Image from 'next/image'
-import { MOCK_EXHIBITIONS, MOCK_ARTWORKS } from '@/lib/mockData'
 import { use } from 'react'
 import { clsx } from 'clsx'
 import { RichText } from '@/components/RichText'
@@ -25,18 +24,9 @@ export default function ExhibitionPage({ params }: { params: Promise<{ slug: str
           return fetch(`/api/artworks?exhibitionId=${found.id}&limit=100`).then(r => r.json()).then(aw => {
             setArtworks(aw.items || [])
           })
-        } else {
-          const mock = MOCK_EXHIBITIONS.find(e => e.slug?.current === slug)
-          if (mock) {
-            setExhibition({ id: mock._id, title: mock.title, slug: mock.slug?.current, startDate: mock.startDate, endDate: mock.endDate, location: mock.location, description: Array.isArray(mock.description) ? mock.description.map((b: any) => b?.children?.map((c: any) => c?.text).join('')).join('\n') : '', coverImage: mock.coverImage?.asset?.url })
-            setArtworks(MOCK_ARTWORKS.slice(0, 4).map(a => ({ id: a._id, title: a.title, slug: a.slug?.current, artistName: a.artist, price: a.price, status: a.status, imagePath: a.mainImage?.asset?.url })))
-          }
         }
       })
-      .catch(() => {
-        const mock = MOCK_EXHIBITIONS.find(e => e.slug?.current === slug)
-        if (mock) setExhibition({ id: mock._id, title: mock.title, slug: mock.slug?.current, coverImage: mock.coverImage?.asset?.url })
-      })
+      .catch(() => {})
       .finally(() => setLoading(false))
   }, [slug])
 
@@ -110,7 +100,7 @@ export default function ExhibitionPage({ params }: { params: Promise<{ slug: str
             <h2 className="text-xs uppercase tracking-widest text-gray-400 mb-10 border-t border-gray-100 pt-10">Работы на выставке</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-8 gap-y-14">
               {artworks.map(artwork => (
-                <ArtworkCard key={artwork.id || artwork._id} artwork={artwork} />
+                <HomeArtworkCard key={artwork.id || artwork._id} artwork={artwork} cover />
               ))}
             </div>
           </section>

@@ -3,8 +3,6 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { MOCK_ARTISTS } from '@/lib/mockData'
-
 export default function ArtistsPage() {
   const [artists, setArtists] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -12,11 +10,8 @@ export default function ArtistsPage() {
   useEffect(() => {
     fetch('/api/artists')
       .then(r => r.json())
-      .then(d => {
-        if (Array.isArray(d) && d.length > 0) setArtists(d)
-        else setArtists(MOCK_ARTISTS.map(a => ({ id: a._id, name: a.name, slug: a.slug?.current, imagePath: a.portrait?.asset?.url, bio: a.bio })))
-      })
-      .catch(() => setArtists(MOCK_ARTISTS.map(a => ({ id: a._id, name: a.name, slug: a.slug?.current, imagePath: a.portrait?.asset?.url }))))
+      .then(d => { if (Array.isArray(d)) setArtists(d) })
+      .catch(() => {})
       .finally(() => setLoading(false))
   }, [])
 

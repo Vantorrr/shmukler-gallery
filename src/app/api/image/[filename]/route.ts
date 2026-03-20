@@ -15,9 +15,9 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ fil
     const ext = filename.split('.').pop()?.toLowerCase() || 'jpg'
     const contentTypeMap: Record<string, string> = {
       jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png',
-      webp: 'image/webp', gif: 'image/gif',
+      webp: 'image/webp', gif: 'image/gif', heic: 'image/heic', heif: 'image/heif',
     }
-    const contentType = contentTypeMap[ext] || 'application/octet-stream'
+    const contentType = contentTypeMap[ext] ?? 'application/octet-stream'
     return new NextResponse(buffer, {
       headers: { 'Content-Type': contentType, 'Cache-Control': 'public, max-age=31536000, immutable' },
     })

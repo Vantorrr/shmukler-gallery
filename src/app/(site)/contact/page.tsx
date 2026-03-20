@@ -5,14 +5,27 @@ import { useState } from 'react'
 export default function ContactPage() {
   const [form, setForm] = useState({ name: '', email: '', phone: '', message: '' })
   const [sent, setSent] = useState(false)
+  const [sending, setSending] = useState(false)
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    setSent(true)
+    setSending(true)
+    try {
+      await fetch('/api/inquiries', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'contact', ...form }),
+      })
+      setSent(true)
+    } catch {
+      alert('Ошибка при отправке. Попробуйте ещё раз.')
+    } finally {
+      setSending(false)
+    }
   }
 
   return (
@@ -25,7 +38,7 @@ export default function ContactPage() {
           <div className="space-y-12">
             <div>
               <h2 className="text-xs uppercase tracking-widest text-gray-400 mb-4">Адрес</h2>
-              <p className="text-lg font-light leading-relaxed">Новослободская 45Б<br />Москва, Россия</p>
+              <p className="text-lg font-light leading-relaxed">Большой Краснопрудный тупик, 8/12<br />Москва, Россия</p>
             </div>
             <div>
               <h2 className="text-xs uppercase tracking-widest text-gray-400 mb-4">Часы работы</h2>
@@ -37,8 +50,8 @@ export default function ContactPage() {
             </div>
             <div>
               <h2 className="text-xs uppercase tracking-widest text-gray-400 mb-4">Телефон</h2>
-              <a href="tel:+79895919112" className="text-lg font-light hover:opacity-60 transition-opacity">
-                +7 989 59 19 112
+              <a href="tel:+78989591912" className="text-lg font-light hover:opacity-60 transition-opacity">
+                8 989 591 91 12
               </a>
             </div>
             <div>
@@ -50,9 +63,8 @@ export default function ContactPage() {
             <div>
               <h2 className="text-xs uppercase tracking-widest text-gray-400 mb-4">Социальные сети</h2>
               <div className="space-y-2 text-lg font-light">
-                <p><a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="hover:opacity-60 transition-opacity">Instagram</a></p>
-                <p><a href="https://vk.com" target="_blank" rel="noopener noreferrer" className="hover:opacity-60 transition-opacity">ВКонтакте</a></p>
-                <p><a href="https://t.me" target="_blank" rel="noopener noreferrer" className="hover:opacity-60 transition-opacity">Telegram</a></p>
+                <p><a href="https://www.instagram.com/shmukler_gallery" target="_blank" rel="noopener noreferrer" className="hover:opacity-60 transition-opacity">Instagram</a></p>
+                <p><a href="https://t.me/shmuklergallery" target="_blank" rel="noopener noreferrer" className="hover:opacity-60 transition-opacity">Telegram</a></p>
               </div>
             </div>
           </div>
@@ -68,6 +80,9 @@ export default function ContactPage() {
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-8">
+              <p className="text-lg font-light text-gray-600 pb-2">
+                Оставьте свой запрос и мы свяжемся с вами в ближайшее время.
+              </p>
               <div>
                 <input type="text" name="name" placeholder="Имя" value={form.name} onChange={handleChange} required className="w-full py-4 border-b border-gray-200 focus:border-black focus:outline-none transition-colors font-light placeholder:text-gray-300" />
               </div>
@@ -80,8 +95,8 @@ export default function ContactPage() {
               <div>
                 <textarea name="message" placeholder="Сообщение" rows={5} value={form.message} onChange={handleChange} required className="w-full py-4 border-b border-gray-200 focus:border-black focus:outline-none transition-colors font-light placeholder:text-gray-300 resize-none" />
               </div>
-              <button type="submit" className="bg-black text-white px-8 py-4 text-xs uppercase tracking-widest hover:bg-gray-900 transition-colors">
-                Отправить
+              <button type="submit" disabled={sending} className="bg-black text-white px-8 py-4 text-xs uppercase tracking-widest hover:bg-gray-900 transition-colors disabled:opacity-50">
+                {sending ? 'Отправка...' : 'Отправить'}
               </button>
             </form>
           )}

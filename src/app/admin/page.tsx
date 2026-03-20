@@ -7,7 +7,7 @@ import {
   Upload, LogOut, RefreshCw, Archive, ArchiveRestore
 } from 'lucide-react'
 
-type Tab = 'artworks' | 'artists' | 'exhibitions' | 'events' | 'team' | 'fairs' | 'slides' | 'announcements' | 'collections' | 'filters' | 'pages'
+type Tab = 'artworks' | 'artists' | 'exhibitions' | 'events' | 'team' | 'fairs' | 'slides' | 'announcements' | 'collections' | 'inquiries' | 'filters' | 'pages'
 
 const TABS: { key: Tab; label: string }[] = [
   { key: 'artworks', label: 'Работы' },
@@ -19,6 +19,7 @@ const TABS: { key: Tab; label: string }[] = [
   { key: 'slides', label: 'Слайдер' },
   { key: 'announcements', label: 'Анонсы' },
   { key: 'collections', label: 'Подборки' },
+  { key: 'inquiries', label: 'Заявки' },
   { key: 'filters', label: 'Фильтры' },
   { key: 'pages', label: 'Страницы' },
 ]
@@ -27,12 +28,14 @@ const TABS: { key: Tab; label: string }[] = [
 function MultiImageUpload({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const ref = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState('')
   const paths = value ? value.split(',').map(s => s.trim()).filter(Boolean) : []
 
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files || [])
     if (!files.length) return
     setUploading(true)
+    setUploadError('')
     const uploaded: string[] = []
     for (const file of files) {
       const fd = new FormData()
@@ -41,7 +44,8 @@ function MultiImageUpload({ value, onChange }: { value: string; onChange: (v: st
         const res = await fetch('/api/admin/upload', { method: 'POST', body: fd })
         const data = await res.json()
         if (data.path) uploaded.push(data.path)
-      } catch { /* ignore */ }
+        else if (data.error) setUploadError(data.error)
+      } catch { setUploadError('Ошибка загрузки') }
     }
     onChange([...paths, ...uploaded].join(', '))
     setUploading(false)
@@ -72,7 +76,8 @@ function MultiImageUpload({ value, onChange }: { value: string; onChange: (v: st
           {uploading ? '...' : <Upload className="w-4 h-4" />}
         </button>
       </div>
-      <input ref={ref} type="file" accept="image/*" multiple className="hidden" onChange={handleFile} />
+      {uploadError && <p className="text-xs text-red-500 mt-1">{uploadError}</p>}
+      <input ref={ref} type="file" accept=".jpg,.jpeg,.png,.webp,.gif" multiple className="hidden" onChange={handleFile} />
     </div>
   )
 }
@@ -80,18 +85,21 @@ function MultiImageUpload({ value, onChange }: { value: string; onChange: (v: st
 function ImageUpload({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const ref = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState('')
 
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
     setUploading(true)
+    setUploadError('')
     const fd = new FormData()
     fd.append('file', file)
     try {
       const res = await fetch('/api/admin/upload', { method: 'POST', body: fd })
       const data = await res.json()
       if (data.path) onChange(data.path)
-    } catch { /* ignore */ }
+      else if (data.error) setUploadError(data.error)
+    } catch { setUploadError('Ошибка загрузки') }
     finally { setUploading(false) }
   }
 
@@ -118,7 +126,8 @@ function ImageUpload({ value, onChange }: { value: string; onChange: (v: string)
           <img src={value} alt="" className="h-10 w-10 object-cover rounded border" />
         )}
       </div>
-      <input ref={ref} type="file" accept="image/*" className="hidden" onChange={handleFile} />
+      {uploadError && <p className="text-xs text-red-500 mt-1">{uploadError}</p>}
+      <input ref={ref} type="file" accept=".jpg,.jpeg,.png,.webp,.gif" className="hidden" onChange={handleFile} />
     </div>
   )
 }
@@ -156,7 +165,7 @@ function Select({ children, ...props }: React.SelectHTMLAttributes<HTMLSelectEle
 // ─── Forms ───────────────────────────────────────────────────────────────────
 
 function ArtworkForm({ initial, onSave, onCancel }: { initial: any; onSave: (d: any) => void; onCancel: () => void }) {
-  const defaults = { title: '', slug: '', artistName: '', artistSlug: '', price: '', status: 'available', medium: '', technique: '', materials: '', dimensions: '', year: '', series: '', description: '', imagePath: '', theme: '', colorTags: '', exhibitionId: '', orderIndex: 0, isArchived: false }
+  const defaults = { title: '', slug: '', artistName: '', artistSlug: '', price: '', status: 'available', medium: '', technique: '', materials: '', dimensions: '', year: '', series: '', description: '', imagePath: '', images: '', theme: '', colorTags: '', exhibitionId: '', fairId: '', orderIndex: 0, isArchived: false }
   const [d, setD] = useState({ ...defaults, ...initial, price: initial?.price ?? '', year: initial?.year ?? '', orderIndex: initial?.orderIndex ?? 0 })
   const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => setD((prev: any) => ({ ...prev, [k]: e.target.value }))
 
@@ -200,7 +209,10 @@ function ArtworkForm({ initial, onSave, onCancel }: { initial: any; onSave: (d: 
         </Field>
       </div>
       <Field label="Описание"><Textarea value={d.description} onChange={set('description')} /></Field>
-      <Field label="Изображение"><ImageUpload value={d.imagePath || ''} onChange={v => setD((p: any) => ({ ...p, imagePath: v }))} /></Field>
+      <Field label="Главное изображение"><ImageUpload value={d.imagePath || ''} onChange={v => setD((p: any) => ({ ...p, imagePath: v }))} /></Field>
+      <Field label="Дополнительные фото">
+        <MultiImageUpload value={d.images || ''} onChange={v => setD((p: any) => ({ ...p, images: v }))} />
+      </Field>
       <div className="flex gap-2 pt-2">
         <button type="submit" className="flex items-center gap-1 bg-black text-white px-4 py-2 text-sm rounded hover:bg-gray-800"><Check className="w-4 h-4" /> Сохранить</button>
         <button type="button" onClick={onCancel} className="flex items-center gap-1 border border-gray-300 px-4 py-2 text-sm rounded hover:bg-gray-50"><X className="w-4 h-4" /> Отмена</button>
@@ -366,7 +378,7 @@ function TeamForm({ initial, onSave, onCancel }: { initial: any; onSave: (d: any
 }
 
 function FairForm({ initial, onSave, onCancel }: { initial: any; onSave: (d: any) => void; onCancel: () => void }) {
-  const fairDefaults = { title: '', slug: '', dates: '', location: '', booth: '', description: '', coverImage: '', status: 'upcoming', orderIndex: 0 }
+  const fairDefaults = { title: '', slug: '', dates: '', location: '', booth: '', description: '', coverImage: '', galleryImages: '', status: 'upcoming', orderIndex: 0 }
   const [d, setD] = useState({ ...fairDefaults, ...initial, orderIndex: initial?.orderIndex ?? 0 })
   const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => setD((prev: any) => ({ ...prev, [k]: e.target.value }))
 
@@ -482,13 +494,120 @@ function CollectionForm({ initial, onSave, onCancel }: { initial: any; onSave: (
         </Field>
       </div>
       <Field label="Описание"><Textarea value={d.description || ''} onChange={set('description')} /></Field>
-      <Field label="ID работ (JSON-массив)"><Textarea value={d.artworkIds} onChange={set('artworkIds')} rows={2} /></Field>
       <Field label="Обложка"><ImageUpload value={d.coverImage || ''} onChange={v => setD((p: any) => ({ ...p, coverImage: v }))} /></Field>
+      <CollectionArtworkLinker
+        artworkIds={d.artworkIds}
+        onChange={ids => setD((p: any) => ({ ...p, artworkIds: ids }))}
+      />
       <div className="flex gap-2 pt-2">
         <button type="submit" className="flex items-center gap-1 bg-black text-white px-4 py-2 text-sm rounded hover:bg-gray-800"><Check className="w-4 h-4" /> Сохранить</button>
         <button type="button" onClick={onCancel} className="flex items-center gap-1 border border-gray-300 px-4 py-2 text-sm rounded hover:bg-gray-50"><X className="w-4 h-4" /> Отмена</button>
       </div>
     </form>
+  )
+}
+
+const STATUS_LABELS: Record<string, string> = { new: 'Новая', viewed: 'Просмотрена', done: 'Обработана' }
+
+function InquiryForm({ initial, onSave, onCancel }: { initial: any; onSave: (d: any) => void; onCancel: () => void }) {
+  const [d, setD] = useState({ status: 'new', ...initial })
+  const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => setD((p: any) => ({ ...p, [k]: e.target.value }))
+  const readOnly = true
+
+  return (
+    <form onSubmit={e => { e.preventDefault(); onSave(d) }} className="space-y-4 p-4 bg-gray-50 rounded-lg border">
+      <div className="grid grid-cols-2 gap-4">
+        <Field label="Тип"><Input value={d.type === 'contact' ? 'Контактная форма' : d.type === 'service' ? 'Заявка на услугу' : d.type === 'order' ? 'Заказ' : d.type} readOnly /></Field>
+        <Field label="Статус">
+          <select value={d.status} onChange={set('status')} className="w-full border rounded px-3 py-2 text-sm">
+            <option value="new">Новая</option>
+            <option value="viewed">Просмотрена</option>
+            <option value="done">Обработана</option>
+          </select>
+        </Field>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <Field label="Имя"><Input value={d.name} readOnly={readOnly} /></Field>
+        <Field label="Email"><Input value={d.email} readOnly={readOnly} /></Field>
+      </div>
+      {d.phone && <Field label="Телефон"><Input value={d.phone} readOnly={readOnly} /></Field>}
+      {d.service && <Field label="Услуга"><Input value={d.service} readOnly={readOnly} /></Field>}
+      {d.message && <Field label="Сообщение"><textarea value={d.message} readOnly className="w-full border rounded px-3 py-2 text-sm bg-white" rows={4} /></Field>}
+      {d.items && <Field label="Товары"><textarea value={d.items} readOnly className="w-full border rounded px-3 py-2 text-sm bg-white" rows={4} /></Field>}
+      {d.createdAt && <p className="text-xs text-gray-400">Создана: {new Date(d.createdAt).toLocaleString('ru-RU')}</p>}
+      <div className="flex gap-2 pt-2">
+        <button type="submit" className="flex items-center gap-1 bg-black text-white px-4 py-2 text-sm rounded hover:bg-gray-800"><Check className="w-4 h-4" /> Сохранить</button>
+        <button type="button" onClick={onCancel} className="flex items-center gap-1 border border-gray-300 px-4 py-2 text-sm rounded hover:bg-gray-50"><X className="w-4 h-4" /> Отмена</button>
+      </div>
+    </form>
+  )
+}
+
+function CollectionArtworkLinker({ artworkIds, onChange }: { artworkIds: string; onChange: (ids: string) => void }) {
+  const [open, setOpen] = useState(false)
+  const [allArtworks, setAllArtworks] = useState<any[]>([])
+  const [search, setSearch] = useState('')
+
+  let currentIds: string[] = []
+  try { currentIds = JSON.parse(artworkIds || '[]') } catch { currentIds = [] }
+  const selected = new Set(currentIds)
+
+  function load() {
+    fetch('/api/admin/artworks').then(r => r.json()).then(items => {
+      setAllArtworks(Array.isArray(items) ? items : [])
+    }).catch(() => {})
+  }
+
+  function toggle(id: string) {
+    const next = new Set(selected)
+    next.has(id) ? next.delete(id) : next.add(id)
+    onChange(JSON.stringify(Array.from(next)))
+  }
+
+  const filtered = allArtworks.filter(a =>
+    !search || a.title?.toLowerCase().includes(search.toLowerCase()) || a.artistName?.toLowerCase().includes(search.toLowerCase())
+  )
+
+  return (
+    <div className="border-t border-gray-200 pt-4">
+      <button
+        type="button"
+        onClick={() => { setOpen(o => !o); if (!open) load() }}
+        className="text-xs uppercase tracking-widest border-b border-black pb-0.5 hover:opacity-60 transition-opacity"
+      >
+        {open ? 'Скрыть список работ' : `Выбрать работы для подборки (${selected.size})`}
+      </button>
+
+      {open && (
+        <div className="mt-4 space-y-3">
+          <div className="flex items-center gap-3">
+            <input
+              type="text"
+              placeholder="Поиск по названию или художнику..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="flex-1 border border-gray-200 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-black"
+            />
+            <span className="text-xs text-gray-500">{selected.size} выбрано</span>
+          </div>
+          <div className="max-h-72 overflow-y-auto border border-gray-200 rounded divide-y divide-gray-100">
+            {filtered.length === 0 ? (
+              <p className="p-4 text-sm text-gray-400 text-center">Нет работ</p>
+            ) : filtered.map((a: any) => (
+              <label key={a.id} className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 cursor-pointer">
+                <input type="checkbox" checked={selected.has(a.id)} onChange={() => toggle(a.id)} className="accent-black" />
+                {a.imagePath && <img src={a.imagePath} alt="" className="w-8 h-8 object-contain bg-gray-50 rounded flex-shrink-0" />}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm truncate">{a.title}</p>
+                  {a.artistName && <p className="text-xs text-gray-400 truncate">{a.artistName}</p>}
+                </div>
+                {selected.has(a.id) && <span className="text-xs text-green-600 flex-shrink-0">&#10003; в подборке</span>}
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -498,7 +617,7 @@ const TAB_API: Record<Tab, string> = {
   artworks: 'artworks', artists: 'artists', exhibitions: 'exhibitions',
   events: 'events', team: 'team-members', fairs: 'fairs',
   slides: 'hero-slides', announcements: 'announcements', collections: 'collections',
-  filters: '', pages: '',
+  inquiries: 'inquiries', filters: '', pages: '',
 }
 
 const TAB_COLS: Record<Tab, string[]> = {
@@ -511,6 +630,7 @@ const TAB_COLS: Record<Tab, string[]> = {
   slides: ['title', 'orderIndex', 'isActive'],
   announcements: ['text', 'isActive', 'expiresAt'],
   collections: ['title', 'orderIndex', 'isActive'],
+  inquiries: ['type', 'name', 'email', 'service', 'status', 'createdAt'],
   filters: [], pages: [],
 }
 
@@ -519,13 +639,14 @@ const COL_LABELS: Record<string, string> = {
   status: 'Статус', orderIndex: '№', name: 'Имя', role: 'Роль',
   startDate: 'Начало', format: 'Формат', date: 'Дата', dates: 'Даты',
   isArchived: 'Архив', isActive: 'Активен', expiresAt: 'До', text: 'Текст',
+  type: 'Тип', email: 'Email', service: 'Услуга', createdAt: 'Дата',
 }
 
 const FORMS: Record<Tab, any> = {
   artworks: ArtworkForm, artists: ArtistForm, exhibitions: ExhibitionForm,
   events: EventForm, team: TeamForm, fairs: FairForm,
   slides: SlideForm, announcements: AnnouncementForm, collections: CollectionForm,
-  filters: null, pages: null,
+  inquiries: InquiryForm, filters: null, pages: null,
 }
 
 function Section({ tab }: { tab: Tab }) {
@@ -628,6 +749,8 @@ function Section({ tab }: { tab: Tab }) {
     if (typeof v === 'boolean') return v ? '✓' : '✗'
     if (col === 'price') return v ? `${Number(v).toLocaleString()} ₽` : 'бесплатно'
     if (col === 'expiresAt' && v) return new Date(v).toLocaleDateString('ru')
+    if (col === 'createdAt' && v) return new Date(v).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })
+    if (col === 'status' && STATUS_LABELS[v]) return STATUS_LABELS[v]
     return String(v).slice(0, 60)
   }
 
@@ -636,13 +759,15 @@ function Section({ tab }: { tab: Tab }) {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
-        <button
-          onClick={() => { setEditId(null); setShowForm(v => !v) }}
-          className={`flex items-center gap-1 px-3 py-2 text-sm rounded transition-colors ${showForm && !editId ? 'bg-gray-200 text-black' : 'bg-black text-white hover:bg-gray-800'}`}
-        >
-          {showForm && !editId ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-          {showForm && !editId ? 'Отмена' : 'Добавить'}
-        </button>
+        {tab !== 'inquiries' && (
+          <button
+            onClick={() => { setEditId(null); setShowForm(v => !v) }}
+            className={`flex items-center gap-1 px-3 py-2 text-sm rounded transition-colors ${showForm && !editId ? 'bg-gray-200 text-black' : 'bg-black text-white hover:bg-gray-800'}`}
+          >
+            {showForm && !editId ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+            {showForm && !editId ? 'Отмена' : 'Добавить'}
+          </button>
+        )}
         <button onClick={load} className="flex items-center gap-1 border border-gray-300 px-3 py-2 text-sm rounded hover:bg-gray-50">
           <RefreshCw className="w-4 h-4" /> Обновить
         </button>
@@ -790,7 +915,17 @@ function FiltersSection() {
   const [msg, setMsg] = useState('')
 
   useEffect(() => {
-    fetch('/api/admin/filter-config').then(r => r.json()).then(setConfig).catch(() => {})
+    fetch('/api/admin/filter-config')
+      .then(r => r.json())
+      .then(d => {
+        if (d && Array.isArray(d.techniques) && Array.isArray(d.themes) && Array.isArray(d.colors)) {
+          setConfig(d)
+        } else {
+          // fallback to safe defaults if API returned unexpected shape
+          setConfig({ techniques: [], themes: [], colors: [] })
+        }
+      })
+      .catch(() => setConfig({ techniques: [], themes: [], colors: [] }))
   }, [])
 
   async function save() {
@@ -844,10 +979,10 @@ function FiltersSection() {
             <textarea
               className="w-full border border-gray-200 rounded px-3 py-2 text-sm font-mono resize-none focus:outline-none focus:border-black"
               rows={12}
-              value={config[f.key].join('\n')}
+              value={(config[f.key] ?? []).join('\n')}
               onChange={e => updateList(f.key, e.target.value)}
             />
-            <p className="text-xs text-gray-400 mt-1">{config[f.key].length} значений</p>
+            <p className="text-xs text-gray-400 mt-1">{(config[f.key] ?? []).length} значений</p>
           </div>
         ))}
       </div>
@@ -857,10 +992,25 @@ function FiltersSection() {
 
 // ─── Pages Section ────────────────────────────────────────────────────────────
 
-const PAGE_DEFAULTS = {
+const PAGE_DEFAULTS: Record<string, string> = {
   about_mission: 'Галерея Шмуклер основана арт-историком и коучем Ольгой Шмуклер в 2022 году. Наша цель — создать пространство, где искусство становится способом познания себя и мира.',
   about_description: 'Мы убеждены, что искусство — не просто украшение. Это диалог между зрителем и произведением, путь к более глубокому самопознанию и связи с окружающим миром.',
   services_subtitle: 'Для коллекционеров и дизайнеров',
+  service_1_title: 'Подбор искусства',
+  service_1_short: 'Индивидуальный подбор произведений по вашему запросу',
+  service_1_desc: 'Мы поможем вам найти идеальное произведение искусства, учитывая ваши вкусы, интерьер и бюджет. Наши специалисты проводят персональные консультации и подбирают работы из коллекции галереи и от партнёрских художников.',
+  service_2_title: 'Арт-консалтинг',
+  service_2_short: 'Помощь с формированием коллекции, стилем, хранением и оформлением',
+  service_2_desc: 'Комплексное сопровождение коллекционеров и дизайнеров: стратегия формирования коллекции, выбор техники обрамления, рекомендации по хранению и уходу за произведениями. Работаем с частными коллекционерами, корпоративными клиентами и дизайн-бюро.',
+  service_3_title: 'Арт-примерка',
+  service_3_short: 'Просмотр работы в вашем пространстве перед покупкой',
+  service_3_desc: 'Привезём и установим выбранную работу в вашем доме или офисе на несколько дней, чтобы вы могли оценить, как она будет смотреться в реальном окружении. Стоимость услуги — 10 000 ₽ (засчитывается при покупке).',
+  service_4_title: 'Аренда произведений',
+  service_4_short: 'Аренда работ для фотосъёмок, проектов и интерьерного дизайна',
+  service_4_desc: 'Произведения из коллекции галереи доступны для краткосрочной аренды под фотосессии, кино- и видеопроизводство, а также оформление выставочных и корпоративных пространств. При наличии галерейного кредита — бесплатно.',
+  service_5_title: 'Корпоративное искусство',
+  service_5_short: 'Арт-оформление офисов, гостиниц и общественных пространств',
+  service_5_desc: 'Создаём концепцию арт-оформления коммерческих и общественных пространств: от подбора работ до монтажа и обслуживания. Постоянная ротация произведений по подписке.',
 }
 
 function PagesSection() {
@@ -887,10 +1037,17 @@ function PagesSection() {
     finally { setSaving(false) }
   }
 
+  const SERVICE_NUMS = [1, 2, 3, 4, 5]
+
   const fields = [
     { key: 'about_mission', label: 'О нас — заголовок/миссия', rows: 4 },
     { key: 'about_description', label: 'О нас — описание', rows: 4 },
     { key: 'services_subtitle', label: 'Услуги — подзаголовок', rows: 2 },
+    ...SERVICE_NUMS.flatMap(n => [
+      { key: `service_${n}_title`, label: `Услуга ${n} — название`, rows: 1 },
+      { key: `service_${n}_short`, label: `Услуга ${n} — краткое описание`, rows: 2 },
+      { key: `service_${n}_desc`, label: `Услуга ${n} — полное описание`, rows: 4 },
+    ]),
   ]
 
   return (
@@ -936,10 +1093,10 @@ function ArtworkLinker({ type, parentId, parentTitle }: { type: 'exhibition' | '
   const field = type === 'fair' ? 'fairId' : 'exhibitionId'
 
   function load() {
-    fetch('/api/artworks?limit=500').then(r => r.json()).then(d => {
-      const items = d.items || []
-      setAllArtworks(items)
-      setSelected(new Set(items.filter((a: any) => a[field] === parentId).map((a: any) => a.id)))
+    fetch('/api/admin/artworks').then(r => r.json()).then(items => {
+      const list = Array.isArray(items) ? items : []
+      setAllArtworks(list)
+      setSelected(new Set(list.filter((a: any) => a[field] === parentId).map((a: any) => a.id)))
     }).catch(() => {})
   }
 

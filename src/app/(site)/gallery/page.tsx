@@ -1,12 +1,11 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { ArtworkCard } from '@/components/ArtworkCard'
-import { MOCK_ARTWORKS } from '@/lib/mockData'
+import { HomeArtworkCard } from '@/components/HomeArtworkCard'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Suspense } from 'react'
 
-const DEFAULT_TECHNIQUES = ['Живопись', 'Графика', 'Смешанная техника', 'Скульптура', 'Фотография', 'Керамика', 'Фреска']
+const DEFAULT_TECHNIQUES = ['Живопись', 'Графика', 'Скульптура', 'Фотография', 'Керамика', 'Фреска', 'Смешанная техника']
 const DEFAULT_THEMES = ['Пейзаж', 'Портрет', 'Натюрморт', 'Абстракция', 'Город', 'Природа', 'Цветы', 'Чувства', 'Любовь', 'Дружба', 'Море', 'Память', 'Тело', 'Детство', 'Дом']
 const DEFAULT_COLORS = ['Белый', 'Черный', 'Красный', 'Зеленый', 'Синий', 'Желтый', 'Коричневый', 'Розовый', 'Бежевый', 'Серый', 'Фиолетовый', 'Голубой']
 const SORT_OPTIONS = [
@@ -55,7 +54,6 @@ function GalleryContent() {
   const [hasMore, setHasMore] = useState(true)
   const [total, setTotal] = useState(0)
   const observerRef = useRef<HTMLDivElement>(null)
-  const useMock = useRef(false)
 
   useEffect(() => {
     fetch('/api/filter-options').then(r => r.json()).then(d => setFilterOptions(d)).catch(() => {})
@@ -82,35 +80,23 @@ function GalleryContent() {
     if (artist) params.set('artist', artist)
     if (sortBy) params.set('sortBy', sortBy)
     return `/api/artworks?${params}`
-  }, [technique, theme, color, series, sortBy])
+  }, [technique, theme, color, series, artist, sortBy])
 
   const load = useCallback(async (pg: number, reset = false) => {
     if (pg === 1) setLoading(true); else setLoadingMore(true)
     try {
       const res = await fetch(buildUrl(pg))
       const data = await res.json()
-      if (data.items && data.items.length > 0) {
-        useMock.current = false
-        setArtworks(prev => reset ? data.items : [...prev, ...data.items])
-        setTotal(data.total)
-        setHasMore(pg < data.pages)
-      } else if (pg === 1) {
-        useMock.current = true
-        const filtered = MOCK_ARTWORKS.map(mapArtwork).filter(a => {
-          if (technique && technique !== 'Все' && !a.medium?.toLowerCase().includes(technique.toLowerCase())) return false
-          if (series && a.series !== series) return false
-          return true
-        })
-        setArtworks(filtered)
-        setTotal(filtered.length)
-        setHasMore(false)
-      }
+      const items = data.items || []
+      setArtworks(prev => reset ? items : [...prev, ...items])
+      setTotal(data.total || 0)
+      setHasMore(pg < (data.pages || 0))
     } catch {
-      if (pg === 1) { useMock.current = true; setArtworks(MOCK_ARTWORKS.map(mapArtwork)); setHasMore(false) }
+      if (pg === 1) { setArtworks([]); setHasMore(false) }
     } finally {
       setLoading(false); setLoadingMore(false)
     }
-  }, [buildUrl, technique, series])
+  }, [buildUrl])
 
   useEffect(() => {
     setPage(1)
@@ -119,7 +105,7 @@ function GalleryContent() {
   }, [technique, theme, color, series, artist, sortBy, load])
 
   useEffect(() => {
-    if (!observerRef.current || !hasMore || loadingMore) return
+    if (!observerRef.current || !hasMore || loadingMore || loading) return
     const obs = new IntersectionObserver(entries => {
       if (entries[0].isIntersecting) {
         const next = page + 1
@@ -129,7 +115,7 @@ function GalleryContent() {
     }, { rootMargin: '200px' })
     obs.observe(observerRef.current)
     return () => obs.disconnect()
-  }, [hasMore, loadingMore, page, load])
+  }, [hasMore, loadingMore, loading, page, load])
 
   function setFilter(key: string, value: string) {
     const p = new URLSearchParams(searchParams.toString())
@@ -231,7 +217,7 @@ function GalleryContent() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-8 gap-y-16">
               {artworks.map((artwork) => (
                 <div key={artwork.id || artwork._id}>
-                  <ArtworkCard artwork={artwork} />
+                  <HomeArtworkCard artwork={artwork} cover />
                   {artwork.series && (
                     <button
                       onClick={() => setFilter('series', artwork.series)}
@@ -258,21 +244,6 @@ function GalleryContent() {
       </div>
     </div>
   )
-}
-
-function mapArtwork(a: any) {
-  return {
-    id: a.id || a._id,
-    title: a.title,
-    slug: typeof a.slug === 'string' ? a.slug : a.slug?.current,
-    artistName: a.artist || a.artistName,
-    artistSlug: a.artistSlug,
-    price: a.price,
-    status: a.status,
-    medium: a.medium,
-    series: a.series,
-    imagePath: a.mainImage?.asset?.url || a.imagePath,
-  }
 }
 
 export default function GalleryPage() {

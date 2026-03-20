@@ -2,5 +2,10 @@ import { NextResponse } from 'next/server'
 import { readFilterConfig } from '@/lib/filterConfig'
 
 export async function GET() {
-  return NextResponse.json(readFilterConfig())
+  try {
+    return NextResponse.json(readFilterConfig())
+  } catch (error) {
+    console.error('GET /api/filter-options failed:', error)
+    return NextResponse.json({ techniques: [], themes: [], colors: [] })
+  }
 }

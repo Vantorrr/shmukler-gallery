@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { HomeArtworkCard } from '@/components/HomeArtworkCard'
 import { HeroSlider } from '@/components/HeroSlider'
-import { MOCK_ARTWORKS, MOCK_EXHIBITIONS, MOCK_ARTISTS } from '@/lib/mockData'
 import Link from 'next/link'
 import Image from 'next/image'
 
@@ -16,18 +15,18 @@ export default function Home() {
   useEffect(() => {
     fetch('/api/artworks?limit=6')
       .then(r => r.json())
-      .then(d => setArtworks(d.items?.length ? d.items : MOCK_ARTWORKS.slice(0, 6).map(mapArtwork)))
-      .catch(() => setArtworks(MOCK_ARTWORKS.slice(0, 6).map(mapArtwork)))
+      .then(d => setArtworks(d.items || []))
+      .catch(() => {})
 
     fetch('/api/exhibitions')
       .then(r => r.json())
-      .then(d => setExhibitions(Array.isArray(d) && d.length ? d.slice(0, 2) : MOCK_EXHIBITIONS.slice(0, 2).map(mapExhibition)))
-      .catch(() => setExhibitions(MOCK_EXHIBITIONS.slice(0, 2).map(mapExhibition)))
+      .then(d => setExhibitions(Array.isArray(d) ? d.slice(0, 2) : []))
+      .catch(() => {})
 
     fetch('/api/artists')
       .then(r => r.json())
-      .then(d => setArtists(Array.isArray(d) && d.length ? d.slice(0, 6) : MOCK_ARTISTS.slice(0, 6).map(mapArtist)))
-      .catch(() => setArtists(MOCK_ARTISTS.slice(0, 6).map(mapArtist)))
+      .then(d => setArtists(Array.isArray(d) ? d.slice(0, 6) : []))
+      .catch(() => {})
 
     fetch('/api/collections')
       .then(r => r.json())
@@ -80,7 +79,7 @@ export default function Home() {
             <h2 className="text-3xl md:text-4xl font-serif mb-12">Тематические подборки</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {collections.map(col => (
-                <Link key={col.id} href={`/gallery?collection=${col.slug}`} className="group block relative overflow-hidden aspect-[4/3] bg-gray-100">
+                <Link key={col.id} href={`/collections/${col.slug}`} className="group block relative overflow-hidden aspect-[4/3] bg-gray-100">
                   {col.coverImage && (
                     <Image
                       src={col.coverImage}
@@ -194,37 +193,3 @@ export default function Home() {
   )
 }
 
-function mapArtwork(a: any) {
-  return {
-    id: a._id,
-    title: a.title,
-    slug: a.slug?.current || a.slug,
-    artistName: a.artist || a.artistName,
-    artistSlug: a.artistSlug,
-    price: a.price,
-    status: a.status,
-    medium: a.medium,
-    imagePath: a.mainImage?.asset?.url || a.imagePath,
-  }
-}
-
-function mapExhibition(e: any) {
-  return {
-    id: e._id,
-    title: e.title,
-    slug: e.slug?.current || e.slug,
-    startDate: e.startDate,
-    endDate: e.endDate,
-    location: e.location,
-    coverImage: e.coverImage?.asset?.url || e.coverImage,
-  }
-}
-
-function mapArtist(a: any) {
-  return {
-    id: a._id,
-    name: a.name,
-    slug: a.slug?.current || a.slug,
-    imagePath: a.portrait?.asset?.url || a.imagePath,
-  }
-}
