@@ -29,7 +29,7 @@ function CdekModal({ onClose, onSelect }: {
 
   useEffect(() => {
     const initWidget = () => {
-      const W = (window as Record<string, unknown>).CDEKWidget as (new (opts: unknown) => void) | undefined
+      const W = (window as unknown as Record<string, unknown>).CDEKWidget as (new (opts: unknown) => void) | undefined
       if (!W) { console.error('CDEKWidget not loaded'); return }
       new W({
         from: 'Москва',
@@ -63,7 +63,7 @@ function CdekModal({ onClose, onSelect }: {
       })
     }
 
-    const W = (window as Record<string, unknown>).CDEKWidget
+    const W = (window as unknown as Record<string, unknown>).CDEKWidget
     if (W) {
       initWidget()
       return
