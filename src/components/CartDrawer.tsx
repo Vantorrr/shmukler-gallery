@@ -26,60 +26,75 @@ function CdekModal({ onClose, onSelect }: {
   const onCloseRef = useRef(onClose)
   onSelectRef.current = onSelect
   onCloseRef.current = onClose
+  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading')
+  const [errorMsg, setErrorMsg] = useState('')
 
   useEffect(() => {
-    const initWidget = () => {
-      const W = (window as unknown as Record<string, unknown>).CDEKWidget as (new (opts: unknown) => void) | undefined
-      if (!W) { console.error('CDEKWidget not loaded'); return }
-      new W({
-        from: 'Москва',
-        root: 'cdek-widget-root',
-        apiKey: process.env.NEXT_PUBLIC_YANDEX_MAPS_KEY ?? '',
-        servicePath: '/api/cdek-service',
-        defaultLocation: 'Москва',
-        goods: [{ weight: 2, length: 50, width: 50, height: 10 }],
-        callbacks: {
-          onChoose: (delivery: {
-            delivery_type?: string
-            address?: string
-            office?: { address?: string; name?: string }
-            tariff?: { delivery_sum?: number; tariff_name?: string }
-            total_sum?: number
-          }) => {
-            const addr =
-              delivery.address ||
-              delivery.office?.address ||
-              delivery.office?.name ||
-              ''
-            const price =
-              delivery.tariff?.delivery_sum ??
-              delivery.total_sum ??
-              0
-            const type = delivery.delivery_type === 'door' ? 'Курьер' : 'ПВЗ'
-            onSelectRef.current({ address: addr, price, type })
-            onCloseRef.current()
+    let cancelled = false
+
+    async function init() {
+      try {
+        // Fetch Yandex Maps key from server (works regardless of build time)
+        const cfg = await fetch('/api/cdek-config').then(r => r.json())
+        const apiKey: string = cfg.apiKey || ''
+        if (!apiKey) {
+          setErrorMsg('Ключ Яндекс Карт не настроен. Добавьте NEXT_PUBLIC_YANDEX_MAPS_KEY в Railway.')
+          setStatus('error')
+          return
+        }
+
+        // Load CDEK widget script if not already loaded
+        await new Promise<void>((resolve, reject) => {
+          if ((window as unknown as Record<string, unknown>).CDEKWidget) { resolve(); return }
+          const existing = document.getElementById('cdek-widget-script')
+          if (existing) { existing.addEventListener('load', () => resolve()); return }
+          const s = document.createElement('script')
+          s.id = 'cdek-widget-script'
+          s.src = 'https://cdn.jsdelivr.net/npm/@cdek-it/widget@3'
+          s.onload = () => resolve()
+          s.onerror = () => reject(new Error('Не удалось загрузить скрипт СДЭК'))
+          document.head.appendChild(s)
+        })
+
+        if (cancelled) return
+
+        const W = (window as unknown as Record<string, unknown>).CDEKWidget as (new (opts: unknown) => void) | undefined
+        if (!W) throw new Error('CDEKWidget не найден после загрузки скрипта')
+
+        new W({
+          from: 'Москва',
+          root: 'cdek-widget-root',
+          apiKey,
+          servicePath: '/api/cdek-service',
+          defaultLocation: 'Москва',
+          goods: [{ weight: 2, length: 50, width: 50, height: 10 }],
+          callbacks: {
+            onChoose: (delivery: {
+              delivery_type?: string
+              address?: string
+              office?: { address?: string; name?: string }
+              tariff?: { delivery_sum?: number }
+              total_sum?: number
+            }) => {
+              const addr = delivery.address || delivery.office?.address || delivery.office?.name || ''
+              const price = delivery.tariff?.delivery_sum ?? delivery.total_sum ?? 0
+              const type = delivery.delivery_type === 'door' ? 'Курьер' : 'ПВЗ'
+              onSelectRef.current({ address: addr, price, type })
+              onCloseRef.current()
+            },
           },
-        },
-      })
+        })
+        if (!cancelled) setStatus('ready')
+      } catch (e) {
+        if (!cancelled) {
+          setErrorMsg(e instanceof Error ? e.message : 'Ошибка загрузки виджета СДЭК')
+          setStatus('error')
+        }
+      }
     }
 
-    const W = (window as unknown as Record<string, unknown>).CDEKWidget
-    if (W) {
-      initWidget()
-      return
-    }
-
-    const existing = document.getElementById('cdek-widget-script')
-    if (existing) {
-      existing.addEventListener('load', initWidget)
-      return () => existing.removeEventListener('load', initWidget)
-    }
-
-    const s = document.createElement('script')
-    s.id = 'cdek-widget-script'
-    s.src = 'https://cdn.jsdelivr.net/npm/@cdek-it/widget@3'
-    s.onload = initWidget
-    document.head.appendChild(s)
+    init()
+    return () => { cancelled = true }
   }, [])
 
   return (
@@ -90,7 +105,26 @@ function CdekModal({ onClose, onSelect }: {
           <X className="w-5 h-5" />
         </button>
       </div>
-      <div id="cdek-widget-root" className="flex-1" style={{ minHeight: 500 }} />
+
+      {status === 'loading' && (
+        <div className="flex-1 flex flex-col items-center justify-center gap-4 text-gray-400">
+          <div className="w-8 h-8 border-2 border-gray-200 border-t-black rounded-full animate-spin" />
+          <p className="text-sm">Загрузка карты СДЭК...</p>
+        </div>
+      )}
+
+      {status === 'error' && (
+        <div className="flex-1 flex flex-col items-center justify-center gap-3 px-8 text-center">
+          <p className="text-sm text-red-500">{errorMsg}</p>
+          <button onClick={onClose} className="text-sm underline text-gray-500 hover:text-black">Закрыть</button>
+        </div>
+      )}
+
+      <div
+        id="cdek-widget-root"
+        className="flex-1"
+        style={{ minHeight: 500, display: status === 'ready' ? 'block' : 'none' }}
+      />
     </div>
   )
 }
