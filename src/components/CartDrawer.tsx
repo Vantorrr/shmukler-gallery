@@ -69,6 +69,9 @@ function CdekModal({ onClose, onSelect }: {
           defaultLocation: 'Москва',
           goods: [{ weight: 2, length: 50, width: 50, height: 10 }],
           callbacks: {
+            onReady: () => {
+              if (!cancelled) setStatus('ready')
+            },
             onChoose: (delivery: {
               delivery_type?: string
               address?: string
@@ -84,7 +87,8 @@ function CdekModal({ onClose, onSelect }: {
             },
           },
         })
-        if (!cancelled) setStatus('ready')
+        // Fallback: show widget after 5s even if onReady doesn't fire
+        setTimeout(() => { if (!cancelled) setStatus('ready') }, 5000)
       } catch (e) {
         if (!cancelled) {
           setErrorMsg(e instanceof Error ? e.message : 'Ошибка загрузки виджета СДЭК')
@@ -106,25 +110,26 @@ function CdekModal({ onClose, onSelect }: {
         </button>
       </div>
 
-      {status === 'loading' && (
-        <div className="flex-1 flex flex-col items-center justify-center gap-4 text-gray-400">
-          <div className="w-8 h-8 border-2 border-gray-200 border-t-black rounded-full animate-spin" />
-          <p className="text-sm">Загрузка карты СДЭК...</p>
-        </div>
-      )}
+      <div className="flex-1 relative" style={{ minHeight: 500 }}>
+        {/* Widget container — always in DOM so the widget can render into it */}
+        <div id="cdek-widget-root" style={{ width: '100%', height: '100%', minHeight: 500 }} />
 
-      {status === 'error' && (
-        <div className="flex-1 flex flex-col items-center justify-center gap-3 px-8 text-center">
-          <p className="text-sm text-red-500">{errorMsg}</p>
-          <button onClick={onClose} className="text-sm underline text-gray-500 hover:text-black">Закрыть</button>
-        </div>
-      )}
+        {/* Loading overlay */}
+        {status === 'loading' && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-gray-50">
+            <div className="w-8 h-8 border-2 border-gray-200 border-t-green-500 rounded-full animate-spin" />
+            <p className="text-sm text-gray-500">Загрузка карты СДЭК...</p>
+          </div>
+        )}
 
-      <div
-        id="cdek-widget-root"
-        className="flex-1"
-        style={{ minHeight: 500, display: status === 'ready' ? 'block' : 'none' }}
-      />
+        {/* Error overlay */}
+        {status === 'error' && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-8 text-center bg-white">
+            <p className="text-sm text-red-500">{errorMsg}</p>
+            <button onClick={onClose} className="text-sm underline text-gray-500 hover:text-black">Закрыть</button>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
