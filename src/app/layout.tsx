@@ -13,8 +13,31 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: "Shmukler Gallery",
-  description: "Contemporary Art Gallery",
+  title: "Галерея Шмуклер",
+  description: "Галерея современного искусства в Москве. Живопись, графика, скульптура. Покупка картин напрямую от художников.",
+  metadataBase: new URL("https://shmuklergallery.com"),
+  openGraph: {
+    title: "Галерея Шмуклер",
+    description: "Галерея современного искусства в Москве. Живопись, графика, скульптура. Покупка картин напрямую от художников.",
+    url: "https://shmuklergallery.com",
+    siteName: "Галерея Шмуклер",
+    images: [
+      {
+        url: "/logo.png",
+        width: 1200,
+        height: 630,
+        alt: "Галерея Шмуклер",
+      },
+    ],
+    locale: "ru_RU",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Галерея Шмуклер",
+    description: "Галерея современного искусства в Москве.",
+    images: ["/logo.png"],
+  },
 };
 
 export default function RootLayout({
