@@ -243,7 +243,7 @@ export function CartDrawer() {
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-[80] flex items-stretch justify-end">
+        <div className="fixed inset-0 z-[200] flex items-stretch justify-end">
           <div className="absolute inset-0 bg-black/40" onClick={() => { setOpen(false); setCheckout(false) }} />
           <div className="relative z-10 w-full max-w-md bg-white shadow-2xl flex flex-col" style={{ height: '100dvh', maxHeight: '100vh' }}>
             <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 flex-shrink-0">

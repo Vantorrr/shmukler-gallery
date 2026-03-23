@@ -18,7 +18,7 @@ export function AnnouncementBanner() {
   if (!announcement || dismissed) return null
 
   return (
-    <div className="relative z-[60] bg-black text-white text-xs py-2.5 px-12 text-center">
+    <div className="relative z-[30] bg-black text-white text-xs py-2.5 px-12 text-center">
       {announcement.linkUrl ? (
         <Link href={announcement.linkUrl} className="hover:underline">
           {announcement.text}
