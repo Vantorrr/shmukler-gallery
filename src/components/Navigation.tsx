@@ -62,7 +62,7 @@ export function Navigation() {
       </nav>
 
       {mobileOpen && (
-        <div className="fixed inset-0 z-40 bg-white pt-24 px-6 overflow-y-auto">
+        <div className="fixed inset-0 z-40 bg-white pt-36 px-6 overflow-y-auto">
           <ul className="space-y-5">
             {links.map((link) => (
               <li key={link.href}>
