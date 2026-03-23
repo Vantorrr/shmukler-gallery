@@ -28,7 +28,7 @@ export function Navigation() {
     <>
       <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 md:px-12 py-5 bg-white/95 backdrop-blur-sm border-b border-gray-100">
         <Link href="/" className="hover:opacity-80 transition-opacity flex-shrink-0">
-          <Image src="/logo.png" alt="Шмуклер Галерея" width={240} height={96} className="h-[68px] w-auto object-contain" priority />
+          <Image src="/logo.png" alt="Шмуклер Галерея" width={240} height={96} className="h-[90px] w-auto object-contain" priority />
         </Link>
 
         <div className="flex items-center gap-5 md:gap-8">

@@ -201,10 +201,10 @@ function GalleryContent() {
 
         {/* Grid */}
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-8 gap-y-16">
+          <div className="columns-2 lg:columns-3 xl:columns-4 gap-x-8">
             {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="animate-pulse">
-                <div className="bg-gray-100 aspect-[3/4] mb-4" />
+              <div key={i} className="animate-pulse break-inside-avoid mb-10">
+                <div className="bg-gray-100 w-full mb-4" style={{ height: i % 2 === 0 ? 320 : 260 }} />
                 <div className="h-3 bg-gray-100 rounded mb-2 w-2/3" />
                 <div className="h-3 bg-gray-100 rounded w-1/2" />
               </div>
@@ -214,10 +214,10 @@ function GalleryContent() {
           <p className="text-center text-gray-400 py-24 text-lg">Работы не найдены</p>
         ) : (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-8 gap-y-16">
+            <div className="columns-2 lg:columns-3 xl:columns-4 gap-x-8">
               {artworks.map((artwork) => (
-                <div key={artwork.id || artwork._id}>
-                  <HomeArtworkCard artwork={artwork} cover />
+                <div key={artwork.id || artwork._id} className="break-inside-avoid mb-10">
+                  <HomeArtworkCard artwork={artwork} natural />
                   {artwork.series && (
                     <button
                       onClick={() => setFilter('series', artwork.series)}

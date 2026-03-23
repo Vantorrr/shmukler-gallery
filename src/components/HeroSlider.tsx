@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { ChevronRight } from 'lucide-react'
+import { ChevronRight, ChevronLeft } from 'lucide-react'
 import { clsx } from 'clsx'
 
 const FALLBACK_SLIDES = [
@@ -124,6 +124,25 @@ export function HeroSlider() {
           )}
         </div>
       ))}
+
+      {list.length > 1 && (
+        <>
+          <button
+            onClick={prev}
+            className="hidden md:flex absolute left-6 top-1/2 -translate-y-1/2 z-30 w-11 h-11 bg-white/15 hover:bg-white/35 rounded-full items-center justify-center transition-colors backdrop-blur-sm"
+            aria-label="Предыдущий слайд"
+          >
+            <ChevronLeft className="w-5 h-5 text-white" />
+          </button>
+          <button
+            onClick={next}
+            className="hidden md:flex absolute right-6 top-1/2 -translate-y-1/2 z-30 w-11 h-11 bg-white/15 hover:bg-white/35 rounded-full items-center justify-center transition-colors backdrop-blur-sm"
+            aria-label="Следующий слайд"
+          >
+            <ChevronRight className="w-5 h-5 text-white" />
+          </button>
+        </>
+      )}
 
       {list.length > 1 && (
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-30">

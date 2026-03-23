@@ -1,11 +1,28 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+
+const DEFAULTS = {
+  contact_address: 'Большой Краснопрудный тупик, 8/12\nМосква, Россия',
+  contact_hours: 'Вт–Пт: 12:00–20:00\nСб–Вс: 12:00–19:00\nПн: выходной',
+  contact_phone: '8 989 591 91 12',
+  contact_email: 'info@artishokcenter.ru',
+  contact_instagram: 'https://www.instagram.com/shmukler_gallery',
+  contact_telegram: 'https://t.me/shmuklergallery',
+}
 
 export default function ContactPage() {
   const [form, setForm] = useState({ name: '', email: '', phone: '', message: '' })
   const [sent, setSent] = useState(false)
   const [sending, setSending] = useState(false)
+  const [info, setInfo] = useState(DEFAULTS)
+
+  useEffect(() => {
+    fetch('/api/admin/page-content')
+      .then(r => r.json())
+      .then(d => setInfo(prev => ({ ...prev, ...d })))
+      .catch(() => {})
+  }, [])
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))
@@ -28,6 +45,9 @@ export default function ContactPage() {
     }
   }
 
+  const phoneRaw = info.contact_phone.replace(/\D/g, '')
+  const phoneHref = `tel:+7${phoneRaw.startsWith('8') ? phoneRaw.slice(1) : phoneRaw}`
+
   return (
     <div className="min-h-screen bg-white pt-12 pb-24 px-6 md:px-12">
       <div className="max-w-[1600px] mx-auto">
@@ -36,37 +56,47 @@ export default function ContactPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 mb-24">
           {/* Контактная информация */}
           <div className="space-y-12">
-            <div>
-              <h2 className="text-xs uppercase tracking-widest text-gray-400 mb-4">Адрес</h2>
-              <p className="text-lg font-light leading-relaxed">Большой Краснопрудный тупик, 8/12<br />Москва, Россия</p>
-            </div>
-            <div>
-              <h2 className="text-xs uppercase tracking-widest text-gray-400 mb-4">Часы работы</h2>
-              <p className="text-lg font-light leading-relaxed">
-                Вт–Пт: 12:00–20:00<br />
-                Сб–Вс: 12:00–19:00<br />
-                Пн: выходной
-              </p>
-            </div>
-            <div>
-              <h2 className="text-xs uppercase tracking-widest text-gray-400 mb-4">Телефон</h2>
-              <a href="tel:+78989591912" className="text-lg font-light hover:opacity-60 transition-opacity">
-                8 989 591 91 12
-              </a>
-            </div>
-            <div>
-              <h2 className="text-xs uppercase tracking-widest text-gray-400 mb-4">Email</h2>
-              <a href="mailto:info@artishokcenter.ru" className="text-lg font-light hover:opacity-60 transition-opacity">
-                info@artishokcenter.ru
-              </a>
-            </div>
-            <div>
-              <h2 className="text-xs uppercase tracking-widest text-gray-400 mb-4">Социальные сети</h2>
-              <div className="space-y-2 text-lg font-light">
-                <p><a href="https://www.instagram.com/shmukler_gallery" target="_blank" rel="noopener noreferrer" className="hover:opacity-60 transition-opacity">Instagram</a></p>
-                <p><a href="https://t.me/shmuklergallery" target="_blank" rel="noopener noreferrer" className="hover:opacity-60 transition-opacity">Telegram</a></p>
+            {info.contact_address && (
+              <div>
+                <h2 className="text-xs uppercase tracking-widest text-gray-400 mb-4">Адрес</h2>
+                <p className="text-lg font-light leading-relaxed whitespace-pre-line">{info.contact_address}</p>
               </div>
-            </div>
+            )}
+            {info.contact_hours && (
+              <div>
+                <h2 className="text-xs uppercase tracking-widest text-gray-400 mb-4">Часы работы</h2>
+                <p className="text-lg font-light leading-relaxed whitespace-pre-line">{info.contact_hours}</p>
+              </div>
+            )}
+            {info.contact_phone && (
+              <div>
+                <h2 className="text-xs uppercase tracking-widest text-gray-400 mb-4">Телефон</h2>
+                <a href={phoneHref} className="text-lg font-light hover:opacity-60 transition-opacity">
+                  {info.contact_phone}
+                </a>
+              </div>
+            )}
+            {info.contact_email && (
+              <div>
+                <h2 className="text-xs uppercase tracking-widest text-gray-400 mb-4">Email</h2>
+                <a href={`mailto:${info.contact_email}`} className="text-lg font-light hover:opacity-60 transition-opacity">
+                  {info.contact_email}
+                </a>
+              </div>
+            )}
+            {(info.contact_instagram || info.contact_telegram) && (
+              <div>
+                <h2 className="text-xs uppercase tracking-widest text-gray-400 mb-4">Социальные сети</h2>
+                <div className="space-y-2 text-lg font-light">
+                  {info.contact_instagram && (
+                    <p><a href={info.contact_instagram} target="_blank" rel="noopener noreferrer" className="hover:opacity-60 transition-opacity">Instagram</a></p>
+                  )}
+                  {info.contact_telegram && (
+                    <p><a href={info.contact_telegram} target="_blank" rel="noopener noreferrer" className="hover:opacity-60 transition-opacity">Telegram</a></p>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Форма */}

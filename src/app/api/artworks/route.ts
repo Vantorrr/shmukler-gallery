@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
     const series = searchParams.get('series') || undefined
     const sortBy = searchParams.get('sortBy') || 'orderIndex'
 
-    const where: any = { isArchived: false }
+    const where: any = ids ? {} : { isArchived: false }
     if (artistSlug) where.artistSlug = artistSlug
     if (slugFilter) where.slug = slugFilter
     if (exhibitionId) where.exhibitionId = exhibitionId

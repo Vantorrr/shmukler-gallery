@@ -993,6 +993,12 @@ function FiltersSection() {
 // ─── Pages Section ────────────────────────────────────────────────────────────
 
 const PAGE_DEFAULTS: Record<string, string> = {
+  contact_address: 'Большой Краснопрудный тупик, 8/12\nМосква, Россия',
+  contact_hours: 'Вт–Пт: 12:00–20:00\nСб–Вс: 12:00–19:00\nПн: выходной',
+  contact_phone: '8 989 591 91 12',
+  contact_email: 'info@artishokcenter.ru',
+  contact_instagram: 'https://www.instagram.com/shmukler_gallery',
+  contact_telegram: 'https://t.me/shmuklergallery',
   about_mission: 'Галерея Шмуклер основана арт-историком и коучем Ольгой Шмуклер в 2022 году. Наша цель — создать пространство, где искусство становится способом познания себя и мира.',
   about_description: 'Мы убеждены, что искусство — не просто украшение. Это диалог между зрителем и произведением, путь к более глубокому самопознанию и связи с окружающим миром.',
   services_subtitle: 'Для коллекционеров и дизайнеров',
@@ -1040,6 +1046,12 @@ function PagesSection() {
   const SERVICE_NUMS = [1, 2, 3, 4, 5]
 
   const fields = [
+    { key: 'contact_address', label: 'Контакты — Адрес (для сайта и футера)', rows: 2 },
+    { key: 'contact_hours', label: 'Контакты — Часы работы', rows: 3 },
+    { key: 'contact_phone', label: 'Контакты — Телефон', rows: 1 },
+    { key: 'contact_email', label: 'Контакты — Email', rows: 1 },
+    { key: 'contact_instagram', label: 'Соцсети — Instagram URL', rows: 1 },
+    { key: 'contact_telegram', label: 'Соцсети — Telegram URL', rows: 1 },
     { key: 'about_mission', label: 'О нас — заголовок/миссия', rows: 4 },
     { key: 'about_description', label: 'О нас — описание', rows: 4 },
     { key: 'services_subtitle', label: 'Услуги — подзаголовок', rows: 2 },

@@ -98,7 +98,7 @@ export default function ExhibitionPage({ params }: { params: Promise<{ slug: str
         {artworks.length > 0 && (
           <section>
             <h2 className="text-xs uppercase tracking-widest text-gray-400 mb-10 border-t border-gray-100 pt-10">Работы на выставке</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-8 gap-y-14">
+            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 md:gap-x-8 gap-y-10 md:gap-y-14">
               {artworks.map(artwork => (
                 <HomeArtworkCard key={artwork.id || artwork._id} artwork={artwork} cover />
               ))}

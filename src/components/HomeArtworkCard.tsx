@@ -19,7 +19,7 @@ type Artwork = {
   mainImage?: { asset?: { url?: string } }
 }
 
-export function HomeArtworkCard({ artwork, cover = false }: { artwork: Artwork; cover?: boolean }) {
+export function HomeArtworkCard({ artwork, cover = false, natural = false }: { artwork: Artwork; cover?: boolean; natural?: boolean }) {
   const { add, items } = useCart()
   const router = useRouter()
   const slug = typeof artwork.slug === 'string' ? artwork.slug : artwork.slug?.current
@@ -52,8 +52,15 @@ export function HomeArtworkCard({ artwork, cover = false }: { artwork: Artwork; 
   return (
     <div className="flex flex-col">
       <Link href={`/artwork/${slug}`} className="group block">
-        <div className="relative bg-gray-50 overflow-hidden mb-3" style={{ aspectRatio: '3/4' }}>
-          {imageUrl && (
+        <div className="relative bg-gray-50 overflow-hidden mb-3" style={natural ? undefined : { aspectRatio: '3/4' }}>
+          {imageUrl && (natural ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={imageUrl}
+              alt={artwork.title}
+              className="w-full h-auto object-contain transition-transform duration-500 group-hover:scale-[1.02]"
+            />
+          ) : (
             <Image
               src={imageUrl}
               alt={artwork.title}
@@ -61,7 +68,7 @@ export function HomeArtworkCard({ artwork, cover = false }: { artwork: Artwork; 
               className={`${cover ? 'object-cover' : 'object-contain'} transition-transform duration-500 group-hover:scale-[1.02]`}
               sizes="(max-width: 768px) 280px, (max-width: 1200px) 50vw, 33vw"
             />
-          )}
+          ))}
           {isSold && (
             <div className="absolute top-3 left-3 bg-black text-white text-[10px] uppercase tracking-widest px-2 py-1">
               Продано

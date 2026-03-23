@@ -1,16 +1,31 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
+
+const CONTACT_DEFAULTS = {
+  contact_address: 'Большой Краснопрудный тупик, 8/12\nМосква, Россия',
+  contact_phone: '8 989 591 91 12',
+  contact_email: 'info@artishokcenter.ru',
+  contact_instagram: 'https://www.instagram.com/shmukler_gallery',
+  contact_telegram: 'https://t.me/shmuklergallery',
+}
 
 export function Footer() {
   const [email, setEmail] = useState('')
   const [name, setName] = useState('')
   const [consent, setConsent] = useState(false)
   const [sent, setSent] = useState(false)
-
   const [sending, setSending] = useState(false)
+  const [info, setInfo] = useState(CONTACT_DEFAULTS)
+
+  useEffect(() => {
+    fetch('/api/admin/page-content')
+      .then(r => r.json())
+      .then(d => setInfo(prev => ({ ...prev, ...d })))
+      .catch(() => {})
+  }, [])
 
   async function handleSubscribe(e: React.FormEvent) {
     e.preventDefault()
@@ -86,10 +101,16 @@ export function Footer() {
         <div className="md:col-span-3 space-y-6">
           <h4 className="text-xs font-medium uppercase tracking-[0.2em] text-gray-400">Галерея</h4>
           <div className="space-y-4 text-sm font-light leading-relaxed text-gray-600">
-            <p>Большой Краснопрудный тупик, 8/12<br />Москва, Россия</p>
+            {info.contact_address && (
+              <p className="whitespace-pre-line">{info.contact_address}</p>
+            )}
             <p>
-              <a href="mailto:info@artishokcenter.ru" className="hover:text-black transition-colors">info@artishokcenter.ru</a><br />
-              <a href="tel:+78989591912" className="hover:text-black transition-colors">8 989 591 91 12</a>
+              {info.contact_email && (
+                <><a href={`mailto:${info.contact_email}`} className="hover:text-black transition-colors">{info.contact_email}</a><br /></>
+              )}
+              {info.contact_phone && (
+                <a href={`tel:+7${info.contact_phone.replace(/\D/g, '').replace(/^8/, '')}`} className="hover:text-black transition-colors">{info.contact_phone}</a>
+              )}
             </p>
           </div>
         </div>
@@ -97,8 +118,12 @@ export function Footer() {
         <div className="md:col-span-2 space-y-6">
           <h4 className="text-xs font-medium uppercase tracking-[0.2em] text-gray-400">Соцсети</h4>
           <ul className="space-y-3 text-sm font-light text-gray-600">
-            <li><a href="https://www.instagram.com/shmukler_gallery" target="_blank" rel="noopener noreferrer" className="hover:text-black transition-colors">Instagram</a></li>
-            <li><a href="https://t.me/shmuklergallery" target="_blank" rel="noopener noreferrer" className="hover:text-black transition-colors">Telegram</a></li>
+            {info.contact_instagram && (
+              <li><a href={info.contact_instagram} target="_blank" rel="noopener noreferrer" className="hover:text-black transition-colors">Instagram</a></li>
+            )}
+            {info.contact_telegram && (
+              <li><a href={info.contact_telegram} target="_blank" rel="noopener noreferrer" className="hover:text-black transition-colors">Telegram</a></li>
+            )}
           </ul>
         </div>
       </div>
