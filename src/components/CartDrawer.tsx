@@ -168,10 +168,9 @@ export function CartDrawer() {
     setShowCdekModal(false)
   }, [])
 
-  async function handleOrder(e: React.FormEvent) {
-    e.preventDefault()
-    if (!form.consent) { alert('Необходимо дать согласие на обработку персональных данных'); return }
-    if (delivery === 'cdek' && !cdekInfo) { alert('Пожалуйста, выберите пункт доставки СДЭК'); return }
+  async function callPaymentAPI(paymentMethod: 'card' | 'split') {
+    if (!form.consent) { alert('Необходимо дать согласие на обработку персональных данных'); return false }
+    if (delivery === 'cdek' && !cdekInfo) { alert('Пожалуйста, выберите пункт доставки СДЭК'); return false }
     setSending(true)
     try {
       const itemsSummary = items.map(i => `${i.title} (${i.price?.toLocaleString() ?? '—'} ₽)`).join('; ')
@@ -180,34 +179,45 @@ export function CartDrawer() {
         : (DELIVERY_OPTIONS.find(o => o.key === delivery)?.label ?? delivery)
       const amount = subtotal + (cdekDeliveryPrice ?? 0)
 
-      const res = await fetch('/api/lifepay', {
+      const endpoint = paymentMethod === 'split' ? '/api/yandex-pay' : '/api/lifepay'
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: form.name,
-          email: form.email,
-          phone: form.phone,
-          delivery: deliveryLabel,
-          address: form.address || (cdekInfo?.address ?? ''),
-          comment: form.comment || '',
-          items: itemsSummary,
-          amount,
+          name: form.name, email: form.email, phone: form.phone,
+          delivery: deliveryLabel, address: form.address || (cdekInfo?.address ?? ''),
+          comment: form.comment || '', items: itemsSummary, amount,
+          paymentMethod,
         }),
       })
       const data = await res.json()
-
       if (data.ok && data.payUrl) {
         clear()
         window.location.href = data.payUrl
-      } else {
-        const errMsg = data.error || 'Ошибка платёжной системы'
-        alert(`Не удалось создать платёж: ${errMsg}\n\nПожалуйста, свяжитесь с нами напрямую:\ninfo@artishokcenter.ru\n8 989 591 91 12`)
+        return true
       }
+      const errMsg = data.error || 'Ошибка платёжной системы'
+      alert(`Не удалось создать платёж: ${errMsg}\n\nСвяжитесь с нами:\ninfo@artishokcenter.ru\n8 989 591 91 12`)
+      return false
     } catch {
       alert('Ошибка соединения. Попробуйте ещё раз или свяжитесь с нами:\ninfo@artishokcenter.ru\n8 989 591 91 12')
+      return false
     } finally {
       setSending(false)
     }
+  }
+
+  async function handleSplitPay() {
+    if (!form.name || !form.email || !form.phone) {
+      alert('Пожалуйста, заполните имя, email и телефон')
+      return
+    }
+    await callPaymentAPI('split')
+  }
+
+  async function handleOrder(e: React.FormEvent) {
+    e.preventDefault()
+    await callPaymentAPI('card')
   }
 
   return (
@@ -395,6 +405,20 @@ export function CartDrawer() {
                   <button type="submit" disabled={sending} className="w-full bg-black text-white py-3 text-sm uppercase tracking-widest hover:bg-gray-900 transition-colors disabled:opacity-50">
                     {sending ? 'Отправка...' : 'Оплатить'}
                   </button>
+                  <button
+                    type="button"
+                    disabled={sending}
+                    onClick={() => handleSplitPay()}
+                    className="w-full border border-[#FC3F1D] text-[#FC3F1D] py-3 text-sm uppercase tracking-widest hover:bg-[#FC3F1D] hover:text-white transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {sending ? 'Отправка...' : (
+                      <>
+                        <span>Я</span>
+                        <span>Оплатить через Сплит</span>
+                      </>
+                    )}
+                  </button>
+                  <p className="text-center text-xs text-gray-400">Рассрочка на 4 части без переплат</p>
                   <button type="button" onClick={() => setCheckout(false)} className="w-full text-xs text-gray-400 hover:text-black transition-colors">
                     Назад к корзине
                   </button>
