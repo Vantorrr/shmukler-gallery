@@ -109,7 +109,7 @@ export function Footer() {
                 <><a href={`mailto:${info.contact_email}`} className="hover:text-black transition-colors">{info.contact_email}</a><br /></>
               )}
               {info.contact_phone && (
-                <a href={`tel:+7${info.contact_phone.replace(/\D/g, '').replace(/^8/, '')}`} className="hover:text-black transition-colors">{info.contact_phone}</a>
+                <a href={`tel:+7${info.contact_phone.replace(/\D/g, '').replace(/^[87]/, '')}`} className="hover:text-black transition-colors">{info.contact_phone}</a>
               )}
             </p>
           </div>

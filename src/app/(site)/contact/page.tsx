@@ -45,8 +45,7 @@ export default function ContactPage() {
     }
   }
 
-  const phoneRaw = info.contact_phone.replace(/\D/g, '')
-  const phoneHref = `tel:+7${phoneRaw.startsWith('8') ? phoneRaw.slice(1) : phoneRaw}`
+  const phoneHref = `tel:+7${info.contact_phone.replace(/\D/g, '').replace(/^[87]/, '')}`
 
   return (
     <div className="min-h-screen bg-white pt-12 pb-24 px-6 md:px-12">
