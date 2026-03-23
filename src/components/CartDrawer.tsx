@@ -62,12 +62,12 @@ function CdekModal({ onClose, onSelect }: {
         if (!W) throw new Error('CDEKWidget не найден после загрузки скрипта')
 
         new W({
-          from: 'Москва',
+          from: { city: 'Москва', postal_code: '107140', address: 'Большой Краснопрудный тупик, 8/12' },
           root: 'cdek-widget-root',
           apiKey,
           servicePath: '/api/cdek-service',
           defaultLocation: 'Москва',
-          goods: [{ weight: 2, length: 50, width: 50, height: 10 }],
+          goods: [{ weight: 2, length: 50, width: 50, height: 10, count: 1 }],
           callbacks: {
             onReady: () => {
               if (!cancelled) setStatus('ready')
