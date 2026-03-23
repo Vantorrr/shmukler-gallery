@@ -411,12 +411,7 @@ export function CartDrawer() {
                     onClick={() => handleSplitPay()}
                     className="w-full border border-[#FC3F1D] text-[#FC3F1D] py-3 text-sm uppercase tracking-widest hover:bg-[#FC3F1D] hover:text-white transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                   >
-                    {sending ? 'Отправка...' : (
-                      <>
-                        <span>Я</span>
-                        <span>Оплатить через Сплит</span>
-                      </>
-                    )}
+                    {sending ? 'Отправка...' : 'Оплатить через Яндекс Сплит'}
                   </button>
                   <p className="text-center text-xs text-gray-400">Рассрочка на 4 части без переплат</p>
                   <button type="button" onClick={() => setCheckout(false)} className="w-full text-xs text-gray-400 hover:text-black transition-colors">
