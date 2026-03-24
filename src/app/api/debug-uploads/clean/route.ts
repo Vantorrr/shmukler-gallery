@@ -35,5 +35,27 @@ export async function POST() {
     }
   }
 
-  return NextResponse.json({ ok: true, fixedCollections, fixedSlides })
+  // Fix artworks with broken imagePath
+  const artworks = await prisma.artwork.findMany({ select: { id: true, imagePath: true } })
+  let fixedArtworks = 0
+  const brokenArtworks: string[] = []
+  for (const a of artworks) {
+    if (a.imagePath && !existsOnDisk(a.imagePath)) {
+      await prisma.artwork.update({ where: { id: a.id }, data: { imagePath: null } })
+      fixedArtworks++
+      brokenArtworks.push(a.id)
+    }
+  }
+
+  // Fix artists with broken imagePath
+  const artists = await prisma.artist.findMany({ select: { id: true, imagePath: true } })
+  let fixedArtists = 0
+  for (const a of artists) {
+    if (a.imagePath && !existsOnDisk(a.imagePath)) {
+      await prisma.artist.update({ where: { id: a.id }, data: { imagePath: null } })
+      fixedArtists++
+    }
+  }
+
+  return NextResponse.json({ ok: true, fixedCollections, fixedSlides, fixedArtworks, fixedArtists })
 }
