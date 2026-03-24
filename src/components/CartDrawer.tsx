@@ -62,31 +62,33 @@ function CdekModal({ onClose, onSelect }: {
         if (!W) throw new Error('CDEKWidget не найден после загрузки скрипта')
 
         new W({
-          from: { city: 'Москва', postal_code: '107140', address: 'Большой Краснопрудный тупик, 8/12' },
+          from: { country_code: 'RU', city: 'Москва', postal_code: 107140, address: 'Большой Краснопрудный тупик, 8/12' },
           root: 'cdek-widget-root',
           apiKey,
+          canChoose: true,
           servicePath: '/api/cdek-service',
           defaultLocation: 'Москва',
-          goods: [{ weight: 2, length: 50, width: 50, height: 10, count: 1 }],
-          callbacks: {
-            onReady: () => {
-              if (!cancelled) setStatus('ready')
-            },
-            onChoose: (delivery: Record<string, unknown>) => {
-              console.log('[CDEK onChoose]', JSON.stringify(delivery))
-              const office = delivery.office as Record<string, unknown> | undefined
-              const tariff = delivery.tariff as Record<string, unknown> | undefined
-              const addr = (delivery.address as string)
-                || (office?.address as string)
-                || (office?.name as string)
-                || ''
-              const price = (tariff?.delivery_sum as number)
-                ?? (delivery.total_sum as number)
-                ?? 0
-              const type = delivery.delivery_type === 'door' ? 'Курьер' : 'ПВЗ'
-              onSelectRef.current({ address: addr, price, type })
-              onCloseRef.current()
-            },
+          lang: 'rus',
+          currency: 'RUB',
+          goods: [{ weight: 2000, length: 50, width: 50, height: 10 }],
+          tariffs: {
+            office: [234, 136, 138],
+            door: [233, 137, 139],
+          },
+          onReady: () => {
+            if (!cancelled) setStatus('ready')
+          },
+          onChoose: (mode: string, tariff: Record<string, unknown>, address: Record<string, unknown>) => {
+            console.log('[CDEK onChoose]', mode, tariff, address)
+            const addr = (address.address as string)
+              || (address.formatted as string)
+              || (address.name as string)
+              || (address.city as string)
+              || ''
+            const price = (tariff.delivery_sum as number) || 0
+            const type = mode === 'door' ? 'Курьер' : 'ПВЗ'
+            onSelectRef.current({ address: addr, price, type })
+            onCloseRef.current()
           },
         })
         // Fallback: show widget after 5s even if onReady doesn't fire
