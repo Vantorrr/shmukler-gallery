@@ -19,9 +19,10 @@ export async function GET(req: NextRequest) {
     const minPrice = searchParams.get('minPrice') ? parseInt(searchParams.get('minPrice')!) : undefined
     const maxPrice = searchParams.get('maxPrice') ? parseInt(searchParams.get('maxPrice')!) : undefined
 
-    const where: any = ids ? {} : { isArchived: false }
+    // When fetching by slug (detail page), don't restrict by isArchived
+    const where: any = (ids || slugFilter) ? {} : { isArchived: false }
     if (artistSlug) where.artistSlug = artistSlug
-    if (slugFilter) where.slug = slugFilter
+    if (slugFilter) where.slug = { equals: slugFilter, mode: 'insensitive' }
     if (exhibitionId) where.exhibitionId = exhibitionId
     if (fairId) where.fairId = fairId
     if (ids) where.id = { in: ids.split(',') }
