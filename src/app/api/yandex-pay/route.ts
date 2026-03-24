@@ -15,12 +15,12 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json()
-    const { name, email, phone, items, amount, delivery, address, comment, paymentMethod } = body
+    const { name, email, phone, items, amount, delivery, address, comment, paymentMethod, deliveryPrice } = body
 
     const orderId = `shmukler-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
 
-    // Parse items into cart
-    const cartItems = (items as string)
+    // Parse artwork items
+    const cartItems: { productId: string; title: string; quantity: { count: string }; total: string }[] = (items as string)
       .split(';')
       .map((s: string, i: number) => {
         const match = s.trim().match(/^(.+)\((.+) ₽\)$/)
@@ -31,6 +31,17 @@ export async function POST(req: NextRequest) {
           total: match?.[2]?.replace(/\s/g, '') || String(amount),
         }
       })
+
+    // Add delivery as separate line item so items_sum == cart_total
+    const deliveryCost = Number(deliveryPrice) || 0
+    if (deliveryCost > 0) {
+      cartItems.push({
+        productId: 'delivery',
+        title: 'Доставка',
+        quantity: { count: '1' },
+        total: String(deliveryCost.toFixed(2)),
+      })
+    }
 
     const orderData = {
       orderId,

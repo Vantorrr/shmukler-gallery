@@ -191,6 +191,7 @@ export function CartDrawer() {
           name: form.name, email: form.email, phone: form.phone,
           delivery: deliveryLabel, address: form.address || (cdekInfo?.address ?? ''),
           comment: form.comment || '', items: itemsSummary, amount,
+          deliveryPrice: cdekDeliveryPrice ?? 0,
           paymentMethod,
         }),
       })
