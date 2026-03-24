@@ -57,12 +57,14 @@ async function handle(req: NextRequest) {
     }
 
     if (action === 'calculate') {
+      console.log('[CDEK calculate] request body:', JSON.stringify(body))
       const upstream = await fetch(`${CDEK_API}/calculator/tarifflist`, {
         method: 'POST',
         headers: { ...authHeader, 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       })
       const text = await upstream.text()
+      console.log('[CDEK calculate] response status:', upstream.status, 'body:', text.slice(0, 500))
       return new NextResponse(text, { headers: RESPONSE_HEADERS })
     }
 
