@@ -49,6 +49,8 @@ async function handle(req: NextRequest) {
     const token = await getToken()
     const authHeader = { Authorization: `Bearer ${token}`, ...CDEK_HEADERS }
 
+    console.log('[CDEK proxy] action:', action, 'method:', req.method)
+
     if (action === 'offices') {
       const qs = new URLSearchParams({ ...params, ...body as Record<string, string> })
       const upstream = await fetch(`${CDEK_API}/deliverypoints?${qs}`, { headers: authHeader })
