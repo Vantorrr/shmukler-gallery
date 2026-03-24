@@ -76,7 +76,7 @@ export function HomeArtworkCard({ artwork, cover = false, natural = false }: { a
           )}
           {isReserved && (
             <div className="absolute top-3 left-3 bg-gray-700 text-white text-[10px] uppercase tracking-widest px-2 py-1">
-              Зарезервировано
+              Забронировано
             </div>
           )}
         </div>

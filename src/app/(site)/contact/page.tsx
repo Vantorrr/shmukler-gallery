@@ -7,7 +7,7 @@ const DEFAULTS = {
   contact_hours: 'Вт–Пт: 12:00–20:00\nСб–Вс: 12:00–19:00\nПн: выходной',
   contact_phone: '8 989 591 91 12',
   contact_email: 'info@artishokcenter.ru',
-  contact_instagram: 'https://www.instagram.com/shmukler_gallery',
+  contact_instagram: 'https://www.youtube.com/@shmuklergallery',
   contact_telegram: 'https://t.me/shmuklergallery',
 }
 
@@ -88,7 +88,7 @@ export default function ContactPage() {
                 <h2 className="text-xs uppercase tracking-widest text-gray-400 mb-4">Социальные сети</h2>
                 <div className="space-y-2 text-lg font-light">
                   {info.contact_instagram && (
-                    <p><a href={info.contact_instagram} target="_blank" rel="noopener noreferrer" className="hover:opacity-60 transition-opacity">Instagram</a></p>
+                    <p><a href={info.contact_instagram} target="_blank" rel="noopener noreferrer" className="hover:opacity-60 transition-opacity">YouTube</a></p>
                   )}
                   {info.contact_telegram && (
                     <p><a href={info.contact_telegram} target="_blank" rel="noopener noreferrer" className="hover:opacity-60 transition-opacity">Telegram</a></p>

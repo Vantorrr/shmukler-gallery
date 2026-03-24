@@ -120,7 +120,7 @@ export default function ArtworkPage({ params }: { params: Promise<{ slug: string
             {artwork.status === 'sold' ? (
               <p className="text-sm text-gray-500 uppercase tracking-widest">Продано</p>
             ) : artwork.status === 'reserved' ? (
-              <p className="text-sm text-gray-500 uppercase tracking-widest">Зарезервировано</p>
+              <p className="text-sm text-gray-500 uppercase tracking-widest">Забронировано</p>
             ) : (
               <button
                 onClick={handleAddToCart}

@@ -68,6 +68,11 @@ function GalleryContent() {
   const series = searchParams.get('series') || ''
   const artist = searchParams.get('artist') || ''
   const sortBy = searchParams.get('sortBy') || 'orderIndex'
+  const minPrice = searchParams.get('minPrice') || ''
+  const maxPrice = searchParams.get('maxPrice') || ''
+
+  const [priceMin, setPriceMin] = useState(minPrice)
+  const [priceMax, setPriceMax] = useState(maxPrice)
 
   const buildUrl = useCallback((pg: number) => {
     const params = new URLSearchParams()
@@ -79,8 +84,10 @@ function GalleryContent() {
     if (series) params.set('series', series)
     if (artist) params.set('artist', artist)
     if (sortBy) params.set('sortBy', sortBy)
+    if (minPrice) params.set('minPrice', minPrice)
+    if (maxPrice) params.set('maxPrice', maxPrice)
     return `/api/artworks?${params}`
-  }, [technique, theme, color, series, artist, sortBy])
+  }, [technique, theme, color, series, artist, sortBy, minPrice, maxPrice])
 
   const load = useCallback(async (pg: number, reset = false) => {
     if (pg === 1) setLoading(true); else setLoadingMore(true)
@@ -102,7 +109,7 @@ function GalleryContent() {
     setPage(1)
     setArtworks([])
     load(1, true)
-  }, [technique, theme, color, series, artist, sortBy, load])
+  }, [technique, theme, color, series, artist, sortBy, minPrice, maxPrice, load])
 
   useEffect(() => {
     if (!observerRef.current || !hasMore || loadingMore || loading) return
@@ -129,6 +136,8 @@ function GalleryContent() {
     color ? { key: 'color', label: `Цвет: ${color}` } : null,
     series ? { key: 'series', label: `Серия: ${series}` } : null,
     artist ? { key: 'artist', label: `Художник: ${artists.find(a => a.slug === artist)?.name || artist}` } : null,
+    minPrice ? { key: 'minPrice', label: `От ${Number(minPrice).toLocaleString('ru-RU')} ₽` } : null,
+    maxPrice ? { key: 'maxPrice', label: `До ${Number(maxPrice).toLocaleString('ru-RU')} ₽` } : null,
   ].filter(Boolean)
 
   return (
@@ -170,6 +179,36 @@ function GalleryContent() {
               }}
             />
           )}
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className="text-xs uppercase tracking-widest text-gray-400 flex-shrink-0">Цена, ₽</span>
+            <input
+              type="number"
+              placeholder="От"
+              value={priceMin}
+              onChange={e => setPriceMin(e.target.value)}
+              className="w-24 text-sm border-b border-gray-200 py-1 focus:outline-none focus:border-black bg-transparent placeholder:text-gray-300"
+            />
+            <span className="text-gray-300 text-sm">—</span>
+            <input
+              type="number"
+              placeholder="До"
+              value={priceMax}
+              onChange={e => setPriceMax(e.target.value)}
+              className="w-24 text-sm border-b border-gray-200 py-1 focus:outline-none focus:border-black bg-transparent placeholder:text-gray-300"
+            />
+            <button
+              onClick={() => {
+                const p = new URLSearchParams(searchParams.toString())
+                if (priceMin) p.set('minPrice', priceMin); else p.delete('minPrice')
+                if (priceMax) p.set('maxPrice', priceMax); else p.delete('maxPrice')
+                router.push(`/gallery?${p}`)
+              }}
+              className="text-xs uppercase tracking-widest border-b border-black pb-0.5 hover:opacity-50 transition-opacity"
+            >
+              Применить
+            </button>
+          </div>
+
           <div className="flex items-center gap-4">
             <span className="text-xs uppercase tracking-widest text-gray-400 flex-shrink-0">Сортировка</span>
             <select

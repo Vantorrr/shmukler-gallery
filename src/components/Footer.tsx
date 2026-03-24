@@ -8,7 +8,7 @@ const CONTACT_DEFAULTS = {
   contact_address: 'Большой Краснопрудный тупик, 8/12\nМосква, Россия',
   contact_phone: '8 989 591 91 12',
   contact_email: 'info@artishokcenter.ru',
-  contact_instagram: 'https://www.instagram.com/shmukler_gallery',
+  contact_instagram: 'https://www.youtube.com/@shmuklergallery',
   contact_telegram: 'https://t.me/shmuklergallery',
 }
 
@@ -119,7 +119,7 @@ export function Footer() {
           <h4 className="text-xs font-medium uppercase tracking-[0.2em] text-gray-400">Соцсети</h4>
           <ul className="space-y-3 text-sm font-light text-gray-600">
             {info.contact_instagram && (
-              <li><a href={info.contact_instagram} target="_blank" rel="noopener noreferrer" className="hover:text-black transition-colors">Instagram</a></li>
+              <li><a href={info.contact_instagram} target="_blank" rel="noopener noreferrer" className="hover:text-black transition-colors">YouTube</a></li>
             )}
             {info.contact_telegram && (
               <li><a href={info.contact_telegram} target="_blank" rel="noopener noreferrer" className="hover:text-black transition-colors">Telegram</a></li>

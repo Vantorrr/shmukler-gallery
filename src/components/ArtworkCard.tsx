@@ -41,7 +41,7 @@ export function ArtworkCard({ artwork }: { artwork: Artwork }) {
         )}
         {artwork.status === 'reserved' && (
           <div className="absolute top-3 left-3 bg-gray-800 text-white text-[10px] uppercase tracking-widest px-2 py-1">
-            Зарезервировано
+            Забронировано
           </div>
         )}
       </div>

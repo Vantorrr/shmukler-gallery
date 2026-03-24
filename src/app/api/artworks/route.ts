@@ -16,6 +16,8 @@ export async function GET(req: NextRequest) {
     const color = searchParams.get('color') || undefined
     const series = searchParams.get('series') || undefined
     const sortBy = searchParams.get('sortBy') || 'orderIndex'
+    const minPrice = searchParams.get('minPrice') ? parseInt(searchParams.get('minPrice')!) : undefined
+    const maxPrice = searchParams.get('maxPrice') ? parseInt(searchParams.get('maxPrice')!) : undefined
 
     const where: any = ids ? {} : { isArchived: false }
     if (artistSlug) where.artistSlug = artistSlug
@@ -27,6 +29,11 @@ export async function GET(req: NextRequest) {
     if (theme) where.theme = { contains: theme, mode: 'insensitive' }
     if (color) where.colorTags = { contains: color, mode: 'insensitive' }
     if (series) where.series = series
+    if (minPrice !== undefined || maxPrice !== undefined) {
+      where.price = {}
+      if (minPrice !== undefined) where.price.gte = minPrice
+      if (maxPrice !== undefined) where.price.lte = maxPrice
+    }
 
     const orderBy = sortBy === 'price_asc' ? { price: 'asc' as const }
       : sortBy === 'price_desc' ? { price: 'desc' as const }
