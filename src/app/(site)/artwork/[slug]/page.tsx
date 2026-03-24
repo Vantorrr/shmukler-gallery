@@ -17,7 +17,8 @@ export default function ArtworkPage({ params }: { params: Promise<{ slug: string
   const inCart = artwork && items.find(i => i.id === artwork.id)
 
   useEffect(() => {
-    fetch(`/api/artworks?slug=${encodeURIComponent(slug)}&limit=1`)
+    const decodedSlug = (() => { try { return decodeURIComponent(slug) } catch { return slug } })()
+    fetch(`/api/artworks?slug=${encodeURIComponent(decodedSlug)}&limit=1`)
       .then(r => r.json())
       .then(d => {
         const found = d.items?.[0]
