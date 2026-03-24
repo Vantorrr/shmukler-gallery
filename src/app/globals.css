@@ -19,3 +19,12 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/* CDEK widget — make right panel scrollable so confirm button is always reachable */
+#cdek-widget-root .cdek-map__sidebar,
+#cdek-widget-root [class*="sidebar"],
+#cdek-widget-root [class*="panel"],
+#cdek-widget-root [class*="info"] {
+  overflow-y: auto !important;
+  max-height: calc(100vh - 65px) !important;
+}

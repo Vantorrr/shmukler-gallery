@@ -72,15 +72,17 @@ function CdekModal({ onClose, onSelect }: {
             onReady: () => {
               if (!cancelled) setStatus('ready')
             },
-            onChoose: (delivery: {
-              delivery_type?: string
-              address?: string
-              office?: { address?: string; name?: string }
-              tariff?: { delivery_sum?: number }
-              total_sum?: number
-            }) => {
-              const addr = delivery.address || delivery.office?.address || delivery.office?.name || ''
-              const price = delivery.tariff?.delivery_sum ?? delivery.total_sum ?? 0
+            onChoose: (delivery: Record<string, unknown>) => {
+              console.log('[CDEK onChoose]', JSON.stringify(delivery))
+              const office = delivery.office as Record<string, unknown> | undefined
+              const tariff = delivery.tariff as Record<string, unknown> | undefined
+              const addr = (delivery.address as string)
+                || (office?.address as string)
+                || (office?.name as string)
+                || ''
+              const price = (tariff?.delivery_sum as number)
+                ?? (delivery.total_sum as number)
+                ?? 0
               const type = delivery.delivery_type === 'door' ? 'Курьер' : 'ПВЗ'
               onSelectRef.current({ address: addr, price, type })
               onCloseRef.current()
