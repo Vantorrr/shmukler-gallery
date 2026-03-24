@@ -102,17 +102,17 @@ function CdekModal({ onClose, onSelect }: {
   }, [])
 
   return (
-    <div className="fixed inset-0 z-[110] flex flex-col bg-white">
-      <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-shrink-0">
+    <div className="fixed inset-0 z-[300] flex flex-col bg-white">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-shrink-0" style={{ height: 65 }}>
         <h3 className="font-medium text-base">Выбор пункта доставки СДЭК</h3>
         <button onClick={onClose} className="text-gray-400 hover:text-black transition-colors">
           <X className="w-5 h-5" />
         </button>
       </div>
 
-      <div className="flex-1 relative" style={{ minHeight: 500 }}>
+      <div className="flex-1 relative">
         {/* Widget container — always in DOM so the widget can render into it */}
-        <div id="cdek-widget-root" style={{ width: '100%', height: '100%', minHeight: 500 }} />
+        <div id="cdek-widget-root" style={{ width: '100%', height: 'calc(100vh - 65px)' }} />
 
         {/* Loading overlay */}
         {status === 'loading' && (
