@@ -1,10 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { sendNotificationEmail } from '@/lib/mailer'
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
     const { type, name, email, phone, message, service, items } = body
+
+    if (type === 'subscribe') {
+      // Subscribe doesn't require phone/message
+      if (!email) return NextResponse.json({ error: 'Email обязателен' }, { status: 400 })
+      const inquiry = await prisma.inquiry.create({
+        data: { type: 'subscribe', name: name || '', email, status: 'new' },
+      })
+      sendNotificationEmail({ type: 'subscribe', name: name || '—', email })
+      return NextResponse.json({ ok: true, id: inquiry.id })
+    }
 
     if (!name || !email) {
       return NextResponse.json({ error: 'Имя и email обязательны' }, { status: 400 })
@@ -22,6 +33,8 @@ export async function POST(req: NextRequest) {
         status: 'new',
       },
     })
+
+    sendNotificationEmail({ type: type || 'contact', name, email, phone, message, service, items })
 
     return NextResponse.json({ ok: true, id: inquiry.id })
   } catch (error) {

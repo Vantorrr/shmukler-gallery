@@ -148,6 +148,10 @@ export function CartDrawer() {
   const [sending, setSending] = useState(false)
   const [cdekInfo, setCdekInfo] = useState<CdekInfo | null>(null)
   const [showCdekModal, setShowCdekModal] = useState(false)
+  const [promoCode, setPromoCode] = useState('')
+  const [promoApplied, setPromoApplied] = useState<{ code: string; discountAmount: number; label: string } | null>(null)
+  const [promoError, setPromoError] = useState('')
+  const [promoLoading, setPromoLoading] = useState(false)
 
   useEffect(() => {
     const handler = () => setOpen(true)
@@ -165,7 +169,26 @@ export function CartDrawer() {
   const fixedDeliveryPrice = DELIVERY_OPTIONS.find(o => o.key === delivery)?.price ?? null
   const deliveryPrice = fixedDeliveryPrice ?? cdekDeliveryPrice ?? 0
   const deliveryIndividual = fixedDeliveryPrice === null && cdekDeliveryPrice === null
-  const total = subtotal + deliveryPrice
+  const discount = promoApplied?.discountAmount ?? 0
+  const total = Math.max(0, subtotal + deliveryPrice - discount)
+
+  async function applyPromo() {
+    if (!promoCode.trim()) return
+    setPromoLoading(true); setPromoError('')
+    try {
+      const res = await fetch('/api/promo-codes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: promoCode, amount: subtotal }),
+      })
+      const data = await res.json()
+      if (!res.ok) { setPromoError(data.error || 'Ошибка'); return }
+      const label = data.type === 'percent' ? `−${data.discount}%` : `−${data.discount} ₽`
+      setPromoApplied({ code: data.code, discountAmount: data.discountAmount, label })
+      setPromoCode('')
+    } catch { setPromoError('Ошибка сети') }
+    finally { setPromoLoading(false) }
+  }
 
   const handleCdekSelect = useCallback((info: CdekInfo) => {
     setCdekInfo(info)
@@ -386,6 +409,36 @@ export function CartDrawer() {
                     </span>
                   </label>
 
+                  {/* Promo code */}
+                  <div className="border-t border-gray-100 pt-4">
+                    {promoApplied ? (
+                      <div className="flex items-center justify-between text-sm bg-green-50 border border-green-200 rounded px-3 py-2">
+                        <span className="text-green-700">Промокод <b>{promoApplied.code}</b> — {promoApplied.label}</span>
+                        <button type="button" onClick={() => setPromoApplied(null)} className="text-gray-400 hover:text-black ml-2"><X className="w-3 h-3" /></button>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={promoCode}
+                          onChange={e => { setPromoCode(e.target.value.toUpperCase()); setPromoError('') }}
+                          placeholder="Промокод"
+                          className="flex-1 border border-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-black"
+                          onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), applyPromo())}
+                        />
+                        <button
+                          type="button"
+                          onClick={applyPromo}
+                          disabled={promoLoading || !promoCode.trim()}
+                          className="border border-gray-300 px-3 py-2 text-sm rounded hover:bg-gray-50 disabled:opacity-50 whitespace-nowrap"
+                        >
+                          {promoLoading ? '...' : 'Применить'}
+                        </button>
+                      </div>
+                    )}
+                    {promoError && <p className="text-xs text-red-500 mt-1">{promoError}</p>}
+                  </div>
+
                   <div className="border-t border-gray-100 pt-4 space-y-2">
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-500">Работы</span>
@@ -399,6 +452,12 @@ export function CartDrawer() {
                           : deliveryIndividual ? 'индивидуально' : deliveryPrice === 0 ? 'бесплатно' : `${deliveryPrice.toLocaleString()} ₽`}
                       </span>
                     </div>
+                    {promoApplied && (
+                      <div className="flex justify-between text-sm text-green-700">
+                        <span>Скидка</span>
+                        <span>−{promoApplied.discountAmount.toLocaleString()} ₽</span>
+                      </div>
+                    )}
                     <div className="flex justify-between font-medium">
                       <span>Итого</span>
                       <span>{total.toLocaleString()} ₽</span>

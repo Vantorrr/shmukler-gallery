@@ -157,3 +157,16 @@ model Inquiry {
   status    String   @default("new")
   createdAt DateTime @default(now())
 }
+
+model PromoCode {
+  id          String    @id @default(cuid())
+  code        String    @unique
+  discount    Int
+  type        String    @default("percent")
+  maxUses     Int?
+  usedCount   Int       @default(0)
+  expiresAt   DateTime?
+  isActive    Boolean   @default(true)
+  description String?
+  createdAt   DateTime  @default(now())
+}

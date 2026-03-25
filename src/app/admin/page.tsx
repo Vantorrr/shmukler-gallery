@@ -4,10 +4,10 @@ import { useState, useEffect, useCallback, useRef, Fragment } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   ChevronUp, ChevronDown, Pencil, Trash2, Plus, X, Check,
-  Upload, LogOut, RefreshCw, Archive, ArchiveRestore
+  Upload, LogOut, RefreshCw, Archive, ArchiveRestore, Download, Tag
 } from 'lucide-react'
 
-type Tab = 'artworks' | 'artists' | 'exhibitions' | 'events' | 'team' | 'fairs' | 'slides' | 'announcements' | 'collections' | 'inquiries' | 'filters' | 'pages'
+type Tab = 'artworks' | 'artists' | 'exhibitions' | 'events' | 'team' | 'fairs' | 'slides' | 'announcements' | 'collections' | 'inquiries' | 'promo' | 'filters' | 'pages'
 
 const TABS: { key: Tab; label: string }[] = [
   { key: 'artworks', label: 'Работы' },
@@ -20,6 +20,7 @@ const TABS: { key: Tab; label: string }[] = [
   { key: 'announcements', label: 'Анонсы' },
   { key: 'collections', label: 'Подборки' },
   { key: 'inquiries', label: 'Заявки' },
+  { key: 'promo', label: 'Промокоды' },
   { key: 'filters', label: 'Фильтры' },
   { key: 'pages', label: 'Страницы' },
 ]
@@ -543,6 +544,59 @@ function InquiryForm({ initial, onSave, onCancel }: { initial: any; onSave: (d: 
   )
 }
 
+function PromoForm({ initial, onSave, onCancel }: { initial: any; onSave: (d: any) => void; onCancel: () => void }) {
+  const [d, setD] = useState({
+    code: '', discount: 10, type: 'percent', maxUses: '', expiresAt: '', isActive: true, description: '',
+    ...initial,
+    expiresAt: initial?.expiresAt ? new Date(initial.expiresAt).toISOString().slice(0, 10) : '',
+    maxUses: initial?.maxUses ?? '',
+  })
+  const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
+    setD((p: any) => ({ ...p, [k]: e.target.value }))
+
+  return (
+    <form onSubmit={e => { e.preventDefault(); onSave(d) }} className="space-y-4 p-4 bg-gray-50 rounded-lg border">
+      <div className="grid grid-cols-2 gap-4">
+        <Field label="Код промокода *">
+          <Input value={d.code} onChange={set('code')} placeholder="SUMMER20" required style={{ textTransform: 'uppercase' }} />
+        </Field>
+        <Field label="Описание (необязательно)">
+          <Input value={d.description} onChange={set('description')} placeholder="Летняя скидка" />
+        </Field>
+      </div>
+      <div className="grid grid-cols-3 gap-4">
+        <Field label="Тип скидки">
+          <select value={d.type} onChange={set('type')} className="w-full border rounded px-3 py-2 text-sm">
+            <option value="percent">Процент (%)</option>
+            <option value="fixed">Фиксированная (₽)</option>
+          </select>
+        </Field>
+        <Field label={d.type === 'percent' ? 'Скидка (%)' : 'Скидка (₽)'}>
+          <Input type="number" value={d.discount} onChange={set('discount')} min={1} max={d.type === 'percent' ? 100 : undefined} required />
+        </Field>
+        <Field label="Лимит использований">
+          <Input type="number" value={d.maxUses} onChange={set('maxUses')} placeholder="Без лимита" min={1} />
+        </Field>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <Field label="Срок действия до">
+          <Input type="date" value={d.expiresAt} onChange={set('expiresAt')} />
+        </Field>
+        <Field label="Активен">
+          <select value={d.isActive ? 'true' : 'false'} onChange={e => setD((p: any) => ({ ...p, isActive: e.target.value === 'true' }))} className="w-full border rounded px-3 py-2 text-sm">
+            <option value="true">Да</option>
+            <option value="false">Нет</option>
+          </select>
+        </Field>
+      </div>
+      <div className="flex gap-2 pt-2">
+        <button type="submit" className="flex items-center gap-1 bg-black text-white px-4 py-2 text-sm rounded hover:bg-gray-800"><Check className="w-4 h-4" /> Сохранить</button>
+        <button type="button" onClick={onCancel} className="flex items-center gap-1 border border-gray-300 px-4 py-2 text-sm rounded hover:bg-gray-50"><X className="w-4 h-4" /> Отмена</button>
+      </div>
+    </form>
+  )
+}
+
 function CollectionArtworkLinker({ artworkIds, onChange }: { artworkIds: string; onChange: (ids: string) => void }) {
   const [open, setOpen] = useState(false)
   const [allArtworks, setAllArtworks] = useState<any[]>([])
@@ -617,7 +671,7 @@ const TAB_API: Record<Tab, string> = {
   artworks: 'artworks', artists: 'artists', exhibitions: 'exhibitions',
   events: 'events', team: 'team-members', fairs: 'fairs',
   slides: 'hero-slides', announcements: 'announcements', collections: 'collections',
-  inquiries: 'inquiries', filters: '', pages: '',
+  inquiries: 'inquiries', promo: 'promo-codes', filters: '', pages: '',
 }
 
 const TAB_COLS: Record<Tab, string[]> = {
@@ -630,7 +684,8 @@ const TAB_COLS: Record<Tab, string[]> = {
   slides: ['title', 'orderIndex', 'isActive'],
   announcements: ['text', 'isActive', 'expiresAt'],
   collections: ['title', 'orderIndex', 'isActive'],
-  inquiries: ['type', 'name', 'email', 'service', 'status', 'createdAt'],
+  inquiries: ['type', 'name', 'email', 'phone', 'service', 'status', 'createdAt'],
+  promo: ['code', 'discount', 'type', 'maxUses', 'usedCount', 'expiresAt', 'isActive'],
   filters: [], pages: [],
 }
 
@@ -639,14 +694,15 @@ const COL_LABELS: Record<string, string> = {
   status: 'Статус', orderIndex: '№', name: 'Имя', role: 'Роль',
   startDate: 'Начало', format: 'Формат', date: 'Дата', dates: 'Даты',
   isArchived: 'Архив', isActive: 'Активен', expiresAt: 'До', text: 'Текст',
-  type: 'Тип', email: 'Email', service: 'Услуга', createdAt: 'Дата',
+  type: 'Тип', email: 'Email', phone: 'Телефон', service: 'Услуга', createdAt: 'Дата',
+  code: 'Код', discount: 'Скидка', maxUses: 'Лимит', usedCount: 'Использован',
 }
 
 const FORMS: Record<Tab, any> = {
   artworks: ArtworkForm, artists: ArtistForm, exhibitions: ExhibitionForm,
   events: EventForm, team: TeamForm, fairs: FairForm,
   slides: SlideForm, announcements: AnnouncementForm, collections: CollectionForm,
-  inquiries: InquiryForm, filters: null, pages: null,
+  inquiries: InquiryForm, promo: PromoForm, filters: null, pages: null,
 }
 
 function Section({ tab }: { tab: Tab }) {
@@ -751,6 +807,12 @@ function Section({ tab }: { tab: Tab }) {
     if (col === 'expiresAt' && v) return new Date(v).toLocaleDateString('ru')
     if (col === 'createdAt' && v) return new Date(v).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })
     if (col === 'status' && STATUS_LABELS[v]) return STATUS_LABELS[v]
+    if (col === 'discount') {
+      const t = item.type === 'percent' ? '%' : ' ₽'
+      return `${v}${t}`
+    }
+    if (col === 'maxUses') return v ? String(v) : '∞'
+    if (col === 'type') return v === 'percent' ? 'Процент' : 'Фиксированная'
     return String(v).slice(0, 60)
   }
 
@@ -758,7 +820,7 @@ function Section({ tab }: { tab: Tab }) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 flex-wrap">
         {tab !== 'inquiries' && (
           <button
             onClick={() => { setEditId(null); setShowForm(v => !v) }}
@@ -771,6 +833,26 @@ function Section({ tab }: { tab: Tab }) {
         <button onClick={load} className="flex items-center gap-1 border border-gray-300 px-3 py-2 text-sm rounded hover:bg-gray-50">
           <RefreshCw className="w-4 h-4" /> Обновить
         </button>
+        {tab === 'inquiries' && (
+          <button
+            onClick={() => {
+              const cols = ['Дата', 'Тип', 'Имя', 'Email', 'Телефон', 'Услуга', 'Статус', 'Сообщение']
+              const rows = items.map(i => [
+                new Date(i.createdAt).toLocaleString('ru-RU'),
+                i.type, i.name, i.email, i.phone || '', i.service || '', i.status, i.message || '',
+              ])
+              const csv = [cols, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n')
+              const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' })
+              const url = URL.createObjectURL(blob)
+              const a = document.createElement('a'); a.href = url
+              a.download = `заявки_${new Date().toISOString().slice(0, 10)}.csv`
+              a.click(); URL.revokeObjectURL(url)
+            }}
+            className="flex items-center gap-1 border border-gray-300 px-3 py-2 text-sm rounded hover:bg-gray-50"
+          >
+            <Download className="w-4 h-4" /> Скачать CSV
+          </button>
+        )}
         {error && <span className="text-red-500 text-sm">{error}</span>}
         {savedMsg && <span className="text-green-600 text-sm font-medium">{savedMsg}</span>}
       </div>
@@ -902,6 +984,7 @@ export default function AdminPage() {
         </div>
 
         {tab === 'filters' ? <FiltersSection /> : tab === 'pages' ? <PagesSection /> : <Section key={tab} tab={tab} />}
+
       </div>
     </div>
   )
