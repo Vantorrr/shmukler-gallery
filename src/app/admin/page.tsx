@@ -545,11 +545,11 @@ function InquiryForm({ initial, onSave, onCancel }: { initial: any; onSave: (d: 
 }
 
 function PromoForm({ initial, onSave, onCancel }: { initial: any; onSave: (d: any) => void; onCancel: () => void }) {
-  const [d, setD] = useState({
-    code: '', discount: 10, type: 'percent', maxUses: '', expiresAt: '', isActive: true, description: '',
-    ...initial,
-    expiresAt: initial?.expiresAt ? new Date(initial.expiresAt).toISOString().slice(0, 10) : '',
-    maxUses: initial?.maxUses ?? '',
+  const [d, setD] = useState(() => {
+    const base = { code: '', discount: 10, type: 'percent', maxUses: '' as string | number, expiresAt: '', isActive: true, description: '', ...initial }
+    base.expiresAt = initial?.expiresAt ? new Date(initial.expiresAt).toISOString().slice(0, 10) : ''
+    base.maxUses = initial?.maxUses ?? ''
+    return base
   })
   const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
     setD((p: any) => ({ ...p, [k]: e.target.value }))

@@ -2,19 +2,19 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { cookies } from 'next/headers'
 
-function auth() {
-  const c = cookies()
+async function auth() {
+  const c = await cookies()
   return c.get('admin_token')?.value === process.env.ADMIN_SECRET
 }
 
 export async function GET() {
-  if (!auth()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!await auth()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const codes = await prisma.promoCode.findMany({ orderBy: { createdAt: 'desc' } })
   return NextResponse.json(codes)
 }
 
 export async function POST(req: NextRequest) {
-  if (!auth()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!await auth()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const body = await req.json()
   const { id, ...data } = body
 
@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  if (!auth()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!await auth()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const { id } = await req.json()
   await prisma.promoCode.delete({ where: { id } })
   return NextResponse.json({ ok: true })
