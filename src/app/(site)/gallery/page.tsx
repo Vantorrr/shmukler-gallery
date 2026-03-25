@@ -253,9 +253,9 @@ function GalleryContent() {
           <p className="text-center text-gray-400 py-24 text-lg">Работы не найдены</p>
         ) : (
           <>
-            <div className="columns-2 lg:columns-3 xl:columns-4 gap-x-8">
+            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 md:gap-x-8 gap-y-10 md:gap-y-14">
               {artworks.map((artwork) => (
-                <div key={artwork.id || artwork._id} className="break-inside-avoid mb-10">
+                <div key={artwork.id || artwork._id}>
                   <HomeArtworkCard artwork={artwork} natural />
                   {artwork.series && (
                     <button
