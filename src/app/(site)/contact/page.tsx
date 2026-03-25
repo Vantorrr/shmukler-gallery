@@ -18,7 +18,7 @@ export default function ContactPage() {
   const [info, setInfo] = useState(DEFAULTS)
 
   useEffect(() => {
-    fetch('/api/admin/page-content')
+    fetch('/api/page-content')
       .then(r => r.json())
       .then(d => setInfo(prev => ({ ...prev, ...d })))
       .catch(() => {})

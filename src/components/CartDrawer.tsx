@@ -6,10 +6,10 @@ import { useCart } from '@/lib/CartContext'
 import Link from 'next/link'
 
 const DELIVERY_OPTIONS = [
-  { key: 'pickup', label: 'Самовывоз', price: 0 },
-  { key: 'moscow', label: 'Доставка по Москве', price: null },
-  { key: 'cdek', label: 'Доставка СДЭК', price: null },
-  { key: 'russia', label: 'Другой способ доставки', price: null },
+  { key: 'pickup', label: 'Самовывоз — бесплатно', price: 0 },
+  { key: 'courier', label: 'Доставка курьером — индивидуально', price: null },
+  { key: 'cdek', label: 'Доставка СДЭК — выбрать адрес/ПВЗ', price: null },
+  { key: 'other', label: 'Другой способ доставки', price: null },
 ]
 
 interface CdekInfo {

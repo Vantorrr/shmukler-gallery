@@ -21,7 +21,7 @@ export function Footer() {
   const [info, setInfo] = useState(CONTACT_DEFAULTS)
 
   useEffect(() => {
-    fetch('/api/admin/page-content')
+    fetch('/api/page-content')
       .then(r => r.json())
       .then(d => setInfo(prev => ({ ...prev, ...d })))
       .catch(() => {})
