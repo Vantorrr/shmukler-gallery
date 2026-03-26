@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef, Fragment } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   ChevronUp, ChevronDown, Pencil, Trash2, Plus, X, Check,
-  Upload, LogOut, RefreshCw, Archive, ArchiveRestore, Download, Tag
+  Upload, LogOut, RefreshCw, Archive, ArchiveRestore, Download, Tag, Copy
 } from 'lucide-react'
 
 type Tab = 'artworks' | 'artists' | 'exhibitions' | 'events' | 'team' | 'fairs' | 'slides' | 'announcements' | 'collections' | 'inquiries' | 'promo' | 'filters' | 'pages'
@@ -778,6 +778,22 @@ function Section({ tab }: { tab: Tab }) {
     }
   }
 
+  async function handleDuplicate(item: any) {
+    try {
+      const { id: _id, createdAt, updatedAt, slug, title, ...rest } = item
+      const copy = { ...rest, title: `${title} (копия)`, slug: `${slug}-copy-${Date.now()}` }
+      const res = await fetch(api, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(copy),
+      })
+      if (!res.ok) { alert('Ошибка дублирования'); return }
+      await load()
+      setSavedMsg('Дублировано ✓')
+      setTimeout(() => setSavedMsg(''), 3000)
+    } catch { alert('Ошибка сети') }
+  }
+
   async function toggleArchive(item: any) {
     const field = 'isArchived' in item ? 'isArchived' : 'isActive' in item ? 'isActive' : null
     if (!field) return
@@ -890,7 +906,10 @@ function Section({ tab }: { tab: Tab }) {
                     ))}
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <button onClick={() => { setEditId(item.id); setShowForm(true) }} className="text-gray-500 hover:text-black"><Pencil className="w-4 h-4" /></button>
+                        <button onClick={() => { setEditId(item.id); setShowForm(true) }} className="text-gray-500 hover:text-black" title="Редактировать"><Pencil className="w-4 h-4" /></button>
+                        {tab === 'artworks' && (
+                          <button onClick={() => handleDuplicate(item)} className="text-gray-500 hover:text-black" title="Дублировать"><Copy className="w-4 h-4" /></button>
+                        )}
                         {('isArchived' in item || 'isActive' in item) && (
                           <button
                             onClick={() => toggleArchive(item)}
