@@ -40,8 +40,13 @@ export default function ArtworkPage({ params }: { params: Promise<{ slug: string
   if (artwork.images) {
     try {
       const parsed = JSON.parse(artwork.images)
-      if (Array.isArray(parsed)) allImages = [...allImages, ...parsed.filter((u: string) => u && !allImages.includes(u))]
-    } catch { /* ignore */ }
+      if (Array.isArray(parsed)) {
+        parsed.filter((u: string) => u && !allImages.includes(u)).forEach((u: string) => allImages.push(u))
+      }
+    } catch {
+      // comma-separated format
+      artwork.images.split(',').map((s: string) => s.trim()).filter((u: string) => u && !allImages.includes(u)).forEach((u: string) => allImages.push(u))
+    }
   }
 
   return (
