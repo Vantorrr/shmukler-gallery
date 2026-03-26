@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { sendAdminNotification } from '@/lib/mailer'
 
 const LIFEPAY_API_KEY = process.env.LIFEPAY_API_KEY || ''
 const LIFEPAY_LOGIN = process.env.LIFEPAY_LOGIN || ''
@@ -50,6 +51,18 @@ export async function POST(req: NextRequest) {
     const data = await response.json()
 
     if (data.code === 0 && data.data?.paymentUrl) {
+      sendAdminNotification({
+        type: 'order',
+        name,
+        email,
+        phone,
+        items,
+        amount,
+        delivery,
+        address,
+        comment,
+        orderId,
+      })
       return NextResponse.json({ ok: true, payUrl: data.data.paymentUrl, orderId })
     } else {
       console.error('LifePay error:', JSON.stringify(data))

@@ -3,6 +3,8 @@ import nodemailer from 'nodemailer'
 const SMTP_USER = process.env.SMTP_USER || ''
 const SMTP_PASS = process.env.SMTP_PASS || ''
 const NOTIFY_EMAIL = process.env.NOTIFY_EMAIL || 'info@shmuklergallery.ru'
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || ''
+const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || ''
 
 const transporter = nodemailer.createTransport({
   host: 'smtp.mail.ru',
@@ -19,6 +21,49 @@ const TYPE_LABELS: Record<string, string> = {
   order: 'Новый заказ',
   service: 'Заявка на услугу',
   subscribe: 'Подписка на рассылку',
+}
+
+type NotificationData = {
+  type: string
+  name: string
+  email: string
+  phone?: string | null
+  message?: string | null
+  service?: string | null
+  items?: string | null
+  amount?: string | null
+  delivery?: string | null
+  address?: string | null
+  comment?: string | null
+  orderId?: string | null
+  deliveryPrice?: number | null
+}
+
+function buildRows(data: NotificationData): [string, string][] {
+  const rows: [string, string][] = []
+
+  if (data.orderId) rows.push(['Заказ №', data.orderId])
+  rows.push(['Имя', data.name || '—'])
+  rows.push(['Email', data.email || '—'])
+  if (data.phone) rows.push(['Телефон', data.phone])
+  if (data.service) rows.push(['Услуга', data.service])
+  if (data.items) rows.push(['Состав', data.items])
+  if (data.delivery) {
+    const deliveryStr = data.delivery + (data.address ? ' — ' + data.address : '') + (data.deliveryPrice ? ` (${data.deliveryPrice} ₽)` : '')
+    rows.push(['Доставка', deliveryStr])
+  }
+  if (data.comment) rows.push(['Комментарий', data.comment])
+  if (data.message) rows.push(['Сообщение', data.message])
+  if (data.amount) rows.push(['Сумма', `${data.amount} ₽`])
+
+  return rows
+}
+
+function escapeTelegram(text: string) {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
 }
 
 function buildHtml(title: string, rows: [string, string][], extraHtml = '') {
@@ -47,42 +92,14 @@ function buildHtml(title: string, rows: [string, string][], extraHtml = '') {
   `
 }
 
-export async function sendNotificationEmail(data: {
-  type: string
-  name: string
-  email: string
-  phone?: string | null
-  message?: string | null
-  service?: string | null
-  items?: string | null
-  amount?: string | null
-  delivery?: string | null
-  address?: string | null
-  comment?: string | null
-  orderId?: string | null
-  deliveryPrice?: number | null
-}) {
+export async function sendNotificationEmail(data: NotificationData) {
   if (!SMTP_PASS) {
     console.warn('SMTP_PASS not set, skipping email notification')
     return
   }
 
   const label = TYPE_LABELS[data.type] || data.type
-  const rows: [string, string][] = []
-
-  if (data.orderId) rows.push(['Заказ №', data.orderId])
-  rows.push(['Имя', data.name])
-  rows.push(['Email', data.email])
-  if (data.phone) rows.push(['Телефон', data.phone])
-  if (data.service) rows.push(['Услуга', data.service])
-  if (data.items) rows.push(['Состав', data.items])
-  if (data.delivery) {
-    const deliveryStr = data.delivery + (data.address ? ' — ' + data.address : '') + (data.deliveryPrice ? ` (${data.deliveryPrice} ₽)` : '')
-    rows.push(['Доставка', deliveryStr])
-  }
-  if (data.comment) rows.push(['Комментарий', data.comment])
-  if (data.message) rows.push(['Сообщение', data.message])
-  if (data.amount) rows.push(['Сумма', `${data.amount} ₽`])
+  const rows = buildRows(data)
 
   const subject = data.amount
     ? `Новый заказ ${data.amount} ₽ — Галерея Шмуклер`
@@ -101,4 +118,41 @@ export async function sendNotificationEmail(data: {
   } catch (e) {
     console.error('Email notification failed:', e)
   }
+}
+
+export async function sendTelegramNotification(data: NotificationData) {
+  if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
+    console.warn('Telegram is not configured, skipping telegram notification')
+    return
+  }
+
+  const label = TYPE_LABELS[data.type] || data.type
+  const rows = buildRows(data)
+  const lines = [
+    `<b>${escapeTelegram(label)}</b>`,
+    '',
+    ...rows.map(([k, v]) => `<b>${escapeTelegram(k)}:</b> ${escapeTelegram(v)}`),
+  ]
+
+  try {
+    await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: TELEGRAM_CHAT_ID,
+        text: lines.join('\n'),
+        parse_mode: 'HTML',
+        disable_web_page_preview: true,
+      }),
+    })
+  } catch (e) {
+    console.error('Telegram notification failed:', e)
+  }
+}
+
+export async function sendAdminNotification(data: NotificationData) {
+  await Promise.allSettled([
+    sendNotificationEmail(data),
+    sendTelegramNotification(data),
+  ])
 }

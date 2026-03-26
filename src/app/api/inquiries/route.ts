@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { sendNotificationEmail } from '@/lib/mailer'
+import { sendAdminNotification } from '@/lib/mailer'
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
       const inquiry = await prisma.inquiry.create({
         data: { type: 'subscribe', name: name || '', email, status: 'new' },
       })
-      sendNotificationEmail({ type: 'subscribe', name: name || '—', email })
+      sendAdminNotification({ type: 'subscribe', name: name || '—', email })
       return NextResponse.json({ ok: true, id: inquiry.id })
     }
 
@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    sendNotificationEmail({ type: type || 'contact', name, email, phone, message, service, items })
+    sendAdminNotification({ type: type || 'contact', name, email, phone, message, service, items })
 
     return NextResponse.json({ ok: true, id: inquiry.id })
   } catch (error) {

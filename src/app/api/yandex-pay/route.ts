@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { sendNotificationEmail } from '@/lib/mailer'
+import { sendAdminNotification } from '@/lib/mailer'
 
 const MERCHANT_ID = process.env.YANDEX_PAY_MERCHANT_ID || ''
 const API_KEY = process.env.YANDEX_PAY_API_KEY || ''
@@ -82,8 +82,7 @@ export async function POST(req: NextRequest) {
     console.log('Yandex Pay response:', JSON.stringify(data))
 
     if (data.data?.paymentUrl) {
-      // Send order notification email
-      sendNotificationEmail({
+      sendAdminNotification({
         type: 'order',
         name, email, phone, items, amount,
         delivery, address, comment, orderId,
