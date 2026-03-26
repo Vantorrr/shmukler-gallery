@@ -82,7 +82,7 @@ export async function POST(req: NextRequest) {
     console.log('Yandex Pay response:', JSON.stringify(data))
 
     if (data.data?.paymentUrl) {
-      sendAdminNotification({
+      await sendAdminNotification({
         type: 'order',
         name, email, phone, items, amount,
         delivery, address, comment, orderId,

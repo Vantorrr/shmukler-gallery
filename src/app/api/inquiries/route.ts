@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
       const inquiry = await prisma.inquiry.create({
         data: { type: 'subscribe', name: name || '', email, status: 'new' },
       })
-      sendAdminNotification({ type: 'subscribe', name: name || '—', email })
+      await sendAdminNotification({ type: 'subscribe', name: name || '—', email })
       return NextResponse.json({ ok: true, id: inquiry.id })
     }
 
@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    sendAdminNotification({ type: type || 'contact', name, email, phone, message, service, items })
+    await sendAdminNotification({ type: type || 'contact', name, email, phone, message, service, items })
 
     return NextResponse.json({ ok: true, id: inquiry.id })
   } catch (error) {

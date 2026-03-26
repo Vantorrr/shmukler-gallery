@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
     const data = await response.json()
 
     if (data.code === 0 && data.data?.paymentUrl) {
-      sendAdminNotification({
+      await sendAdminNotification({
         type: 'order',
         name,
         email,
