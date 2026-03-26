@@ -11,13 +11,22 @@ export async function GET() {
   }
 }
 
+async function uniqueSlug(base: string): Promise<string> {
+  let slug = base
+  let i = 2
+  while (await prisma.artwork.findUnique({ where: { slug } })) {
+    slug = `${base}-${i++}`
+  }
+  return slug
+}
+
 export async function POST(req: NextRequest) {
   try {
     const raw = await req.json()
     const { id: _id, createdAt, updatedAt, ...data } = raw
-    // Normalize numeric fields
     const normalized = {
       ...data,
+      slug: await uniqueSlug(data.slug || ''),
       price: data.price !== '' && data.price != null ? Number(data.price) : null,
       year: data.year !== '' && data.year != null ? Number(data.year) : null,
       orderIndex: Number(data.orderIndex) || 0,
