@@ -7,7 +7,7 @@ import Link from 'next/link'
 
 const DELIVERY_OPTIONS = [
   { key: 'pickup', label: 'Самовывоз — бесплатно', price: 0 },
-  { key: 'courier', label: 'Доставка курьером — индивидуально', price: null },
+  { key: 'courier', label: 'Доставка курьером — 1 500 ₽', price: 1500 },
   { key: 'cdek', label: 'Доставка СДЭК — выбрать адрес/ПВЗ', price: null },
   { key: 'other', label: 'Другой способ доставки', price: null },
 ]

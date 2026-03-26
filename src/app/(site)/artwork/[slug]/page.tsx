@@ -106,10 +106,10 @@ export default function ArtworkPage({ params }: { params: Promise<{ slug: string
             </button>
             {deliveryOpen && (
               <div className="mt-3 text-sm text-gray-600 font-light space-y-1 bg-gray-50 p-4 rounded-lg">
-                <p>Самовывоз из галереи — бесплатно</p>
-                <p>Доставка по Москве — индивидуально</p>
-                <p>Доставка по России — индивидуально</p>
-                <p>Международная доставка — по запросу</p>
+                <p>Самовывоз — бесплатно</p>
+                <p>Доставка курьером — 1 500 ₽</p>
+                <p>Доставка СДЭК — выбрать адрес/ПВЗ</p>
+                <p>Другой способ доставки — по договорённости</p>
               </div>
             )}
           </div>
