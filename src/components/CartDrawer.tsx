@@ -354,16 +354,9 @@ export function CartDrawer() {
                   <div className="space-y-2">
                     <p className="text-xs uppercase tracking-widest text-gray-400">Способ получения</p>
                     {DELIVERY_OPTIONS.map(opt => (
-                      <label key={opt.key} className="flex items-center justify-between cursor-pointer group">
-                        <div className="flex items-center gap-3">
-                          <input type="radio" name="delivery" value={opt.key} checked={delivery === opt.key} onChange={e => setDelivery(e.target.value)} className="accent-black" />
-                          <span className="text-sm">{opt.label}</span>
-                        </div>
-                        <span className="text-sm text-gray-500">
-                          {opt.key === 'cdek'
-                            ? (cdekInfo ? `${cdekInfo.price.toLocaleString()} ₽` : 'выбрать ПВЗ')
-                            : opt.price === 0 ? 'бесплатно' : opt.price === null ? 'индивидуально' : `${opt.price.toLocaleString()} ₽`}
-                        </span>
+                      <label key={opt.key} className="flex items-center gap-3 cursor-pointer group">
+                        <input type="radio" name="delivery" value={opt.key} checked={delivery === opt.key} onChange={e => setDelivery(e.target.value)} className="accent-black" />
+                        <span className="text-sm">{opt.label}</span>
                       </label>
                     ))}
                   </div>
