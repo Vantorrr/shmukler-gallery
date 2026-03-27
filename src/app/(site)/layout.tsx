@@ -11,7 +11,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
       <div className="flex flex-col min-h-screen">
         <AnnouncementBanner />
         <Navigation />
-        <main className="flex-grow pt-20">
+        <main className="flex-grow" style={{ paddingTop: 'calc(5rem + var(--announcement-offset, 0px))' }}>
           {children}
         </main>
         <Footer />

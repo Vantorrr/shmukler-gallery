@@ -15,10 +15,16 @@ export function AnnouncementBanner() {
       .catch(() => {})
   }, [])
 
+  useEffect(() => {
+    const offset = announcement && !dismissed ? '38px' : '0px'
+    document.documentElement.style.setProperty('--announcement-offset', offset)
+    return () => document.documentElement.style.setProperty('--announcement-offset', '0px')
+  }, [announcement, dismissed])
+
   if (!announcement || dismissed) return null
 
   return (
-    <div className="relative z-[30] bg-black text-white text-xs py-2.5 px-12 text-center">
+    <div className="fixed top-0 left-0 right-0 z-[60] bg-black text-white text-xs py-2.5 px-12 text-center">
       {announcement.linkUrl ? (
         <Link href={announcement.linkUrl} className="hover:underline">
           {announcement.text}

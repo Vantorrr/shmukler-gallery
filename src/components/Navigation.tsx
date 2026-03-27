@@ -26,7 +26,10 @@ export function Navigation() {
 
   return (
     <>
-      <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 md:px-12 py-5 bg-white/95 backdrop-blur-sm border-b border-gray-100">
+      <nav
+        className="fixed left-0 right-0 z-50 flex items-center justify-between px-6 md:px-12 py-5 bg-white/95 backdrop-blur-sm border-b border-gray-100"
+        style={{ top: 'var(--announcement-offset, 0px)' }}
+      >
         <Link href="/" className="hover:opacity-80 transition-opacity flex-shrink-0">
           <Image src="/logo.png" alt="Шмуклер Галерея" width={240} height={96} className="h-[90px] w-auto object-contain" priority />
         </Link>
@@ -62,7 +65,10 @@ export function Navigation() {
       </nav>
 
       {mobileOpen && (
-        <div className="fixed inset-0 z-40 bg-white pt-36 px-6 overflow-y-auto">
+        <div
+          className="fixed inset-0 z-40 bg-white px-6 overflow-y-auto"
+          style={{ paddingTop: 'calc(9rem + var(--announcement-offset, 0px))' }}
+        >
           <ul className="space-y-5">
             {links.map((link) => (
               <li key={link.href}>
