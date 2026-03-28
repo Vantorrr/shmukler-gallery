@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+function normalizeAnnouncementData(raw: any) {
+  const data = { ...raw }
+  if (data.expiresAt === '' || data.expiresAt == null) data.expiresAt = null
+  else data.expiresAt = new Date(data.expiresAt)
+  if (data.linkUrl === '') data.linkUrl = null
+  return data
+}
+
 export async function GET() {
   try {
     const items = await prisma.announcement.findMany({ orderBy: { createdAt: 'desc' } })
@@ -13,7 +21,7 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
-    const data = await req.json()
+    const data = normalizeAnnouncementData(await req.json())
     const item = await prisma.announcement.create({ data })
     return NextResponse.json(item, { status: 201 })
   } catch (error) {
