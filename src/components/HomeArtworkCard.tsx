@@ -4,6 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useCart } from '@/lib/CartContext'
+import { parseArtists } from '@/lib/gallery-helpers'
 
 type Artwork = {
   id?: string
@@ -11,10 +12,12 @@ type Artwork = {
   title: string
   slug: string | { current: string }
   artistName?: string
+  artistsJson?: string
   artist?: string
   price?: number
   status?: string
   medium?: string
+  dimensions?: string
   imagePath?: string
   mainImage?: { asset?: { url?: string } }
 }
@@ -24,7 +27,8 @@ export function HomeArtworkCard({ artwork, cover = false, natural = false }: { a
   const router = useRouter()
   const slug = typeof artwork.slug === 'string' ? artwork.slug : artwork.slug?.current
   const imageUrl = artwork.imagePath || artwork.mainImage?.asset?.url
-  const artist = artwork.artistName || artwork.artist
+  const artistLinks = parseArtists(artwork.artistsJson, { name: artwork.artistName || artwork.artist })
+  const artist = artistLinks.map(link => link.name).join(', ')
   const itemId = artwork.id || artwork._id || ''
   const inCart = items.some(i => i.id === itemId)
   const isSold = artwork.status === 'sold'
@@ -83,6 +87,8 @@ export function HomeArtworkCard({ artwork, cover = false, natural = false }: { a
         <div className="space-y-0.5 mb-3">
           {artist && <p className="text-[11px] text-gray-400 uppercase tracking-widest">{artist}</p>}
           <h3 className="text-sm font-medium leading-snug group-hover:opacity-60 transition-opacity">{artwork.title}</h3>
+          {artwork.medium && <p className="text-sm text-gray-600">{artwork.medium}</p>}
+          {artwork.dimensions && <p className="text-sm text-gray-600">{artwork.dimensions}</p>}
           {artwork.price && !isSold && (
             <p className="text-sm text-gray-600">{artwork.price.toLocaleString('ru-RU')} ₽</p>
           )}

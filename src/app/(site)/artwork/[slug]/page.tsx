@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useCart } from '@/lib/CartContext'
 import { use } from 'react'
 import { RichText } from '@/components/RichText'
+import { parseArtists, parseStringArray } from '@/lib/gallery-helpers'
 
 export default function ArtworkPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params)
@@ -13,6 +14,7 @@ export default function ArtworkPage({ params }: { params: Promise<{ slug: string
   const [loading, setLoading] = useState(true)
   const [deliveryOpen, setDeliveryOpen] = useState(false)
   const [activeImage, setActiveImage] = useState(0)
+  const [relatedWorks, setRelatedWorks] = useState<any[]>([])
   const { add, items } = useCart()
   const inCart = artwork && items.find(i => i.id === artwork.id)
 
@@ -22,7 +24,19 @@ export default function ArtworkPage({ params }: { params: Promise<{ slug: string
       .then(r => r.json())
       .then(d => {
         const found = d.items?.[0]
-        if (found) setArtwork(found)
+        if (found) {
+          setActiveImage(0)
+          setArtwork(found)
+          const relatedIds = parseStringArray(found.relatedArtworkIds)
+          if (relatedIds.length > 0) {
+            fetch(`/api/artworks?ids=${encodeURIComponent(relatedIds.join(','))}&limit=100`)
+              .then(r => r.json())
+              .then(related => setRelatedWorks(Array.isArray(related.items) ? related.items : []))
+              .catch(() => {})
+          } else {
+            setRelatedWorks([])
+          }
+        }
       })
       .catch(() => {})
       .finally(() => setLoading(false))
@@ -32,8 +46,13 @@ export default function ArtworkPage({ params }: { params: Promise<{ slug: string
   if (!artwork) return <div className="min-h-[50vh] flex items-center justify-center"><h1 className="text-2xl font-light text-gray-400">Работа не найдена</h1></div>
 
   const handleAddToCart = () => {
-    add({ id: artwork.id, title: artwork.title, artistName: artwork.artistName, price: artwork.price, imagePath: artwork.imagePath, slug: artwork.slug })
+    const artistLabel = parseArtists(artwork.artistsJson, { name: artwork.artistName, slug: artwork.artistSlug }).map(artist => artist.name).join(', ')
+    add({ id: artwork.id, title: artwork.title, artistName: artistLabel, price: artwork.price, imagePath: artwork.imagePath, slug: artwork.slug })
   }
+
+  const artistLinks = parseArtists(artwork.artistsJson, { name: artwork.artistName, slug: artwork.artistSlug })
+  const variantMode = artwork.variantMode || 'single'
+  const bundleOptions = variantMode === 'bundle' ? [artwork, ...relatedWorks] : relatedWorks
 
   let allImages: string[] = []
   if (artwork.imagePath) allImages.push(artwork.imagePath)
@@ -77,10 +96,20 @@ export default function ArtworkPage({ params }: { params: Promise<{ slug: string
 
         <div className="lg:col-span-5 lg:sticky lg:top-32 h-fit space-y-8">
           <div className="space-y-3">
-            {artwork.artistName && (
-              <Link href={`/artists/${artwork.artistSlug || ''}`} className="text-xs uppercase tracking-widest text-gray-500 hover:text-black transition-colors block">
-                {artwork.artistName}
-              </Link>
+            {artistLinks.length > 0 && (
+              <div className="flex flex-wrap gap-x-3 gap-y-1">
+                {artistLinks.map((artist, index) => (
+                  artist.slug ? (
+                    <Link key={`${artist.slug}-${index}`} href={`/artists/${artist.slug}`} className="text-xs uppercase tracking-widest text-gray-500 hover:text-black transition-colors block">
+                      {artist.name}
+                    </Link>
+                  ) : (
+                    <span key={`${artist.name}-${index}`} className="text-xs uppercase tracking-widest text-gray-500 block">
+                      {artist.name}
+                    </span>
+                  )
+                ))}
+              </div>
             )}
             <h1 className="text-3xl md:text-4xl font-serif leading-tight">{artwork.title}</h1>
             {artwork.series && (
@@ -100,6 +129,55 @@ export default function ArtworkPage({ params }: { params: Promise<{ slug: string
           {artwork.description && (
             <div className="text-sm text-gray-600 font-light leading-relaxed">
               <RichText text={artwork.description} />
+            </div>
+          )}
+
+          {variantMode === 'switch' && relatedWorks.length > 0 && (
+            <div className="space-y-3">
+              <h2 className="text-xs uppercase tracking-widest text-gray-400">Работы на выбор</h2>
+              <div className="grid grid-cols-2 gap-3">
+                {[artwork, ...relatedWorks].map((item: any) => (
+                  <Link
+                    key={item.id}
+                    href={`/artwork/${item.slug}`}
+                    className={`border p-3 transition-colors ${item.id === artwork.id ? 'border-black bg-gray-50' : 'border-gray-200 hover:border-black'}`}
+                  >
+                    <div className="relative aspect-square bg-gray-50 mb-2">
+                      {item.imagePath && <Image src={item.imagePath} alt={item.title} fill className="object-contain" sizes="160px" />}
+                    </div>
+                    <p className="text-sm leading-snug">{item.title}</p>
+                    {item.price ? <p className="text-xs text-gray-500 mt-1">{Number(item.price).toLocaleString('ru-RU')} ₽</p> : null}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {variantMode === 'bundle' && bundleOptions.length > 0 && (
+            <div className="space-y-3">
+              <h2 className="text-xs uppercase tracking-widest text-gray-400">Варианты покупки</h2>
+              <div className="space-y-2">
+                {bundleOptions.map((item: any, index: number) => {
+                  const isCurrent = item.id === artwork.id
+                  const label = index === 0 ? 'Целиком' : `Часть ${index}`
+                  return (
+                    <Link
+                      key={item.id}
+                      href={`/artwork/${item.slug}`}
+                      className={`flex items-center gap-3 border p-3 transition-colors ${isCurrent ? 'border-black bg-gray-50' : 'border-gray-200 hover:border-black'}`}
+                    >
+                      <div className="relative w-16 h-16 bg-gray-50 flex-shrink-0">
+                        {item.imagePath && <Image src={item.imagePath} alt={item.title} fill className="object-contain" sizes="64px" />}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[11px] uppercase tracking-widest text-gray-400">{label}</p>
+                        <p className="text-sm truncate">{item.title}</p>
+                        {item.price ? <p className="text-xs text-gray-500 mt-1">{Number(item.price).toLocaleString('ru-RU')} ₽</p> : null}
+                      </div>
+                    </Link>
+                  )
+                })}
+              </div>
             </div>
           )}
 

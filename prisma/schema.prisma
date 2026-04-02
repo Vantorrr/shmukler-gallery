@@ -7,30 +7,33 @@ datasource db {
 }
 
 model Artwork {
-  id           String   @id @default(cuid())
-  title        String
-  slug         String   @unique
-  artistName   String?
-  artistSlug   String?
-  exhibitionId String?
-  fairId       String?
-  price        Int?
-  status       String   @default("available")
-  medium       String?
-  technique    String?
-  materials    String?
-  dimensions   String?
-  year         Int?
-  series       String?
-  description  String?
-  imagePath    String?
-  images       String?
-  theme        String?
-  colorTags    String?
-  isArchived   Boolean  @default(false)
-  orderIndex   Int      @default(0)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id                String   @id @default(cuid())
+  title             String
+  slug              String   @unique
+  artistName        String?
+  artistSlug        String?
+  artistsJson       String?
+  exhibitionId      String?
+  fairId            String?
+  price             Int?
+  status            String   @default("available")
+  medium            String?
+  technique         String?
+  materials         String?
+  dimensions        String?
+  year              Int?
+  series            String?
+  description       String?
+  imagePath         String?
+  images            String?
+  theme             String?
+  colorTags         String?
+  variantMode       String   @default("single")
+  relatedArtworkIds String   @default("[]")
+  isArchived        Boolean  @default(false)
+  orderIndex        Int      @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 }
 
 model Artist {
@@ -49,19 +52,21 @@ model Artist {
 }
 
 model Exhibition {
-  id           String   @id @default(cuid())
-  title        String
-  slug         String   @unique
-  startDate    String?
-  endDate      String?
-  location     String?
-  description  String?
-  coverImage   String?
+  id            String   @id @default(cuid())
+  title         String
+  slug          String   @unique
+  startDate     String?
+  endDate       String?
+  location      String?
+  description   String?
+  coverImage    String?
   galleryImages String?
-  status       String   @default("current")
-  orderIndex   Int      @default(0)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  eventIds      String   @default("[]")
+  status        String   @default("current")
+  isArchived    Boolean  @default(false)
+  orderIndex    Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 model Event {
@@ -107,6 +112,7 @@ model Fair {
   coverImage    String?
   galleryImages String?
   status        String   @default("upcoming")
+  isArchived    Boolean  @default(false)
   orderIndex    Int      @default(0)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt

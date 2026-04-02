@@ -200,7 +200,9 @@ export function CartDrawer() {
     if (delivery === 'cdek' && !cdekInfo) { alert('Пожалуйста, выберите пункт доставки СДЭК'); return false }
     setSending(true)
     try {
-      const itemsSummary = items.map(i => `${i.title} (${i.price?.toLocaleString() ?? '—'} ₽)`).join('; ')
+      const itemsSummary = items
+        .map(i => `${i.artistName ? `${i.artistName} — ` : ''}${i.title} (${i.price?.toLocaleString() ?? '—'} ₽)`)
+        .join('; ')
       const deliveryLabel = delivery === 'cdek' && cdekInfo
         ? `СДЭК (${cdekInfo.type}): ${cdekInfo.address}`
         : (DELIVERY_OPTIONS.find(o => o.key === delivery)?.label ?? delivery)

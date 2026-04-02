@@ -21,7 +21,13 @@ export async function GET(req: NextRequest) {
 
     // When fetching by slug (detail page), don't restrict by isArchived
     const where: any = (ids || slugFilter) ? {} : { isArchived: false }
-    if (artistSlug) where.artistSlug = artistSlug
+    if (artistSlug) {
+      where.OR = [
+        { artistSlug },
+        { artistsJson: { contains: `"slug":"${artistSlug}"` } },
+        { artistsJson: { contains: `"slug":"${artistSlug.toLowerCase()}"` } },
+      ]
+    }
     if (slugFilter) where.slug = { equals: slugFilter, mode: 'insensitive' }
     if (exhibitionId) where.exhibitionId = exhibitionId
     if (fairId) where.fairId = fairId

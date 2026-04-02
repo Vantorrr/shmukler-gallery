@@ -12,6 +12,7 @@ function parseInline(text: string): string {
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="underline hover:opacity-70 transition-opacity">$1</a>')
     .replace(/\*\*(.*?)\*\*/g, '<strong style="font-weight:800">$1</strong>')
     .replace(/__(.*?)__/g, '<u>$1</u>')
     .replace(/\*(.*?)\*/g, '<em>$1</em>')

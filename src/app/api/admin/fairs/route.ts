@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+function normalizeFairData(data: any) {
+  return {
+    ...data,
+    isArchived: Boolean(data.isArchived),
+    orderIndex: Number(data.orderIndex) || 0,
+  }
+}
+
 export async function GET() {
   try {
     const items = await prisma.fair.findMany({ orderBy: [{ orderIndex: 'asc' }, { createdAt: 'desc' }] })
@@ -13,7 +21,7 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
-    const data = await req.json()
+    const data = normalizeFairData(await req.json())
     const item = await prisma.fair.create({ data })
     return NextResponse.json(item, { status: 201 })
   } catch (error) {

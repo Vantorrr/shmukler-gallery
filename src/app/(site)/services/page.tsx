@@ -100,7 +100,7 @@ function ApplicationModal({ service, onClose }: { service: Service; onClose: () 
         <button onClick={onClose} className="absolute top-5 right-5 text-gray-400 hover:text-black transition-colors"><X className="w-5 h-5" /></button>
 
         <h3 className="text-2xl font-serif mb-1">{service.title}</h3>
-        <p className="text-sm text-gray-500 mb-6">Оставьте ваш запрос и мы свяжемся с вами для уточнения деталей</p>
+        <p className="text-sm text-gray-500 mb-6">Оставьте ваш запрос, и мы свяжемся с вами для уточнения деталей</p>
 
         {!sent ? (
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -175,7 +175,7 @@ export default function ServicesPage() {
         </div>
 
         <div className="mt-20 text-center border-t border-gray-100 pt-16">
-          <p className="text-lg text-gray-500 font-light mb-2">Оставьте ваш запрос и мы свяжемся с вами для уточнения деталей</p>
+          <p className="text-lg text-gray-500 font-light mb-2">Оставьте ваш запрос, и мы свяжемся с вами для уточнения деталей</p>
           <p className="text-sm text-gray-400 mb-8">или напишите напрямую: <a href="mailto:info@artishokcenter.ru" className="underline hover:text-black">info@artishokcenter.ru</a></p>
         </div>
       </div>

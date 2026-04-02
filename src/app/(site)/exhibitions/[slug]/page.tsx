@@ -6,11 +6,14 @@ import Image from 'next/image'
 import { use } from 'react'
 import { clsx } from 'clsx'
 import { RichText } from '@/components/RichText'
+import Link from 'next/link'
+import { parseStringArray } from '@/lib/gallery-helpers'
 
 export default function ExhibitionPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params)
   const [exhibition, setExhibition] = useState<any>(null)
   const [artworks, setArtworks] = useState<any[]>([])
+  const [events, setEvents] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [slideIdx, setSlideIdx] = useState(0)
 
@@ -21,8 +24,14 @@ export default function ExhibitionPage({ params }: { params: Promise<{ slug: str
         const found = Array.isArray(d) ? d.find((e: any) => e.slug === slug || e.slug?.current === slug) : null
         if (found) {
           setExhibition(found)
-          return fetch(`/api/artworks?exhibitionId=${found.id}&limit=100`).then(r => r.json()).then(aw => {
+          return Promise.all([
+            fetch(`/api/artworks?exhibitionId=${found.id}&limit=100`).then(r => r.json()),
+            parseStringArray(found.eventIds).length > 0
+              ? fetch(`/api/events?ids=${encodeURIComponent(parseStringArray(found.eventIds).join(','))}`).then(r => r.json())
+              : Promise.resolve([]),
+          ]).then(([aw, eventsData]) => {
             setArtworks(aw.items || [])
+            setEvents(Array.isArray(eventsData) ? eventsData : [])
           })
         }
       })
@@ -93,6 +102,42 @@ export default function ExhibitionPage({ params }: { params: Promise<{ slug: str
           <div className="max-w-2xl mx-auto mb-20">
             <RichText text={exhibition.description} className="text-gray-600 font-light" />
           </div>
+        )}
+
+        {events.length > 0 && (
+          <section className="max-w-4xl mx-auto mb-20">
+            <h2 className="text-xs uppercase tracking-widest text-gray-400 mb-8 border-t border-gray-100 pt-10">Параллельная программа</h2>
+            <div className="space-y-4">
+              {events.map((event) => {
+                const href = event.format === 'offline'
+                  ? (event.ticketUrl || event.registrationUrl || `/events#${event.slug || event.id}`)
+                  : (event.accessUrl || `/events#${event.slug || event.id}`)
+                const buttonLabel = event.format === 'offline'
+                  ? (event.ticketUrl ? 'Купить билет' : 'Зарегистрироваться')
+                  : 'Получить доступ'
+                return (
+                  <div key={event.id} className="border border-gray-200 p-5 grid grid-cols-1 md:grid-cols-[1fr_auto] gap-4 items-start">
+                    <div>
+                      <p className="text-xs uppercase tracking-widest text-gray-400 mb-2">
+                        {event.date ? new Date(event.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' }) : 'Без даты'}
+                        {event.time ? ` · ${event.time}` : ''}
+                      </p>
+                      <h3 className="text-xl font-serif mb-1">{event.title}</h3>
+                      {event.location && <p className="text-sm text-gray-500">{event.location}</p>}
+                    </div>
+                    <a
+                      href={href}
+                      target={href.startsWith('/events#') ? undefined : '_blank'}
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center bg-black text-white px-5 py-2.5 text-xs uppercase tracking-widest hover:bg-gray-900 transition-colors"
+                    >
+                      {buttonLabel}
+                    </a>
+                  </div>
+                )
+              })}
+            </div>
+          </section>
         )}
 
         {artworks.length > 0 && (

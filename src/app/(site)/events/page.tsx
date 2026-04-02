@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
-import { ChevronDown, ChevronUp } from 'lucide-react'
+import { ChevronDown, ChevronUp, Link2 } from 'lucide-react'
 import { RichText } from '@/components/RichText'
 
 function formatDate(dateStr: string) {
@@ -18,11 +18,20 @@ function formatPrice(price: number | null | undefined) {
 
 function EventCard({ event }: { event: any }) {
   const [expanded, setExpanded] = useState(false)
+  const [copied, setCopied] = useState(false)
   const isOffline = event.format === 'offline'
   const imageUrl = event.coverImage?.asset?.url || event.coverImage
+  const anchorId = event.slug || event.id
+
+  async function copyLink() {
+    const url = `${window.location.origin}/events#${anchorId}`
+    await navigator.clipboard.writeText(url)
+    setCopied(true)
+    window.setTimeout(() => setCopied(false), 2000)
+  }
 
   return (
-    <article className="border-b border-gray-100 py-10">
+    <article id={anchorId} className="border-b border-gray-100 py-10 scroll-mt-40">
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-12">
         {imageUrl && (
           <div className="md:col-span-2 lg:col-span-2">
@@ -60,7 +69,14 @@ function EventCard({ event }: { event: any }) {
             </div>
 
             {/* Action button */}
-            <div className="flex-shrink-0">
+            <div className="flex-shrink-0 flex items-center gap-2">
+              <button
+                onClick={() => void copyLink()}
+                className="inline-flex items-center gap-1 border border-gray-300 px-3 py-2.5 text-[11px] uppercase tracking-widest hover:border-black transition-colors whitespace-nowrap"
+              >
+                <Link2 className="w-3.5 h-3.5" />
+                {copied ? 'Скопировано' : 'Ссылка'}
+              </button>
               {isOffline ? (
                 <a
                   href={event.ticketUrl || event.registrationUrl || '#'}

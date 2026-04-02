@@ -4,8 +4,9 @@ import { useState, useEffect, useCallback, useRef, Fragment } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   ChevronUp, ChevronDown, Pencil, Trash2, Plus, X, Check,
-  Upload, LogOut, RefreshCw, Archive, ArchiveRestore, Download, Tag, Copy
+  Upload, LogOut, RefreshCw, Archive, ArchiveRestore, Download, Tag, Copy, Link2, GripVertical
 } from 'lucide-react'
+import { parseArtists, parseStringArray, stringifyArtists, stringifyStringArray } from '@/lib/gallery-helpers'
 
 type Tab = 'artworks' | 'artists' | 'exhibitions' | 'events' | 'team' | 'fairs' | 'slides' | 'announcements' | 'collections' | 'inquiries' | 'promo' | 'filters' | 'pages'
 
@@ -166,15 +167,50 @@ function Select({ children, ...props }: React.SelectHTMLAttributes<HTMLSelectEle
 // ─── Forms ───────────────────────────────────────────────────────────────────
 
 function ArtworkForm({ initial, onSave, onCancel }: { initial: any; onSave: (d: any) => void; onCancel: () => void }) {
-  const defaults = { title: '', slug: '', artistName: '', artistSlug: '', price: '', status: 'available', medium: '', technique: '', materials: '', dimensions: '', year: '', series: '', description: '', imagePath: '', images: '', theme: '', colorTags: '', exhibitionId: '', fairId: '', orderIndex: 0, isArchived: false }
-  const [d, setD] = useState({ ...defaults, ...initial, price: initial?.price ?? '', year: initial?.year ?? '', orderIndex: initial?.orderIndex ?? 0 })
+  const defaults = {
+    title: '', slug: '', artistName: '', artistSlug: '', artistsInput: '', price: '', status: 'available', medium: '', technique: '', materials: '', dimensions: '', year: '', series: '', description: '', imagePath: '', images: '', theme: '', colorTags: '', exhibitionId: '', fairId: '', variantMode: 'single', relatedArtworkIds: '[]', orderIndex: 0, isArchived: false,
+  }
+  const [d, setD] = useState(() => {
+    const artists = parseArtists(initial?.artistsJson, { name: initial?.artistName, slug: initial?.artistSlug })
+    return {
+      ...defaults,
+      ...initial,
+      artistsInput: artists.map(artist => `${artist.name}${artist.slug ? ` | ${artist.slug}` : ''}`).join('\n'),
+      variantMode: initial?.variantMode || 'single',
+      relatedArtworkIds: initial?.relatedArtworkIds || '[]',
+      price: initial?.price ?? '',
+      year: initial?.year ?? '',
+      orderIndex: initial?.orderIndex ?? 0,
+    }
+  })
   const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => setD((prev: any) => ({ ...prev, [k]: e.target.value }))
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!d.title) return
     const slug = d.slug || d.title.toLowerCase().replace(/[^a-z0-9а-яёA-ZА-ЯЁ\s]/g, '').replace(/\s+/g, '-')
-    onSave({ ...d, slug, price: d.price ? parseInt(d.price) : null, year: d.year ? parseInt(d.year) : null, orderIndex: parseInt(String(d.orderIndex)) || 0 })
+    const artists = d.artistsInput
+      .split('\n')
+      .map((row: string) => row.trim())
+      .filter(Boolean)
+      .map((row: string) => {
+        const [name, slugPart] = row.split('|').map(s => s.trim())
+        return { name, slug: slugPart || undefined }
+      })
+      .filter((artist: any) => artist.name)
+    const primaryArtist = artists[0] || null
+    const { artistsInput, ...rest } = d
+
+    onSave({
+      ...rest,
+      slug,
+      artistName: primaryArtist?.name || d.artistName || '',
+      artistSlug: primaryArtist?.slug || d.artistSlug || '',
+      artistsJson: stringifyArtists(artists),
+      price: d.price ? parseInt(d.price) : null,
+      year: d.year ? parseInt(d.year) : null,
+      orderIndex: parseInt(String(d.orderIndex)) || 0,
+    })
   }
 
   return (
@@ -184,6 +220,13 @@ function ArtworkForm({ initial, onSave, onCancel }: { initial: any; onSave: (d: 
         <Field label="Slug"><Input value={d.slug} onChange={set('slug')} placeholder="auto" /></Field>
         <Field label="Художник (имя)"><Input value={d.artistName} onChange={set('artistName')} /></Field>
         <Field label="Slug художника"><Input value={d.artistSlug} onChange={set('artistSlug')} /></Field>
+        <Field label="Режим карточки">
+          <Select value={d.variantMode} onChange={set('variantMode')}>
+            <option value="single">Обычная работа</option>
+            <option value="switch">Несколько работ на выбор</option>
+            <option value="bundle">Целая работа / части</option>
+          </Select>
+        </Field>
         <Field label="Цена (₽)"><Input type="number" value={d.price} onChange={set('price')} /></Field>
         <Field label="Статус">
           <Select value={d.status} onChange={set('status')}>
@@ -209,11 +252,21 @@ function ArtworkForm({ initial, onSave, onCancel }: { initial: any; onSave: (d: 
           </label>
         </Field>
       </div>
+      <Field label="Авторы (каждый с новой строки: Имя | slug)">
+        <Textarea value={d.artistsInput} onChange={set('artistsInput')} rows={3} />
+      </Field>
       <Field label="Описание"><Textarea value={d.description} onChange={set('description')} /></Field>
       <Field label="Главное изображение"><ImageUpload value={d.imagePath || ''} onChange={v => setD((p: any) => ({ ...p, imagePath: v }))} /></Field>
       <Field label="Дополнительные фото">
         <MultiImageUpload value={d.images || ''} onChange={v => setD((p: any) => ({ ...p, images: v }))} />
       </Field>
+      {initial?.id && d.variantMode !== 'single' && (
+        <RelatedArtworkLinker
+          currentArtworkId={initial.id}
+          relatedArtworkIds={d.relatedArtworkIds}
+          onChange={ids => setD((p: any) => ({ ...p, relatedArtworkIds: ids }))}
+        />
+      )}
       <div className="flex gap-2 pt-2">
         <button type="submit" className="flex items-center gap-1 bg-black text-white px-4 py-2 text-sm rounded hover:bg-gray-800"><Check className="w-4 h-4" /> Сохранить</button>
         <button type="button" onClick={onCancel} className="flex items-center gap-1 border border-gray-300 px-4 py-2 text-sm rounded hover:bg-gray-50"><X className="w-4 h-4" /> Отмена</button>
@@ -261,8 +314,8 @@ function ArtistForm({ initial, onSave, onCancel }: { initial: any; onSave: (d: a
 }
 
 function ExhibitionForm({ initial, onSave, onCancel }: { initial: any; onSave: (d: any) => void; onCancel: () => void }) {
-  const exhibitionDefaults = { title: '', slug: '', startDate: '', endDate: '', location: '', description: '', coverImage: '', galleryImages: '', status: 'current', orderIndex: 0 }
-  const [d, setD] = useState({ ...exhibitionDefaults, ...initial, orderIndex: initial?.orderIndex ?? 0 })
+  const exhibitionDefaults = { title: '', slug: '', startDate: '', endDate: '', location: '', description: '', coverImage: '', galleryImages: '', eventIds: '[]', status: 'current', orderIndex: 0, isArchived: false }
+  const [d, setD] = useState({ ...exhibitionDefaults, ...initial, eventIds: initial?.eventIds || '[]', orderIndex: initial?.orderIndex ?? 0 })
   const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => setD((prev: any) => ({ ...prev, [k]: e.target.value }))
 
   function handleSubmit(e: React.FormEvent) {
@@ -288,12 +341,19 @@ function ExhibitionForm({ initial, onSave, onCancel }: { initial: any; onSave: (
           </Select>
         </Field>
         <Field label="Порядок показа"><Input type="number" value={d.orderIndex} onChange={set('orderIndex')} /></Field>
+        <Field label="Архив">
+          <label className="flex items-center gap-2 text-sm cursor-pointer">
+            <input type="checkbox" checked={d.isArchived} onChange={e => setD((p: any) => ({ ...p, isArchived: e.target.checked }))} />
+            Скрыть (в архив)
+          </label>
+        </Field>
       </div>
       <Field label="Описание"><Textarea value={d.description} onChange={set('description')} /></Field>
       <Field label="Обложка"><ImageUpload value={d.coverImage || ''} onChange={v => setD((p: any) => ({ ...p, coverImage: v }))} /></Field>
       <Field label="Фото галереи (загрузите или вставьте URL через запятую)">
         <MultiImageUpload value={d.galleryImages || ''} onChange={v => setD((p: any) => ({ ...p, galleryImages: v }))} />
       </Field>
+      <EventLinker eventIds={d.eventIds} onChange={ids => setD((p: any) => ({ ...p, eventIds: ids }))} />
       {initial?.id && <ArtworkLinker type="exhibition" parentId={initial.id} parentTitle={d.title} />}
       <div className="flex gap-2 pt-2">
         <button type="submit" className="flex items-center gap-1 bg-black text-white px-4 py-2 text-sm rounded hover:bg-gray-800"><Check className="w-4 h-4" /> Сохранить</button>
@@ -379,7 +439,7 @@ function TeamForm({ initial, onSave, onCancel }: { initial: any; onSave: (d: any
 }
 
 function FairForm({ initial, onSave, onCancel }: { initial: any; onSave: (d: any) => void; onCancel: () => void }) {
-  const fairDefaults = { title: '', slug: '', dates: '', location: '', booth: '', description: '', coverImage: '', galleryImages: '', status: 'upcoming', orderIndex: 0 }
+  const fairDefaults = { title: '', slug: '', dates: '', location: '', booth: '', description: '', coverImage: '', galleryImages: '', status: 'upcoming', orderIndex: 0, isArchived: false }
   const [d, setD] = useState({ ...fairDefaults, ...initial, orderIndex: initial?.orderIndex ?? 0 })
   const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => setD((prev: any) => ({ ...prev, [k]: e.target.value }))
 
@@ -399,6 +459,12 @@ function FairForm({ initial, onSave, onCancel }: { initial: any; onSave: (d: any
           </Select>
         </Field>
         <Field label="Порядок показа"><Input type="number" value={d.orderIndex} onChange={set('orderIndex')} /></Field>
+        <Field label="Архив">
+          <label className="flex items-center gap-2 text-sm cursor-pointer">
+            <input type="checkbox" checked={d.isArchived} onChange={e => setD((p: any) => ({ ...p, isArchived: e.target.checked }))} />
+            Скрыть (в архив)
+          </label>
+        </Field>
       </div>
       <Field label="Описание"><Textarea value={d.description} onChange={set('description')} /></Field>
       <Field label="Обложка"><ImageUpload value={d.coverImage || ''} onChange={v => setD((p: any) => ({ ...p, coverImage: v }))} /></Field>
@@ -675,12 +741,12 @@ const TAB_API: Record<Tab, string> = {
 }
 
 const TAB_COLS: Record<Tab, string[]> = {
-  artworks: ['_img', 'title', 'artistName', 'medium', 'price', 'status', 'orderIndex'],
+  artworks: ['_img', 'title', 'artistName', 'variantMode', 'medium', 'price', 'status', 'orderIndex'],
   artists: ['name', 'orderIndex', 'isArchived'],
-  exhibitions: ['title', 'startDate', 'status', 'orderIndex'],
+  exhibitions: ['title', 'startDate', 'status', 'isArchived', 'orderIndex'],
   events: ['title', 'date', 'format', 'price', 'orderIndex'],
   team: ['name', 'role', 'orderIndex'],
-  fairs: ['title', 'dates', 'status', 'orderIndex'],
+  fairs: ['title', 'dates', 'status', 'isArchived', 'orderIndex'],
   slides: ['title', 'orderIndex', 'isActive'],
   announcements: ['text', 'isActive', 'expiresAt'],
   collections: ['title', 'orderIndex', 'isActive'],
@@ -695,7 +761,7 @@ const COL_LABELS: Record<string, string> = {
   startDate: 'Начало', format: 'Формат', date: 'Дата', dates: 'Даты',
   isArchived: 'Архив', isActive: 'Активен', expiresAt: 'До', text: 'Текст',
   type: 'Тип', email: 'Email', phone: 'Телефон', service: 'Услуга', createdAt: 'Дата',
-  code: 'Код', discount: 'Скидка', maxUses: 'Лимит', usedCount: 'Использован',
+  code: 'Код', discount: 'Скидка', maxUses: 'Лимит', usedCount: 'Использован', variantMode: 'Режим',
 }
 
 const FORMS: Record<Tab, any> = {
@@ -714,6 +780,7 @@ function Section({ tab }: { tab: Tab }) {
   const [savedMsg, setSavedMsg] = useState('')
   const [sortCol, setSortCol] = useState(TAB_COLS[tab][0])
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
+  const [dragId, setDragId] = useState<string | null>(null)
 
   const api = `/api/admin/${TAB_API[tab]}`
   const cols = TAB_COLS[tab]
@@ -794,6 +861,47 @@ function Section({ tab }: { tab: Tab }) {
     } catch { alert('Ошибка сети') }
   }
 
+  async function handleCopyEventLink(item: any) {
+    try {
+      const url = `${window.location.origin}/events#${item.slug || item.id}`
+      await navigator.clipboard.writeText(url)
+      setSavedMsg('Ссылка скопирована ✓')
+      setTimeout(() => setSavedMsg(''), 3000)
+    } catch {
+      alert('Не удалось скопировать ссылку')
+    }
+  }
+
+  async function handleReorder(dropId: string) {
+    if (tab !== 'artworks' || !dragId || dragId === dropId) return
+    const current = [...sorted]
+    const from = current.findIndex(item => item.id === dragId)
+    const to = current.findIndex(item => item.id === dropId)
+    if (from === -1 || to === -1) return
+
+    const [moved] = current.splice(from, 1)
+    current.splice(to, 0, moved)
+    const reordered = current.map((item, index) => ({ ...item, orderIndex: index }))
+    setItems(reordered)
+
+    try {
+      const res = await fetch('/api/admin/artworks-reorder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: reordered.map(item => item.id) }),
+      })
+      if (!res.ok) throw new Error('reorder failed')
+      setSavedMsg('Порядок сохранён ✓')
+      setTimeout(() => setSavedMsg(''), 3000)
+      await load()
+    } catch {
+      alert('Не удалось сохранить новый порядок')
+      await load()
+    } finally {
+      setDragId(null)
+    }
+  }
+
   async function toggleArchive(item: any) {
     const field = 'isArchived' in item ? 'isArchived' : 'isActive' in item ? 'isActive' : null
     if (!field) return
@@ -826,6 +934,11 @@ function Section({ tab }: { tab: Tab }) {
     if (col === 'discount') {
       const t = item.type === 'percent' ? '%' : ' ₽'
       return `${v}${t}`
+    }
+    if (col === 'variantMode') {
+      if (v === 'switch') return 'Несколько работ'
+      if (v === 'bundle') return 'Целиком / части'
+      return 'Обычная'
     }
     if (col === 'maxUses') return v ? String(v) : '∞'
     if (col === 'type') return v === 'percent' ? 'Процент' : 'Фиксированная'
@@ -900,15 +1013,33 @@ function Section({ tab }: { tab: Tab }) {
             <tbody>
               {sorted.map(item => (
                 <Fragment key={item.id}>
-                  <tr className={`border-b border-gray-100 hover:bg-gray-50 ${item.isArchived ? 'opacity-50' : ''}`}>
+                  <tr
+                    className={`border-b border-gray-100 hover:bg-gray-50 ${item.isArchived ? 'opacity-50' : ''} ${dragId === item.id ? 'bg-gray-50' : ''}`}
+                    draggable={tab === 'artworks' && sortCol === 'orderIndex'}
+                    onDragStart={() => setDragId(item.id)}
+                    onDragOver={e => {
+                      if (tab === 'artworks' && sortCol === 'orderIndex') e.preventDefault()
+                    }}
+                    onDrop={e => {
+                      e.preventDefault()
+                      void handleReorder(item.id)
+                    }}
+                    onDragEnd={() => setDragId(null)}
+                  >
                     {cols.map(col => (
                       <td key={col} className={`px-4 py-3 text-gray-700 ${col === '_img' ? '' : 'max-w-[200px] truncate'}`}>{cellVal(item, col)}</td>
                     ))}
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
+                        {tab === 'artworks' && sortCol === 'orderIndex' && (
+                          <span className="text-gray-300" title="Перетащите для сортировки"><GripVertical className="w-4 h-4" /></span>
+                        )}
                         <button onClick={() => { setEditId(item.id); setShowForm(true) }} className="text-gray-500 hover:text-black" title="Редактировать"><Pencil className="w-4 h-4" /></button>
                         {tab === 'artworks' && (
                           <button onClick={() => handleDuplicate(item)} className="text-gray-500 hover:text-black" title="Дублировать"><Copy className="w-4 h-4" /></button>
+                        )}
+                        {tab === 'events' && (
+                          <button onClick={() => handleCopyEventLink(item)} className="text-gray-500 hover:text-black" title="Скопировать ссылку"><Link2 className="w-4 h-4" /></button>
                         )}
                         {('isArchived' in item || 'isActive' in item) && (
                           <button
@@ -1284,6 +1415,148 @@ function ArtworkLinker({ type, parentId, parentTitle }: { type: 'exhibition' | '
                   {a.artistName && <p className="text-xs text-gray-400 truncate">{a.artistName}</p>}
                 </div>
                 {selected.has(a.id) && <span className="text-xs text-green-600 flex-shrink-0">✓ привязана</span>}
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function EventLinker({ eventIds, onChange }: { eventIds: string; onChange: (ids: string) => void }) {
+  const [open, setOpen] = useState(false)
+  const [allEvents, setAllEvents] = useState<any[]>([])
+  const [search, setSearch] = useState('')
+  const [selected, setSelected] = useState<Set<string>>(new Set(parseStringArray(eventIds)))
+
+  useEffect(() => {
+    setSelected(new Set(parseStringArray(eventIds)))
+  }, [eventIds])
+
+  function load() {
+    fetch('/api/admin/events').then(r => r.json()).then(items => {
+      setAllEvents(Array.isArray(items) ? items : [])
+    }).catch(() => {})
+  }
+
+  function toggle(id: string) {
+    setSelected(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      onChange(stringifyStringArray(Array.from(next)))
+      return next
+    })
+  }
+
+  const filtered = allEvents.filter((event: any) =>
+    !search || event.title?.toLowerCase().includes(search.toLowerCase())
+  )
+
+  return (
+    <div className="mt-4 border-t border-gray-200 pt-4">
+      <button
+        type="button"
+        onClick={() => { setOpen(o => !o); if (!open) load() }}
+        className="text-xs uppercase tracking-widest border-b border-black pb-0.5 hover:opacity-60 transition-opacity"
+      >
+        {open ? 'Скрыть параллельную программу' : 'Параллельная программа'}
+      </button>
+
+      {open && (
+        <div className="mt-4 space-y-3">
+          <div className="flex items-center gap-3">
+            <input
+              type="text"
+              placeholder="Поиск мероприятия..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="flex-1 border border-gray-200 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-black"
+            />
+            <span className="text-xs text-gray-500">{selected.size} выбрано</span>
+          </div>
+          <div className="max-h-72 overflow-y-auto border border-gray-200 rounded divide-y divide-gray-100">
+            {filtered.length === 0 ? (
+              <p className="p-4 text-sm text-gray-400 text-center">Нет мероприятий</p>
+            ) : filtered.map((event: any) => (
+              <label key={event.id} className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 cursor-pointer">
+                <input type="checkbox" checked={selected.has(event.id)} onChange={() => toggle(event.id)} className="accent-black" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm truncate">{event.title}</p>
+                  <p className="text-xs text-gray-400 truncate">{event.date || 'Без даты'} {event.time ? `· ${event.time}` : ''}</p>
+                </div>
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function RelatedArtworkLinker({ relatedArtworkIds, currentArtworkId, onChange }: { relatedArtworkIds: string; currentArtworkId?: string; onChange: (ids: string) => void }) {
+  const [open, setOpen] = useState(false)
+  const [allArtworks, setAllArtworks] = useState<any[]>([])
+  const [search, setSearch] = useState('')
+  const [selected, setSelected] = useState<Set<string>>(new Set(parseStringArray(relatedArtworkIds)))
+
+  useEffect(() => {
+    setSelected(new Set(parseStringArray(relatedArtworkIds)))
+  }, [relatedArtworkIds])
+
+  function load() {
+    fetch('/api/admin/artworks').then(r => r.json()).then(items => {
+      const list = Array.isArray(items) ? items.filter((item: any) => item.id !== currentArtworkId) : []
+      setAllArtworks(list)
+    }).catch(() => {})
+  }
+
+  function toggle(id: string) {
+    setSelected(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      onChange(stringifyStringArray(Array.from(next)))
+      return next
+    })
+  }
+
+  const filtered = allArtworks.filter((artwork: any) =>
+    !search || artwork.title?.toLowerCase().includes(search.toLowerCase()) || artwork.artistName?.toLowerCase().includes(search.toLowerCase())
+  )
+
+  return (
+    <div className="mt-4 border-t border-gray-200 pt-4">
+      <button
+        type="button"
+        onClick={() => { setOpen(o => !o); if (!open) load() }}
+        className="text-xs uppercase tracking-widest border-b border-black pb-0.5 hover:opacity-60 transition-opacity"
+      >
+        {open ? 'Скрыть связанные работы' : 'Связанные работы / варианты'}
+      </button>
+
+      {open && (
+        <div className="mt-4 space-y-3">
+          <div className="flex items-center gap-3">
+            <input
+              type="text"
+              placeholder="Поиск по названию или художнику..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="flex-1 border border-gray-200 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-black"
+            />
+            <span className="text-xs text-gray-500">{selected.size} выбрано</span>
+          </div>
+          <div className="max-h-72 overflow-y-auto border border-gray-200 rounded divide-y divide-gray-100">
+            {filtered.length === 0 ? (
+              <p className="p-4 text-sm text-gray-400 text-center">Нет работ</p>
+            ) : filtered.map((artwork: any) => (
+              <label key={artwork.id} className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 cursor-pointer">
+                <input type="checkbox" checked={selected.has(artwork.id)} onChange={() => toggle(artwork.id)} className="accent-black" />
+                {artwork.imagePath && <img src={artwork.imagePath} alt="" className="w-8 h-8 object-contain bg-gray-50 rounded flex-shrink-0" />}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm truncate">{artwork.title}</p>
+                  {artwork.artistName && <p className="text-xs text-gray-400 truncate">{artwork.artistName}</p>}
+                </div>
               </label>
             ))}
           </div>
