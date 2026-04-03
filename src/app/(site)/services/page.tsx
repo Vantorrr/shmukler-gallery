@@ -122,7 +122,7 @@ function ApplicationModal({ service, onClose }: { service: Service; onClose: () 
             {showContacts && (
               <div className="text-sm text-gray-600 space-y-2 text-left bg-gray-50 rounded-lg p-4">
                 <p className="font-medium text-xs uppercase tracking-widest text-gray-400 mb-3">Контакты</p>
-                <p><a href="mailto:info@artishokcenter.ru" className="hover:text-black">info@artishokcenter.ru</a></p>
+                <p><a href="mailto:info@shmuklergallery.ru" className="hover:text-black">info@shmuklergallery.ru</a></p>
                 <p><a href="tel:+78989591912" className="hover:text-black">8 989 591 91 12</a></p>
                 <p className="text-gray-400 text-xs">Большой Краснопрудный тупик, 8/12, Москва</p>
               </div>
@@ -172,11 +172,6 @@ export default function ServicesPage() {
           {services.map(service => (
             <ServiceCard key={service.id} service={service} onApply={setApplyService} />
           ))}
-        </div>
-
-        <div className="mt-20 text-center border-t border-gray-100 pt-16">
-          <p className="text-lg text-gray-500 font-light mb-2">Оставьте ваш запрос, и мы свяжемся с вами для уточнения деталей</p>
-          <p className="text-sm text-gray-400 mb-8">или напишите напрямую: <a href="mailto:info@artishokcenter.ru" className="underline hover:text-black">info@artishokcenter.ru</a></p>
         </div>
       </div>
 

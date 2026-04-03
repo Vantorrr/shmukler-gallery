@@ -110,7 +110,7 @@ export default function ContactPage() {
           ) : (
             <form onSubmit={handleSubmit} className="space-y-8">
               <p className="text-lg font-light text-gray-600 pb-2">
-                Оставьте свой запрос и мы свяжемся с вами в ближайшее время.
+                Оставьте свой запрос, и мы свяжемся с вами в ближайшее время.
               </p>
               <div>
                 <input type="text" name="name" placeholder="Имя" value={form.name} onChange={handleChange} required className="w-full py-4 border-b border-gray-200 focus:border-black focus:outline-none transition-colors font-light placeholder:text-gray-300" />
