@@ -87,7 +87,6 @@ export function HomeArtworkCard({ artwork, cover = false, natural = false }: { a
         <div className="space-y-0.5 mb-3">
           {artist && <p className="text-[11px] text-gray-400 uppercase tracking-widest">{artist}</p>}
           <h3 className="text-sm font-medium leading-snug group-hover:opacity-60 transition-opacity">{artwork.title}</h3>
-          {artwork.medium && <p className="text-sm text-gray-600">{artwork.medium}</p>}
           {artwork.dimensions && <p className="text-sm text-gray-600">{artwork.dimensions}</p>}
           {artwork.price && !isSold && (
             <p className="text-sm text-gray-600">{artwork.price.toLocaleString('ru-RU')} ₽</p>
