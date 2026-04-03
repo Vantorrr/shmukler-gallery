@@ -109,25 +109,27 @@ export default function ExhibitionPage({ params }: { params: Promise<{ slug: str
             <h2 className="text-xs uppercase tracking-widest text-gray-400 mb-8 border-t border-gray-100 pt-10">Параллельная программа</h2>
             <div className="space-y-4">
               {events.map((event) => {
+                const anchorId = event.slug || event.id
+                const detailsHref = `/events#${anchorId}`
                 const href = event.format === 'offline'
-                  ? (event.ticketUrl || event.registrationUrl || `/events#${event.slug || event.id}`)
-                  : (event.accessUrl || `/events#${event.slug || event.id}`)
+                  ? (event.ticketUrl || event.registrationUrl || detailsHref)
+                  : (event.accessUrl || detailsHref)
                 const buttonLabel = event.format === 'offline'
                   ? (event.ticketUrl ? 'Купить билет' : 'Зарегистрироваться')
                   : 'Получить доступ'
                 return (
                   <div key={event.id} className="border border-gray-200 p-5 grid grid-cols-1 md:grid-cols-[1fr_auto] gap-4 items-start">
-                    <div>
+                    <Link href={detailsHref} className="block hover:opacity-70 transition-opacity">
                       <p className="text-xs uppercase tracking-widest text-gray-400 mb-2">
                         {event.date ? new Date(event.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' }) : 'Без даты'}
                         {event.time ? ` · ${event.time}` : ''}
                       </p>
                       <h3 className="text-xl font-serif mb-1">{event.title}</h3>
                       {event.location && <p className="text-sm text-gray-500">{event.location}</p>}
-                    </div>
+                    </Link>
                     <a
                       href={href}
-                      target={href.startsWith('/events#') ? undefined : '_blank'}
+                      target={href === detailsHref ? undefined : '_blank'}
                       rel="noopener noreferrer"
                       className="inline-flex items-center justify-center bg-black text-white px-5 py-2.5 text-xs uppercase tracking-widest hover:bg-gray-900 transition-colors"
                     >

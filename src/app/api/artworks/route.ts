@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { parseStringArray } from '@/lib/gallery-helpers'
 
 export async function GET(req: NextRequest) {
   try {
@@ -21,6 +22,8 @@ export async function GET(req: NextRequest) {
 
     // When fetching by slug (detail page), don't restrict by isArchived
     const where: any = (ids || slugFilter) ? {} : { isArchived: false }
+    const shouldHideVariantChildren = !ids && !slugFilter
+
     if (artistSlug) {
       where.OR = [
         { artistSlug },
@@ -46,6 +49,26 @@ export async function GET(req: NextRequest) {
       : sortBy === 'price_desc' ? { price: 'desc' as const }
       : sortBy === 'newest' ? { createdAt: 'desc' as const }
       : { orderIndex: 'asc' as const }
+
+    if (shouldHideVariantChildren) {
+      const variantParents = await prisma.artwork.findMany({
+        where: {
+          isArchived: false,
+          variantMode: { in: ['switch', 'bundle'] },
+        },
+        select: { relatedArtworkIds: true },
+      })
+
+      const hiddenIds = Array.from(
+        new Set(
+          variantParents.flatMap(item => parseStringArray(item.relatedArtworkIds))
+        )
+      )
+
+      if (hiddenIds.length > 0) {
+        where.NOT = [...(Array.isArray(where.NOT) ? where.NOT : where.NOT ? [where.NOT] : []), { id: { in: hiddenIds } }]
+      }
+    }
 
     const [items, total] = await Promise.all([
       prisma.artwork.findMany({

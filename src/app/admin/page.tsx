@@ -151,7 +151,7 @@ function Textarea({ rows = 3, ...props }: React.TextareaHTMLAttributes<HTMLTextA
   return (
     <div>
       <textarea rows={rows} {...props} className="w-full border border-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-black resize-none" />
-      <p className="text-[10px] text-gray-400 mt-0.5">**жирный** · *курсив* · пустая строка = новый абзац</p>
+      <p className="text-[10px] text-gray-400 mt-0.5">**жирный** · *курсив* · [ссылка](https://example.com) · пустая строка = новый абзац</p>
     </div>
   )
 }
