@@ -39,6 +39,14 @@ type NotificationData = {
   deliveryPrice?: number | null
 }
 
+export type NotificationAttemptResult = {
+  ok: boolean
+  skipped?: boolean
+  channel: 'email' | 'telegram'
+  detail?: string
+  raw?: unknown
+}
+
 function buildRows(data: NotificationData): [string, string][] {
   const rows: [string, string][] = []
 
@@ -74,6 +82,27 @@ function toPlainTelegramText(rows: [string, string][], title: string) {
   ].join('\n')
 }
 
+type TelegramResponsePayload = {
+  ok?: boolean
+  error_code?: number
+  description?: string
+  result?: unknown
+  parameters?: {
+    migrate_to_chat_id?: number | string
+  }
+}
+
+async function postTelegramMessage(body: Record<string, unknown>) {
+  const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+
+  const result = await response.json().catch(() => null) as TelegramResponsePayload | null
+  return { response, result }
+}
+
 function buildHtml(title: string, rows: [string, string][], extraHtml = '') {
   return `
     <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto">
@@ -100,10 +129,10 @@ function buildHtml(title: string, rows: [string, string][], extraHtml = '') {
   `
 }
 
-export async function sendNotificationEmail(data: NotificationData) {
+export async function sendNotificationEmail(data: NotificationData): Promise<NotificationAttemptResult> {
   if (!SMTP_PASS) {
     console.warn('SMTP_PASS not set, skipping email notification')
-    return
+    return { ok: false, skipped: true, channel: 'email', detail: 'SMTP_PASS not set' }
   }
 
   const label = TYPE_LABELS[data.type] || data.type
@@ -123,15 +152,22 @@ export async function sendNotificationEmail(data: NotificationData) {
       html,
     })
     console.log('Notification email sent:', subject)
+    return { ok: true, channel: 'email', detail: subject }
   } catch (e) {
     console.error('Email notification failed:', e)
+    return {
+      ok: false,
+      channel: 'email',
+      detail: e instanceof Error ? e.message : String(e),
+      raw: e,
+    }
   }
 }
 
-export async function sendTelegramNotification(data: NotificationData) {
+export async function sendTelegramNotification(data: NotificationData): Promise<NotificationAttemptResult> {
   if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
     console.warn('Telegram is not configured, skipping telegram notification')
-    return
+    return { ok: false, skipped: true, channel: 'telegram', detail: 'TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID missing' }
   }
 
   const label = TYPE_LABELS[data.type] || data.type
@@ -143,49 +179,66 @@ export async function sendTelegramNotification(data: NotificationData) {
   ]
 
   try {
-    const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: TELEGRAM_CHAT_ID,
-        text: lines.join('\n'),
-        parse_mode: 'HTML',
-        disable_web_page_preview: true,
-      }),
+    let chatId = TELEGRAM_CHAT_ID
+    let { response, result } = await postTelegramMessage({
+      chat_id: chatId,
+      text: lines.join('\n'),
+      parse_mode: 'HTML',
+      disable_web_page_preview: true,
     })
 
-    const result = await response.json().catch(() => null)
     if (response.ok && result?.ok) {
       console.log('Telegram notification sent:', label)
-      return
+      return { ok: true, channel: 'telegram', detail: 'html', raw: result }
     }
 
     console.error('Telegram HTML notification failed:', result || response.status)
 
-    const fallbackResponse = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: TELEGRAM_CHAT_ID,
-        text: toPlainTelegramText(rows, label),
+    const migratedChatId = result?.parameters?.migrate_to_chat_id
+    if (migratedChatId) {
+      chatId = String(migratedChatId)
+      console.warn(`Telegram chat migrated. Retry with chat_id=${chatId} and update TELEGRAM_CHAT_ID in Railway.`)
+      ;({ response, result } = await postTelegramMessage({
+        chat_id: chatId,
+        text: lines.join('\n'),
+        parse_mode: 'HTML',
         disable_web_page_preview: true,
-      }),
-    })
+      }))
 
-    const fallbackResult = await fallbackResponse.json().catch(() => null)
+      if (response.ok && result?.ok) {
+        console.log('Telegram notification sent after chat migration retry:', label)
+        return { ok: true, channel: 'telegram', detail: `html with migrated chat_id ${chatId}`, raw: result }
+      }
+
+      console.error('Telegram migration retry failed:', result || response.status)
+    }
+
+    const { response: fallbackResponse, result: fallbackResult } = await postTelegramMessage({
+      chat_id: chatId,
+      text: toPlainTelegramText(rows, label),
+      disable_web_page_preview: true,
+    })
     if (!fallbackResponse.ok || !fallbackResult?.ok) {
       throw new Error(`Telegram fallback failed: ${JSON.stringify(fallbackResult || { status: fallbackResponse.status })}`)
     }
 
     console.log('Telegram notification sent via fallback:', label)
+    return { ok: true, channel: 'telegram', detail: 'plain-text fallback', raw: fallbackResult }
   } catch (e) {
     console.error('Telegram notification failed:', e)
+    return {
+      ok: false,
+      channel: 'telegram',
+      detail: e instanceof Error ? e.message : String(e),
+      raw: e,
+    }
   }
 }
 
 export async function sendAdminNotification(data: NotificationData) {
-  await Promise.allSettled([
+  const [email, telegram] = await Promise.all([
     sendNotificationEmail(data),
     sendTelegramNotification(data),
   ])
+  return { email, telegram }
 }
