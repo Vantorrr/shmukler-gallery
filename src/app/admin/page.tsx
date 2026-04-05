@@ -771,6 +771,10 @@ const FORMS: Record<Tab, any> = {
   inquiries: InquiryForm, promo: PromoForm, filters: null, pages: null,
 }
 
+const DEFAULT_SORTS: Partial<Record<Tab, { col: string; dir: 'asc' | 'desc' }>> = {
+  inquiries: { col: 'createdAt', dir: 'desc' },
+}
+
 function Section({ tab }: { tab: Tab }) {
   const [items, setItems] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -778,9 +782,11 @@ function Section({ tab }: { tab: Tab }) {
   const [editId, setEditId] = useState<string | null>(null)
   const [showForm, setShowForm] = useState(false)
   const [savedMsg, setSavedMsg] = useState('')
-  const [sortCol, setSortCol] = useState(TAB_COLS[tab][0])
-  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
+  const [sortCol, setSortCol] = useState(DEFAULT_SORTS[tab]?.col || TAB_COLS[tab][0])
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>(DEFAULT_SORTS[tab]?.dir || 'asc')
   const [dragId, setDragId] = useState<string | null>(null)
+  const [createFormKey, setCreateFormKey] = useState(0)
+  const pendingScrollRestoreRef = useRef<{ selector?: string; top: number } | null>(null)
 
   const api = `/api/admin/${TAB_API[tab]}`
   const cols = TAB_COLS[tab]
@@ -799,6 +805,39 @@ function Section({ tab }: { tab: Tab }) {
 
   useEffect(() => { load() }, [load])
 
+  useEffect(() => {
+    if (loading || !pendingScrollRestoreRef.current) return
+
+    const pending = pendingScrollRestoreRef.current
+    pendingScrollRestoreRef.current = null
+
+    let raf1 = 0
+    let raf2 = 0
+
+    const restoreScroll = () => {
+      const element = pending.selector ? document.querySelector<HTMLElement>(pending.selector) : null
+      if (element) {
+        const top = element.getBoundingClientRect().top + window.scrollY - 140
+        window.scrollTo({ top: Math.max(top, 0), behavior: 'auto' })
+        return
+      }
+      window.scrollTo({ top: pending.top, behavior: 'auto' })
+    }
+
+    raf1 = window.requestAnimationFrame(() => {
+      raf2 = window.requestAnimationFrame(restoreScroll)
+    })
+
+    return () => {
+      window.cancelAnimationFrame(raf1)
+      window.cancelAnimationFrame(raf2)
+    }
+  }, [loading, items, showForm, editId])
+
+  function queueScrollRestore(selector?: string) {
+    pendingScrollRestoreRef.current = { selector, top: window.scrollY }
+  }
+
   const sorted = [...items].sort((a, b) => {
     const av = a[sortCol] ?? '', bv = b[sortCol] ?? ''
     const cmp = typeof av === 'number' ? av - bv : String(av).localeCompare(String(bv))
@@ -812,20 +851,38 @@ function Section({ tab }: { tab: Tab }) {
 
   async function handleSave(data: any) {
     try {
+      const isEditing = Boolean(editId)
+      const restoreSelector = isEditing
+        ? `[data-admin-row-id="${editId}"]`
+        : tab === 'artworks'
+          ? '#admin-create-form'
+          : undefined
+
+      queueScrollRestore(restoreSelector)
+
       const method = editId ? 'PUT' : 'POST'
       const url = editId ? `${api}/${editId}` : api
       const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
       if (!res.ok) {
+        pendingScrollRestoreRef.current = null
         const e = await res.json().catch(() => ({}))
         alert(e.error || `Ошибка ${res.status}`)
         return
       }
-      setShowForm(false)
-      setEditId(null)
+      if (isEditing) {
+        setShowForm(false)
+        setEditId(null)
+      } else if (tab === 'artworks') {
+        setCreateFormKey(k => k + 1)
+        setShowForm(true)
+      } else {
+        setShowForm(false)
+      }
       await load()
       setSavedMsg('Сохранено ✓')
       setTimeout(() => setSavedMsg(''), 3000)
     } catch (err) {
+      pendingScrollRestoreRef.current = null
       alert('Ошибка сети: ' + String(err))
     }
   }
@@ -874,6 +931,7 @@ function Section({ tab }: { tab: Tab }) {
 
   async function handleReorder(dropId: string) {
     if (tab !== 'artworks' || !dragId || dragId === dropId) return
+    queueScrollRestore(`[data-admin-row-id="${dragId}"]`)
     const current = [...sorted]
     const from = current.findIndex(item => item.id === dragId)
     const to = current.findIndex(item => item.id === dropId)
@@ -987,7 +1045,9 @@ function Section({ tab }: { tab: Tab }) {
       </div>
 
       {showForm && !editId && (
-        <Form initial={null} onSave={handleSave} onCancel={() => setShowForm(false)} />
+        <div id="admin-create-form">
+          <Form key={createFormKey} initial={null} onSave={handleSave} onCancel={() => setShowForm(false)} />
+        </div>
       )}
 
       {loading ? (
@@ -1015,6 +1075,7 @@ function Section({ tab }: { tab: Tab }) {
                 <Fragment key={item.id}>
                   <tr
                     className={`border-b border-gray-100 hover:bg-gray-50 ${item.isArchived ? 'opacity-50' : ''} ${dragId === item.id ? 'bg-gray-50' : ''}`}
+                    data-admin-row-id={item.id}
                     draggable={tab === 'artworks' && sortCol === 'orderIndex'}
                     onDragStart={() => setDragId(item.id)}
                     onDragOver={e => {

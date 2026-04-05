@@ -79,15 +79,19 @@ function ApplicationModal({ service, onClose }: { service: Service; onClose: () 
     if (!form.consent) { alert('Необходимо дать согласие на обработку данных'); return }
     setSending(true)
     try {
-      await fetch('/api/inquiries', {
+      const res = await fetch('/api/inquiries', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ type: 'service', service: service.title, ...form }),
       })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.error || 'Ошибка при отправке. Попробуйте ещё раз.')
+      }
       setSent(true)
       setShowContacts(true)
-    } catch {
-      alert('Ошибка при отправке. Попробуйте ещё раз.')
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Ошибка при отправке. Попробуйте ещё раз.')
     } finally {
       setSending(false)
     }
@@ -100,13 +104,13 @@ function ApplicationModal({ service, onClose }: { service: Service; onClose: () 
         <button onClick={onClose} className="absolute top-5 right-5 text-gray-400 hover:text-black transition-colors"><X className="w-5 h-5" /></button>
 
         <h3 className="text-2xl font-serif mb-1">{service.title}</h3>
-        <p className="text-sm text-gray-500 mb-6">Оставьте ваш запрос, и мы свяжемся с вами для уточнения деталей</p>
+        <p className="text-sm text-gray-500 mb-6">Оставьте ваш запрос, и мы свяжемся с вами для уточнения деталей.</p>
 
         {!sent ? (
           <form onSubmit={handleSubmit} className="space-y-4">
             <input required placeholder="Имя *" value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} className="w-full border-b border-gray-200 py-2 text-sm focus:outline-none focus:border-black" />
             <input required type="email" placeholder="Email *" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} className="w-full border-b border-gray-200 py-2 text-sm focus:outline-none focus:border-black" />
-            <input type="tel" placeholder="Телефон" value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} className="w-full border-b border-gray-200 py-2 text-sm focus:outline-none focus:border-black" />
+            <input required type="tel" placeholder="Телефон *" value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} className="w-full border-b border-gray-200 py-2 text-sm focus:outline-none focus:border-black" />
             <textarea placeholder="Опишите ваш запрос" value={form.message} onChange={e => setForm(p => ({ ...p, message: e.target.value }))} rows={3} className="w-full border-b border-gray-200 py-2 text-sm focus:outline-none focus:border-black resize-none" />
             <label className="flex items-start gap-2.5 cursor-pointer">
               <input type="checkbox" checked={form.consent} onChange={e => setForm(p => ({ ...p, consent: e.target.checked }))} className="mt-0.5 accent-black" />

@@ -32,14 +32,18 @@ export default function ContactPage() {
     e.preventDefault()
     setSending(true)
     try {
-      await fetch('/api/inquiries', {
+      const res = await fetch('/api/inquiries', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ type: 'contact', ...form }),
       })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.error || 'Ошибка при отправке. Попробуйте ещё раз.')
+      }
       setSent(true)
-    } catch {
-      alert('Ошибка при отправке. Попробуйте ещё раз.')
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Ошибка при отправке. Попробуйте ещё раз.')
     } finally {
       setSending(false)
     }
@@ -119,7 +123,7 @@ export default function ContactPage() {
                 <input type="email" name="email" placeholder="Email" value={form.email} onChange={handleChange} required className="w-full py-4 border-b border-gray-200 focus:border-black focus:outline-none transition-colors font-light placeholder:text-gray-300" />
               </div>
               <div>
-                <input type="tel" name="phone" placeholder="Телефон" value={form.phone} onChange={handleChange} className="w-full py-4 border-b border-gray-200 focus:border-black focus:outline-none transition-colors font-light placeholder:text-gray-300" />
+                <input required type="tel" name="phone" placeholder="Телефон *" value={form.phone} onChange={handleChange} className="w-full py-4 border-b border-gray-200 focus:border-black focus:outline-none transition-colors font-light placeholder:text-gray-300" />
               </div>
               <div>
                 <textarea name="message" placeholder="Сообщение" rows={5} value={form.message} onChange={handleChange} required className="w-full py-4 border-b border-gray-200 focus:border-black focus:outline-none transition-colors font-light placeholder:text-gray-300 resize-none" />

@@ -6,6 +6,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
     const { type, name, email, phone, message, service, items } = body
+    const normalizedPhone = typeof phone === 'string' ? phone.trim() : ''
 
     if (type === 'subscribe') {
       // Subscribe doesn't require phone/message
@@ -17,8 +18,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true, id: inquiry.id })
     }
 
-    if (!name || !email) {
-      return NextResponse.json({ error: 'Имя и email обязательны' }, { status: 400 })
+    if (!name || !email || !normalizedPhone) {
+      return NextResponse.json({ error: 'Имя, email и телефон обязательны' }, { status: 400 })
     }
 
     const inquiry = await prisma.inquiry.create({
@@ -26,7 +27,7 @@ export async function POST(req: NextRequest) {
         type: type || 'contact',
         name,
         email,
-        phone: phone || null,
+        phone: normalizedPhone,
         message: message || null,
         service: service || null,
         items: items || null,
@@ -34,7 +35,7 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    await sendAdminNotification({ type: type || 'contact', name, email, phone, message, service, items })
+    await sendAdminNotification({ type: type || 'contact', name, email, phone: normalizedPhone, message, service, items })
 
     return NextResponse.json({ ok: true, id: inquiry.id })
   } catch (error) {

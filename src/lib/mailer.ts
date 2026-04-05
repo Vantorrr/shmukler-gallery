@@ -66,6 +66,14 @@ function escapeTelegram(text: string) {
     .replace(/>/g, '&gt;')
 }
 
+function toPlainTelegramText(rows: [string, string][], title: string) {
+  return [
+    title,
+    '',
+    ...rows.map(([k, v]) => `${k}: ${v}`),
+  ].join('\n')
+}
+
 function buildHtml(title: string, rows: [string, string][], extraHtml = '') {
   return `
     <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto">
@@ -135,7 +143,7 @@ export async function sendTelegramNotification(data: NotificationData) {
   ]
 
   try {
-    await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+    const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -145,6 +153,31 @@ export async function sendTelegramNotification(data: NotificationData) {
         disable_web_page_preview: true,
       }),
     })
+
+    const result = await response.json().catch(() => null)
+    if (response.ok && result?.ok) {
+      console.log('Telegram notification sent:', label)
+      return
+    }
+
+    console.error('Telegram HTML notification failed:', result || response.status)
+
+    const fallbackResponse = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: TELEGRAM_CHAT_ID,
+        text: toPlainTelegramText(rows, label),
+        disable_web_page_preview: true,
+      }),
+    })
+
+    const fallbackResult = await fallbackResponse.json().catch(() => null)
+    if (!fallbackResponse.ok || !fallbackResult?.ok) {
+      throw new Error(`Telegram fallback failed: ${JSON.stringify(fallbackResult || { status: fallbackResponse.status })}`)
+    }
+
+    console.log('Telegram notification sent via fallback:', label)
   } catch (e) {
     console.error('Telegram notification failed:', e)
   }
