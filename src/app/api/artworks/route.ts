@@ -12,6 +12,7 @@ export async function GET(req: NextRequest) {
     const exhibitionId = searchParams.get('exhibitionId') || undefined
     const fairId = searchParams.get('fairId') || undefined
     const ids = searchParams.get('ids') || undefined
+    const relatedTo = searchParams.get('relatedTo') || undefined
     const technique = searchParams.get('technique') || undefined
     const theme = searchParams.get('theme') || undefined
     const color = searchParams.get('color') || undefined
@@ -19,6 +20,53 @@ export async function GET(req: NextRequest) {
     const sortBy = searchParams.get('sortBy') || 'orderIndex'
     const minPrice = searchParams.get('minPrice') ? parseInt(searchParams.get('minPrice')!) : undefined
     const maxPrice = searchParams.get('maxPrice') ? parseInt(searchParams.get('maxPrice')!) : undefined
+
+    if (relatedTo) {
+      const anchor = await prisma.artwork.findUnique({ where: { id: relatedTo } })
+      if (!anchor || anchor.isArchived) {
+        return NextResponse.json({ items: [], total: 0, page: 1, limit: 100, pages: 0 })
+      }
+
+      const ownRelatedIds = parseStringArray(anchor.relatedArtworkIds)
+      let parent = anchor
+
+      if (ownRelatedIds.length === 0) {
+        const possibleParents = await prisma.artwork.findMany({
+          where: {
+            isArchived: false,
+            relatedArtworkIds: { contains: relatedTo },
+          },
+          orderBy: { orderIndex: 'asc' },
+        })
+
+        parent = possibleParents.find(item => parseStringArray(item.relatedArtworkIds).includes(relatedTo)) || anchor
+      }
+
+      const groupIds = Array.from(new Set([
+        parent.id,
+        ...parseStringArray(parent.relatedArtworkIds),
+      ]))
+
+      const items = await prisma.artwork.findMany({
+        where: {
+          id: { in: groupIds },
+          isArchived: false,
+        },
+      })
+
+      const itemMap = new Map(items.map(item => [item.id, item]))
+      const orderedItems = groupIds
+        .map(id => itemMap.get(id))
+        .filter((item): item is NonNullable<typeof item> => Boolean(item))
+
+      return NextResponse.json({
+        items: orderedItems,
+        total: orderedItems.length,
+        page: 1,
+        limit: 100,
+        pages: 1,
+      })
+    }
 
     // When fetching by slug (detail page), don't restrict by isArchived
     const where: any = (ids || slugFilter) ? {} : { isArchived: false }

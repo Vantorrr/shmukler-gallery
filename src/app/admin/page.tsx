@@ -931,7 +931,6 @@ function Section({ tab }: { tab: Tab }) {
 
   async function handleReorder(dropId: string) {
     if (tab !== 'artworks' || !dragId || dragId === dropId) return
-    queueScrollRestore(`[data-admin-row-id="${dragId}"]`)
     const current = [...sorted]
     const from = current.findIndex(item => item.id === dragId)
     const to = current.findIndex(item => item.id === dropId)
@@ -949,10 +948,12 @@ function Section({ tab }: { tab: Tab }) {
         body: JSON.stringify({ ids: reordered.map(item => item.id) }),
       })
       if (!res.ok) throw new Error('reorder failed')
+      queueScrollRestore(`[data-admin-row-id="${dragId}"]`)
       setSavedMsg('Порядок сохранён ✓')
       setTimeout(() => setSavedMsg(''), 3000)
       await load()
     } catch {
+      queueScrollRestore(`[data-admin-row-id="${dragId}"]`)
       alert('Не удалось сохранить новый порядок')
       await load()
     } finally {

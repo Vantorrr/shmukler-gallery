@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { sendAdminNotification } from '@/lib/mailer'
 
 export async function POST(req: NextRequest) {
   try {
@@ -11,13 +12,34 @@ export async function POST(req: NextRequest) {
     const status = body.order?.status || body.status || ''
 
     if (event === 'ORDER_STATUS_UPDATED' && status === 'SUCCESS' && orderId) {
-      await prisma.inquiry.updateMany({
-        where: { message: { contains: orderId } },
-        data: {
-          status: 'done',
-          message: `Оплачено через Яндекс Пэй. Статус: ${status}. ID заказа: ${orderId}`,
+      const inquiry = await prisma.inquiry.findFirst({
+        where: {
+          type: 'order',
+          message: { contains: orderId },
         },
+        orderBy: { createdAt: 'desc' },
       })
+
+      if (inquiry) {
+        const updated = await prisma.inquiry.update({
+          where: { id: inquiry.id },
+          data: {
+            status: 'done',
+            message: `${inquiry.message || ''}\n\n✅ Оплата подтверждена. Yandex Pay / Split. Статус: ${status}. ID заказа: ${orderId}`.trim(),
+          },
+        })
+
+        await sendAdminNotification({
+          type: 'order_paid',
+          name: updated.name,
+          email: updated.email,
+          phone: updated.phone,
+          items: updated.items,
+          orderId,
+          paymentProvider: 'Yandex Pay / Split',
+          paymentStatus: 'Оплачено',
+        })
+      }
     }
 
     return NextResponse.json({ ok: true })

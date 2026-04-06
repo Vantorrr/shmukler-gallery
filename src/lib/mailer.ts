@@ -19,8 +19,18 @@ const transporter = nodemailer.createTransport({
 const TYPE_LABELS: Record<string, string> = {
   contact: 'Контактная форма',
   order: 'Новый заказ',
+  order_paid: 'Оплата подтверждена',
   service: 'Заявка на услугу',
   subscribe: 'Подписка на рассылку',
+}
+
+type NotificationItem = {
+  id?: string
+  title?: string
+  artistName?: string
+  price?: number
+  slug?: string
+  imagePath?: string
 }
 
 type NotificationData = {
@@ -37,6 +47,8 @@ type NotificationData = {
   comment?: string | null
   orderId?: string | null
   deliveryPrice?: number | null
+  paymentProvider?: string | null
+  paymentStatus?: string | null
 }
 
 export type NotificationAttemptResult = {
@@ -49,13 +61,17 @@ export type NotificationAttemptResult = {
 
 function buildRows(data: NotificationData): [string, string][] {
   const rows: [string, string][] = []
+  const orderItems = parseNotificationItems(data.items)
 
   if (data.orderId) rows.push(['Заказ №', data.orderId])
+  if (data.paymentProvider) rows.push(['Платёж', data.paymentProvider])
+  if (data.paymentStatus) rows.push(['Статус оплаты', data.paymentStatus])
   rows.push(['Имя', data.name || '—'])
   rows.push(['Email', data.email || '—'])
   if (data.phone) rows.push(['Телефон', data.phone])
   if (data.service) rows.push(['Услуга', data.service])
-  if (data.items) rows.push(['Состав', data.items])
+  if (orderItems.length > 0) rows.push(['Состав', formatNotificationItems(orderItems)])
+  else if (data.items) rows.push(['Состав', data.items])
   if (data.delivery) {
     const deliveryStr = data.delivery + (data.address ? ' — ' + data.address : '') + (data.deliveryPrice ? ` (${data.deliveryPrice} ₽)` : '')
     rows.push(['Доставка', deliveryStr])
@@ -65,6 +81,57 @@ function buildRows(data: NotificationData): [string, string][] {
   if (data.amount) rows.push(['Сумма', `${data.amount} ₽`])
 
   return rows
+}
+
+function parseNotificationItems(value?: string | null): NotificationItem[] {
+  if (!value) return []
+  try {
+    const parsed = JSON.parse(value)
+    if (!Array.isArray(parsed)) return []
+    return parsed
+      .map((item: any) => ({
+        id: item?.id ? String(item.id) : undefined,
+        title: item?.title ? String(item.title) : undefined,
+        artistName: item?.artistName ? String(item.artistName) : undefined,
+        price: typeof item?.price === 'number' ? item.price : item?.price ? Number(item.price) : undefined,
+        slug: item?.slug ? String(item.slug) : undefined,
+        imagePath: item?.imagePath ? String(item.imagePath) : undefined,
+      }))
+      .filter((item: NotificationItem) => item.title)
+  } catch {
+    return []
+  }
+}
+
+function formatNotificationItems(items: NotificationItem[]) {
+  return items.map(item => {
+    const title = item.artistName ? `${item.artistName} — ${item.title}` : item.title
+    const meta = [
+      item.slug ? `slug: ${item.slug}` : null,
+      item.id ? `id: ${item.id}` : null,
+      typeof item.price === 'number' ? `${item.price.toLocaleString('ru-RU')} ₽` : null,
+    ].filter(Boolean).join(', ')
+    return meta ? `${title} (${meta})` : title || '—'
+  }).join('\n')
+}
+
+function buildItemsHtml(items: NotificationItem[]) {
+  if (items.length === 0) return ''
+  const withImages = items.filter(item => item.imagePath)
+  if (withImages.length === 0) return ''
+  return `
+    <div style="margin-top:20px">
+      <p style="margin:0 0 12px;font-size:13px;color:#666">Изображения работ</p>
+      <div style="display:flex;flex-wrap:wrap;gap:12px">
+        ${withImages.map(item => `
+          <div style="width:120px">
+            <img src="${item.imagePath}" alt="${item.title || 'Работа'}" style="width:120px;height:120px;object-fit:cover;background:#f5f5f5;display:block" />
+            <p style="margin:6px 0 0;font-size:12px;color:#666;line-height:1.4">${item.title || ''}</p>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `
 }
 
 function escapeTelegram(text: string) {
@@ -92,8 +159,8 @@ type TelegramResponsePayload = {
   }
 }
 
-async function postTelegramMessage(body: Record<string, unknown>) {
-  const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+async function postTelegramApi(method: string, body: Record<string, unknown>) {
+  const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/${method}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
@@ -101,6 +168,31 @@ async function postTelegramMessage(body: Record<string, unknown>) {
 
   const result = await response.json().catch(() => null) as TelegramResponsePayload | null
   return { response, result }
+}
+
+async function sendTelegramImages(chatId: string, items: NotificationItem[]) {
+  const media = items
+    .filter(item => item.imagePath)
+    .slice(0, 10)
+    .map((item, index) => ({
+      type: 'photo',
+      media: item.imagePath!,
+      caption: index === 0 ? 'Изображения работ' : undefined,
+    }))
+
+  if (media.length === 0) return
+  if (media.length === 1) {
+    await postTelegramApi('sendPhoto', {
+      chat_id: chatId,
+      photo: media[0].media,
+      caption: media[0].caption,
+    })
+    return
+  }
+  await postTelegramApi('sendMediaGroup', {
+    chat_id: chatId,
+    media,
+  })
 }
 
 function buildHtml(title: string, rows: [string, string][], extraHtml = '') {
@@ -137,12 +229,13 @@ export async function sendNotificationEmail(data: NotificationData): Promise<Not
 
   const label = TYPE_LABELS[data.type] || data.type
   const rows = buildRows(data)
+  const orderItems = parseNotificationItems(data.items)
 
   const subject = data.amount
     ? `Новый заказ ${data.amount} ₽ — Галерея Шмуклер`
     : `${label} — Галерея Шмуклер`
 
-  const html = buildHtml(label + (data.orderId ? ` — ${data.orderId}` : ''), rows)
+  const html = buildHtml(label + (data.orderId ? ` — ${data.orderId}` : ''), rows, buildItemsHtml(orderItems))
 
   try {
     await transporter.sendMail({
@@ -172,6 +265,7 @@ export async function sendTelegramNotification(data: NotificationData): Promise<
 
   const label = TYPE_LABELS[data.type] || data.type
   const rows = buildRows(data)
+  const orderItems = parseNotificationItems(data.items)
   const lines = [
     `<b>${escapeTelegram(label)}</b>`,
     '',
@@ -180,7 +274,7 @@ export async function sendTelegramNotification(data: NotificationData): Promise<
 
   try {
     let chatId = TELEGRAM_CHAT_ID
-    let { response, result } = await postTelegramMessage({
+    let { response, result } = await postTelegramApi('sendMessage', {
       chat_id: chatId,
       text: lines.join('\n'),
       parse_mode: 'HTML',
@@ -188,6 +282,11 @@ export async function sendTelegramNotification(data: NotificationData): Promise<
     })
 
     if (response.ok && result?.ok) {
+      if ((data.type === 'order' || data.type === 'order_paid') && orderItems.length > 0) {
+        await sendTelegramImages(chatId, orderItems).catch(error => {
+          console.error('Telegram images failed:', error)
+        })
+      }
       console.log('Telegram notification sent:', label)
       return { ok: true, channel: 'telegram', detail: 'html', raw: result }
     }
@@ -198,7 +297,7 @@ export async function sendTelegramNotification(data: NotificationData): Promise<
     if (migratedChatId) {
       chatId = String(migratedChatId)
       console.warn(`Telegram chat migrated. Retry with chat_id=${chatId} and update TELEGRAM_CHAT_ID in Railway.`)
-      ;({ response, result } = await postTelegramMessage({
+      ;({ response, result } = await postTelegramApi('sendMessage', {
         chat_id: chatId,
         text: lines.join('\n'),
         parse_mode: 'HTML',
@@ -206,6 +305,11 @@ export async function sendTelegramNotification(data: NotificationData): Promise<
       }))
 
       if (response.ok && result?.ok) {
+        if ((data.type === 'order' || data.type === 'order_paid') && orderItems.length > 0) {
+          await sendTelegramImages(chatId, orderItems).catch(error => {
+            console.error('Telegram images failed after migration retry:', error)
+          })
+        }
         console.log('Telegram notification sent after chat migration retry:', label)
         return { ok: true, channel: 'telegram', detail: `html with migrated chat_id ${chatId}`, raw: result }
       }
@@ -213,7 +317,7 @@ export async function sendTelegramNotification(data: NotificationData): Promise<
       console.error('Telegram migration retry failed:', result || response.status)
     }
 
-    const { response: fallbackResponse, result: fallbackResult } = await postTelegramMessage({
+    const { response: fallbackResponse, result: fallbackResult } = await postTelegramApi('sendMessage', {
       chat_id: chatId,
       text: toPlainTelegramText(rows, label),
       disable_web_page_preview: true,
@@ -222,6 +326,11 @@ export async function sendTelegramNotification(data: NotificationData): Promise<
       throw new Error(`Telegram fallback failed: ${JSON.stringify(fallbackResult || { status: fallbackResponse.status })}`)
     }
 
+    if ((data.type === 'order' || data.type === 'order_paid') && orderItems.length > 0) {
+      await sendTelegramImages(chatId, orderItems).catch(error => {
+        console.error('Telegram images failed after fallback:', error)
+      })
+    }
     console.log('Telegram notification sent via fallback:', label)
     return { ok: true, channel: 'telegram', detail: 'plain-text fallback', raw: fallbackResult }
   } catch (e) {

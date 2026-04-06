@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { sendAdminNotification } from '@/lib/mailer'
+import { prisma } from '@/lib/prisma'
 
 const MERCHANT_ID = process.env.YANDEX_PAY_MERCHANT_ID || ''
 const API_KEY = process.env.YANDEX_PAY_API_KEY || ''
@@ -16,9 +17,11 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json()
-    const { name, email, phone, items, amount, delivery, address, comment, paymentMethod, deliveryPrice } = body
+    const { name, email, phone, items, itemDetails, amount, delivery, address, comment, paymentMethod, deliveryPrice } = body
 
     const orderId = `shmukler-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
+    const orderItems = JSON.stringify(Array.isArray(itemDetails) ? itemDetails : [])
+    const pendingMessage = `Ожидает оплату через Яндекс Пэй / Split. ID заказа: ${orderId}.${comment ? ` Комментарий: ${comment}` : ''}`
 
     // Parse artwork items
     const cartItems: { productId: string; title: string; quantity: { count: string }; total: string }[] = (items as string)
@@ -82,11 +85,26 @@ export async function POST(req: NextRequest) {
     console.log('Yandex Pay response:', JSON.stringify(data))
 
     if (data.data?.paymentUrl) {
+      await prisma.inquiry.create({
+        data: {
+          type: 'order',
+          name,
+          email,
+          phone: phone || null,
+          message: pendingMessage,
+          service: 'Yandex Pay / Split',
+          items: orderItems,
+          status: 'new',
+        },
+      })
+
       await sendAdminNotification({
         type: 'order',
-        name, email, phone, items, amount,
+        name, email, phone, items: orderItems, amount,
         delivery, address, comment, orderId,
         deliveryPrice: Number(deliveryPrice) || 0,
+        paymentProvider: 'Yandex Pay / Split',
+        paymentStatus: 'Ожидает оплату',
       })
       return NextResponse.json({ ok: true, payUrl: data.data.paymentUrl, orderId })
     }

@@ -8,13 +8,34 @@ import { use } from 'react'
 import { RichText } from '@/components/RichText'
 import { parseArtists, parseStringArray } from '@/lib/gallery-helpers'
 
+function buildVariantGroup(currentArtwork: any, groupItems: any[]) {
+  const currentRelatedIds = parseStringArray(currentArtwork.relatedArtworkIds)
+  const currentIds = new Set([currentArtwork.id, ...currentRelatedIds])
+  const parentArtwork = groupItems.find(item => {
+    const relatedIds = parseStringArray(item.relatedArtworkIds)
+    return relatedIds.length > 0 && (item.id === currentArtwork.id || relatedIds.includes(currentArtwork.id))
+  }) || (currentRelatedIds.length > 0 ? currentArtwork : null)
+
+  const mode = parentArtwork?.variantMode || currentArtwork.variantMode || 'single'
+  const itemMap = new Map(groupItems.map(item => [item.id, item]))
+  const ordered = parentArtwork
+    ? [parentArtwork, ...parseStringArray(parentArtwork.relatedArtworkIds).map(id => itemMap.get(id)).filter(Boolean)]
+    : groupItems.filter(item => currentIds.has(item.id) || parseStringArray(item.relatedArtworkIds).some(id => currentIds.has(id)))
+
+  const deduped = Array.from(new Map(ordered.map(item => [item.id, item])).values())
+  if (!deduped.some(item => item.id === currentArtwork.id)) deduped.unshift(currentArtwork)
+
+  return { mode, items: deduped }
+}
+
 export default function ArtworkPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params)
   const [artwork, setArtwork] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [deliveryOpen, setDeliveryOpen] = useState(false)
   const [activeImage, setActiveImage] = useState(0)
-  const [relatedWorks, setRelatedWorks] = useState<any[]>([])
+  const [variantItems, setVariantItems] = useState<any[]>([])
+  const [variantMode, setVariantMode] = useState<'single' | 'switch' | 'bundle'>('single')
   const { add, items } = useCart()
   const inCart = artwork && items.find(i => i.id === artwork.id)
 
@@ -27,15 +48,18 @@ export default function ArtworkPage({ params }: { params: Promise<{ slug: string
         if (found) {
           setActiveImage(0)
           setArtwork(found)
-          const relatedIds = parseStringArray(found.relatedArtworkIds)
-          if (relatedIds.length > 0) {
-            fetch(`/api/artworks?ids=${encodeURIComponent(relatedIds.join(','))}&limit=100`)
-              .then(r => r.json())
-              .then(related => setRelatedWorks(Array.isArray(related.items) ? related.items : []))
-              .catch(() => {})
-          } else {
-            setRelatedWorks([])
-          }
+          fetch(`/api/artworks?relatedTo=${encodeURIComponent(found.id)}&limit=100`)
+            .then(r => r.json())
+            .then(group => {
+              const groupedItems = Array.isArray(group.items) ? group.items : []
+              const variantGroup = buildVariantGroup(found, groupedItems.length > 0 ? groupedItems : [found])
+              setVariantItems(variantGroup.items)
+              setVariantMode(variantGroup.mode)
+            })
+            .catch(() => {
+              setVariantItems([found])
+              setVariantMode(found.variantMode || 'single')
+            })
         }
       })
       .catch(() => {})
@@ -51,8 +75,8 @@ export default function ArtworkPage({ params }: { params: Promise<{ slug: string
   }
 
   const artistLinks = parseArtists(artwork.artistsJson, { name: artwork.artistName, slug: artwork.artistSlug })
-  const variantMode = artwork.variantMode || 'single'
-  const bundleOptions = variantMode === 'bundle' ? [artwork, ...relatedWorks] : relatedWorks
+  const selectableVariants = variantItems.length > 0 ? variantItems : [artwork]
+  const hasVariantOptions = selectableVariants.length > 1
 
   let allImages: string[] = []
   if (artwork.imagePath) allImages.push(artwork.imagePath)
@@ -132,47 +156,79 @@ export default function ArtworkPage({ params }: { params: Promise<{ slug: string
             </div>
           )}
 
-          {variantMode === 'switch' && relatedWorks.length > 0 && (
+          {variantMode === 'switch' && hasVariantOptions && (
             <div className="space-y-3">
               <h2 className="text-xs uppercase tracking-widest text-gray-400">Работы на выбор</h2>
               <div className="grid grid-cols-2 gap-3">
-                {[artwork, ...relatedWorks].map((item: any) => (
+                {selectableVariants.map((item: any) => {
+                  const isCurrent = item.id === artwork.id
+                  const isSold = item.status === 'sold'
+                  const isReserved = item.status === 'reserved'
+                  return (
                   <Link
                     key={item.id}
                     href={`/artwork/${item.slug}`}
-                    className={`border p-3 transition-colors ${item.id === artwork.id ? 'border-black bg-gray-50' : 'border-gray-200 hover:border-black'}`}
+                    className={`border p-3 transition-colors ${
+                      isCurrent
+                        ? 'border-black bg-gray-50'
+                        : isSold
+                          ? 'border-gray-200 bg-gray-100 text-gray-400 hover:border-gray-300'
+                          : 'border-gray-200 hover:border-black'
+                    }`}
                   >
-                    <div className="relative aspect-square bg-gray-50 mb-2">
-                      {item.imagePath && <Image src={item.imagePath} alt={item.title} fill className="object-contain" sizes="160px" />}
+                    <div className={`relative aspect-square mb-2 ${isSold ? 'bg-gray-100' : 'bg-gray-50'}`}>
+                      {item.imagePath && <Image src={item.imagePath} alt={item.title} fill className={`object-contain ${isSold ? 'opacity-60 grayscale' : ''}`} sizes="160px" />}
+                      {isSold && (
+                        <span className="absolute left-2 top-2 bg-black/80 px-2 py-1 text-[10px] uppercase tracking-widest text-white">
+                          Продано
+                        </span>
+                      )}
+                      {isReserved && !isSold && (
+                        <span className="absolute left-2 top-2 bg-gray-700/80 px-2 py-1 text-[10px] uppercase tracking-widest text-white">
+                          Резерв
+                        </span>
+                      )}
                     </div>
                     <p className="text-sm leading-snug">{item.title}</p>
-                    {item.price ? <p className="text-xs text-gray-500 mt-1">{Number(item.price).toLocaleString('ru-RU')} ₽</p> : null}
+                    {item.price && !isSold ? <p className="text-xs text-gray-500 mt-1">{Number(item.price).toLocaleString('ru-RU')} ₽</p> : null}
+                    {isSold ? <p className="mt-1 text-[11px] uppercase tracking-widest text-gray-400">Продано</p> : null}
                   </Link>
-                ))}
+                  )
+                })}
               </div>
             </div>
           )}
 
-          {variantMode === 'bundle' && bundleOptions.length > 0 && (
+          {variantMode === 'bundle' && hasVariantOptions && (
             <div className="space-y-3">
               <h2 className="text-xs uppercase tracking-widest text-gray-400">Варианты покупки</h2>
               <div className="space-y-2">
-                {bundleOptions.map((item: any, index: number) => {
+                {selectableVariants.map((item: any, index: number) => {
                   const isCurrent = item.id === artwork.id
+                  const isSold = item.status === 'sold'
+                  const isReserved = item.status === 'reserved'
                   const label = index === 0 ? 'Целиком' : `Часть ${index}`
                   return (
                     <Link
                       key={item.id}
                       href={`/artwork/${item.slug}`}
-                      className={`flex items-center gap-3 border p-3 transition-colors ${isCurrent ? 'border-black bg-gray-50' : 'border-gray-200 hover:border-black'}`}
+                      className={`flex items-center gap-3 border p-3 transition-colors ${
+                        isCurrent
+                          ? 'border-black bg-gray-50'
+                          : isSold
+                            ? 'border-gray-200 bg-gray-100 text-gray-400 hover:border-gray-300'
+                            : 'border-gray-200 hover:border-black'
+                      }`}
                     >
-                      <div className="relative w-16 h-16 bg-gray-50 flex-shrink-0">
-                        {item.imagePath && <Image src={item.imagePath} alt={item.title} fill className="object-contain" sizes="64px" />}
+                      <div className={`relative w-16 h-16 flex-shrink-0 ${isSold ? 'bg-gray-100' : 'bg-gray-50'}`}>
+                        {item.imagePath && <Image src={item.imagePath} alt={item.title} fill className={`object-contain ${isSold ? 'opacity-60 grayscale' : ''}`} sizes="64px" />}
                       </div>
                       <div className="min-w-0">
                         <p className="text-[11px] uppercase tracking-widest text-gray-400">{label}</p>
                         <p className="text-sm truncate">{item.title}</p>
-                        {item.price ? <p className="text-xs text-gray-500 mt-1">{Number(item.price).toLocaleString('ru-RU')} ₽</p> : null}
+                        {item.price && !isSold ? <p className="text-xs text-gray-500 mt-1">{Number(item.price).toLocaleString('ru-RU')} ₽</p> : null}
+                        {isSold ? <p className="text-[11px] uppercase tracking-widest text-gray-400 mt-1">Продано</p> : null}
+                        {isReserved && !isSold ? <p className="text-[11px] uppercase tracking-widest text-gray-400 mt-1">Забронировано</p> : null}
                       </div>
                     </Link>
                   )

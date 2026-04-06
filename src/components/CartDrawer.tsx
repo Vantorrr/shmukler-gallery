@@ -203,6 +203,14 @@ export function CartDrawer() {
       const itemsSummary = items
         .map(i => `${i.artistName ? `${i.artistName} — ` : ''}${i.title} (${i.price?.toLocaleString() ?? '—'} ₽)`)
         .join('; ')
+      const itemDetails = items.map(item => ({
+        id: item.id,
+        title: item.title,
+        artistName: item.artistName || '',
+        price: item.price ?? null,
+        slug: item.slug,
+        imagePath: item.imagePath || '',
+      }))
       const deliveryLabel = delivery === 'cdek' && cdekInfo
         ? `СДЭК (${cdekInfo.type}): ${cdekInfo.address}`
         : (DELIVERY_OPTIONS.find(o => o.key === delivery)?.label ?? delivery)
@@ -215,7 +223,7 @@ export function CartDrawer() {
         body: JSON.stringify({
           name: form.name, email: form.email, phone: form.phone,
           delivery: deliveryLabel, address: form.address || (cdekInfo?.address ?? ''),
-          comment: form.comment || '', items: itemsSummary, amount,
+          comment: form.comment || '', items: itemsSummary, itemDetails, amount,
           deliveryPrice: cdekDeliveryPrice ?? 0,
           paymentMethod,
         }),

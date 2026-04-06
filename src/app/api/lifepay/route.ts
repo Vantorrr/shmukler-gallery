@@ -9,13 +9,15 @@ const LIFEPAY_URL = 'https://api.life-pay.ru/v1/bill'
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { name, email, phone, items, delivery, address, comment, amount } = body
+    const { name, email, phone, items, itemDetails, delivery, address, comment, amount } = body
 
     if (!name || !email || !amount) {
       return NextResponse.json({ error: 'Недостаточно данных' }, { status: 400 })
     }
 
     const orderId = `SG-${Date.now()}`
+    const orderItems = JSON.stringify(Array.isArray(itemDetails) ? itemDetails : [])
+    const pendingMessage = `Ожидает оплату через LifePay. ID заказа: ${orderId}. Доставка: ${delivery}. Адрес: ${address || '—'}.${comment ? ` Комментарий: ${comment}` : ''}`
 
     // Save order to DB
     await prisma.inquiry.create({
@@ -24,8 +26,9 @@ export async function POST(req: NextRequest) {
         name,
         email,
         phone: phone || null,
-        message: `Доставка: ${delivery}. Адрес: ${address || '—'}. Комментарий: ${comment || '—'}`,
-        items: items || null,
+        message: pendingMessage,
+        service: 'LifePay',
+        items: orderItems,
         status: 'new',
       },
     })
@@ -56,12 +59,14 @@ export async function POST(req: NextRequest) {
         name,
         email,
         phone,
-        items,
+        items: orderItems,
         amount,
         delivery,
         address,
         comment,
         orderId,
+        paymentProvider: 'LifePay',
+        paymentStatus: 'Ожидает оплату',
       })
       return NextResponse.json({ ok: true, payUrl: data.data.paymentUrl, orderId })
     } else {
