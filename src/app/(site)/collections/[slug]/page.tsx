@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { use } from 'react'
 import { RichText } from '@/components/RichText'
 import { HomeArtworkCard } from '@/components/HomeArtworkCard'
+import { clearArtworkReturnScroll, getArtworkReturnScroll } from '@/lib/artwork-return-scroll'
 
 export default function CollectionPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params)
@@ -29,6 +30,15 @@ export default function CollectionPage({ params }: { params: Promise<{ slug: str
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [slug])
+
+  useEffect(() => {
+    const saved = getArtworkReturnScroll()
+    if (!saved || loading) return
+    clearArtworkReturnScroll()
+    window.requestAnimationFrame(() => {
+      window.scrollTo({ top: saved.y, behavior: 'auto' })
+    })
+  }, [loading])
 
   if (loading) return <div className="min-h-screen flex items-center justify-center text-gray-400">Загрузка...</div>
   if (!collection) return <div className="min-h-[50vh] flex items-center justify-center"><h1 className="text-2xl font-light text-gray-400">Подборка не найдена</h1></div>

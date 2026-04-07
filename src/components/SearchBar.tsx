@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Search, X } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { saveArtworkReturnScroll } from '@/lib/artwork-return-scroll'
 
 export function SearchBar() {
   const [open, setOpen] = useState(false)
@@ -76,7 +77,7 @@ export function SearchBar() {
                     <p className="text-[10px] uppercase tracking-widest text-gray-400 mb-3">Работы</p>
                     <div className="space-y-1">
                       {results.artworks.map(a => (
-                        <Link key={a.id} href={`/artwork/${a.slug}`} onClick={close} className="flex items-center gap-3 hover:bg-gray-50 rounded-lg p-2 -mx-2 transition-colors">
+                        <Link key={a.id} href={`/artwork/${a.slug}`} onClick={() => { saveArtworkReturnScroll(); close() }} className="flex items-center gap-3 hover:bg-gray-50 rounded-lg p-2 -mx-2 transition-colors">
                           {a.imagePath && (
                             <div className="relative flex-shrink-0 rounded overflow-hidden bg-gray-100" style={{ width: 48, height: 48 }}>
                               <Image src={a.imagePath} alt={a.title} fill className="object-cover" sizes="48px" />

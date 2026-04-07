@@ -8,6 +8,7 @@ import { clsx } from 'clsx'
 import { RichText } from '@/components/RichText'
 import Link from 'next/link'
 import { parseStringArray } from '@/lib/gallery-helpers'
+import { clearArtworkReturnScroll, getArtworkReturnScroll } from '@/lib/artwork-return-scroll'
 
 export default function ExhibitionPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params)
@@ -25,7 +26,7 @@ export default function ExhibitionPage({ params }: { params: Promise<{ slug: str
         if (found) {
           setExhibition(found)
           return Promise.all([
-            fetch(`/api/artworks?exhibitionId=${found.id}&limit=100`).then(r => r.json()),
+            fetch(`/api/artworks?exhibitionId=${found.id}&limit=500`).then(r => r.json()),
             parseStringArray(found.eventIds).length > 0
               ? fetch(`/api/events?ids=${encodeURIComponent(parseStringArray(found.eventIds).join(','))}`).then(r => r.json())
               : Promise.resolve([]),
@@ -38,6 +39,15 @@ export default function ExhibitionPage({ params }: { params: Promise<{ slug: str
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [slug])
+
+  useEffect(() => {
+    const saved = getArtworkReturnScroll()
+    if (!saved || loading) return
+    clearArtworkReturnScroll()
+    window.requestAnimationFrame(() => {
+      window.scrollTo({ top: saved.y, behavior: 'auto' })
+    })
+  }, [loading])
 
   if (loading) return <div className="min-h-screen flex items-center justify-center text-gray-400">Загрузка...</div>
   if (!exhibition) return <div className="min-h-[50vh] flex items-center justify-center"><h1 className="text-2xl font-light text-gray-400">Выставка не найдена</h1></div>

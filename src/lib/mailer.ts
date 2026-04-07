@@ -33,6 +33,8 @@ type NotificationItem = {
   imagePath?: string
 }
 
+const SITE_URL = 'https://shmuklergallery.com'
+
 type NotificationData = {
   type: string
   name: string
@@ -106,10 +108,11 @@ function parseNotificationItems(value?: string | null): NotificationItem[] {
 function formatNotificationItems(items: NotificationItem[]) {
   return items.map(item => {
     const title = item.artistName ? `${item.artistName} — ${item.title}` : item.title
+    const artworkUrl = item.slug ? `${SITE_URL}/artwork/${item.slug}` : null
     const meta = [
-      item.slug ? `slug: ${item.slug}` : null,
       item.id ? `id: ${item.id}` : null,
       typeof item.price === 'number' ? `${item.price.toLocaleString('ru-RU')} ₽` : null,
+      artworkUrl ? `ссылка: ${artworkUrl}` : null,
     ].filter(Boolean).join(', ')
     return meta ? `${title} (${meta})` : title || '—'
   }).join('\n')
@@ -125,8 +128,13 @@ function buildItemsHtml(items: NotificationItem[]) {
       <div style="display:flex;flex-wrap:wrap;gap:12px">
         ${withImages.map(item => `
           <div style="width:120px">
+            ${item.slug
+              ? `<a href="${SITE_URL}/artwork/${item.slug}" style="text-decoration:none;color:inherit">
             <img src="${item.imagePath}" alt="${item.title || 'Работа'}" style="width:120px;height:120px;object-fit:cover;background:#f5f5f5;display:block" />
+            </a>`
+              : `<img src="${item.imagePath}" alt="${item.title || 'Работа'}" style="width:120px;height:120px;object-fit:cover;background:#f5f5f5;display:block" />`}
             <p style="margin:6px 0 0;font-size:12px;color:#666;line-height:1.4">${item.title || ''}</p>
+            ${item.slug ? `<p style="margin:4px 0 0;font-size:11px;line-height:1.4"><a href="${SITE_URL}/artwork/${item.slug}" style="color:#0a0a0a">Открыть на сайте</a></p>` : ''}
           </div>
         `).join('')}
       </div>

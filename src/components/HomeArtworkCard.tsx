@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useCart } from '@/lib/CartContext'
 import { parseArtists } from '@/lib/gallery-helpers'
+import { saveArtworkReturnScroll } from '@/lib/artwork-return-scroll'
 
 type Artwork = {
   id?: string
@@ -53,9 +54,13 @@ export function HomeArtworkCard({ artwork, cover = false, natural = false }: { a
     })
   }
 
+  function handleArtworkOpen() {
+    saveArtworkReturnScroll()
+  }
+
   return (
     <div className="flex flex-col">
-      <Link href={`/artwork/${slug}`} className="group block">
+      <Link href={`/artwork/${slug}`} onClick={handleArtworkOpen} className="group block">
         <div className="relative bg-gray-50 overflow-hidden mb-3" style={natural ? undefined : { aspectRatio: '3/4' }}>
           {imageUrl && (natural ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -109,7 +114,10 @@ export function HomeArtworkCard({ artwork, cover = false, natural = false }: { a
         </button>
       ) : (
         <button
-          onClick={() => router.push(`/artwork/${slug}`)}
+          onClick={() => {
+            handleArtworkOpen()
+            router.push(`/artwork/${slug}`)
+          }}
           className="w-full text-[11px] uppercase tracking-widest py-2.5 border border-gray-300 hover:border-black hover:bg-black hover:text-white transition-colors"
         >
           Узнать цену

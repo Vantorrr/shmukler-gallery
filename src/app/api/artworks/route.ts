@@ -70,7 +70,7 @@ export async function GET(req: NextRequest) {
 
     // When fetching by slug (detail page), don't restrict by isArchived
     const where: any = (ids || slugFilter) ? {} : { isArchived: false }
-    const shouldHideVariantChildren = !ids && !slugFilter
+    const shouldHideVariantChildren = !ids && !slugFilter && !exhibitionId && !fairId
 
     if (artistSlug) {
       where.OR = [

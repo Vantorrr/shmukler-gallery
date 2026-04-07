@@ -5,6 +5,7 @@ import { HomeArtworkCard } from '@/components/HomeArtworkCard'
 import { HeroSlider } from '@/components/HeroSlider'
 import Link from 'next/link'
 import Image from 'next/image'
+import { clearArtworkReturnScroll, getArtworkReturnScroll } from '@/lib/artwork-return-scroll'
 
 export default function Home() {
   const [artworks, setArtworks] = useState<any[]>([])
@@ -33,6 +34,15 @@ export default function Home() {
       .then(d => setCollections(Array.isArray(d) ? d : []))
       .catch(() => {})
   }, [])
+
+  useEffect(() => {
+    const saved = getArtworkReturnScroll()
+    if (!saved || artworks.length === 0) return
+    clearArtworkReturnScroll()
+    window.requestAnimationFrame(() => {
+      window.scrollTo({ top: saved.y, behavior: 'auto' })
+    })
+  }, [artworks])
 
   return (
     <div className="min-h-screen bg-white">

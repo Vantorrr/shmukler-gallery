@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { HomeArtworkCard } from '@/components/HomeArtworkCard'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Suspense } from 'react'
+import { clearArtworkReturnScroll, getArtworkReturnScroll } from '@/lib/artwork-return-scroll'
 
 const DEFAULT_TECHNIQUES = ['Живопись', 'Графика', 'Скульптура', 'Фотография', 'Керамика', 'Фреска', 'Смешанная техника']
 const DEFAULT_THEMES = ['Пейзаж', 'Портрет', 'Натюрморт', 'Абстракция', 'Город', 'Природа', 'Цветы', 'Чувства', 'Любовь', 'Дружба', 'Море', 'Память', 'Тело', 'Детство', 'Дом']
@@ -54,6 +55,12 @@ function GalleryContent() {
   const [hasMore, setHasMore] = useState(true)
   const [total, setTotal] = useState(0)
   const observerRef = useRef<HTMLDivElement>(null)
+  const restoreTargetRef = useRef<number | null>(null)
+  const restoreLoadingRef = useRef(false)
+
+  useEffect(() => {
+    restoreTargetRef.current = getArtworkReturnScroll()?.y ?? null
+  }, [])
 
   useEffect(() => {
     fetch('/api/filter-options').then(r => r.json()).then(d => setFilterOptions(d)).catch(() => {})
@@ -123,6 +130,34 @@ function GalleryContent() {
     obs.observe(observerRef.current)
     return () => obs.disconnect()
   }, [hasMore, loadingMore, loading, page, load])
+
+  useEffect(() => {
+    if (!loadingMore) restoreLoadingRef.current = false
+  }, [loadingMore])
+
+  useEffect(() => {
+    const targetY = restoreTargetRef.current
+    if (targetY === null || loading) return
+
+    const maxScroll = document.documentElement.scrollHeight - window.innerHeight
+    if (maxScroll >= targetY - 40 || !hasMore) {
+      restoreTargetRef.current = null
+      clearArtworkReturnScroll()
+      window.requestAnimationFrame(() => {
+        window.scrollTo({ top: targetY, behavior: 'auto' })
+      })
+      return
+    }
+
+    if (!loadingMore && hasMore && !restoreLoadingRef.current) {
+      restoreLoadingRef.current = true
+      setPage(prev => {
+        const next = prev + 1
+        void load(next)
+        return next
+      })
+    }
+  }, [artworks, hasMore, loading, loadingMore, load])
 
   function setFilter(key: string, value: string) {
     const p = new URLSearchParams(searchParams.toString())

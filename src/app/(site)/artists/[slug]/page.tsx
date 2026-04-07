@@ -5,6 +5,7 @@ import { HomeArtworkCard } from '@/components/HomeArtworkCard'
 import Image from 'next/image'
 import { RichText } from '@/components/RichText'
 import { use } from 'react'
+import { clearArtworkReturnScroll, getArtworkReturnScroll } from '@/lib/artwork-return-scroll'
 
 export default function ArtistPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params)
@@ -23,6 +24,15 @@ export default function ArtistPage({ params }: { params: Promise<{ slug: string 
       }
     }).catch(() => {}).finally(() => setLoading(false))
   }, [slug])
+
+  useEffect(() => {
+    const saved = getArtworkReturnScroll()
+    if (!saved || loading) return
+    clearArtworkReturnScroll()
+    window.requestAnimationFrame(() => {
+      window.scrollTo({ top: saved.y, behavior: 'auto' })
+    })
+  }, [loading])
 
   if (loading) return <div className="min-h-screen flex items-center justify-center text-gray-400">Загрузка...</div>
   if (!artist) return <div className="min-h-[50vh] flex items-center justify-center"><h1 className="text-2xl font-light text-gray-400">Художник не найден</h1></div>

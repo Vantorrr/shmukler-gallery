@@ -7,6 +7,7 @@ import {
   Upload, LogOut, RefreshCw, Archive, ArchiveRestore, Download, Tag, Copy, Link2, GripVertical
 } from 'lucide-react'
 import { parseArtists, parseStringArray, stringifyArtists, stringifyStringArray } from '@/lib/gallery-helpers'
+import { slugifyLatin } from '@/lib/slugify'
 
 type Tab = 'artworks' | 'artists' | 'exhibitions' | 'events' | 'team' | 'fairs' | 'slides' | 'announcements' | 'collections' | 'inquiries' | 'promo' | 'filters' | 'pages'
 
@@ -188,7 +189,7 @@ function ArtworkForm({ initial, onSave, onCancel }: { initial: any; onSave: (d: 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!d.title) return
-    const slug = d.slug || d.title.toLowerCase().replace(/[^a-z0-9а-яёA-ZА-ЯЁ\s]/g, '').replace(/\s+/g, '-')
+    const slug = d.slug || slugifyLatin(d.title)
     const artists = d.artistsInput
       .split('\n')
       .map((row: string) => row.trim())
@@ -283,7 +284,7 @@ function ArtistForm({ initial, onSave, onCancel }: { initial: any; onSave: (d: a
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!d.name) return
-    const slug = d.slug || d.name.toLowerCase().replace(/\s+/g, '-')
+    const slug = d.slug || slugifyLatin(d.name)
     onSave({ ...d, slug, orderIndex: parseInt(String(d.orderIndex)) || 0 })
   }
 
@@ -321,7 +322,7 @@ function ExhibitionForm({ initial, onSave, onCancel }: { initial: any; onSave: (
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!d.title) return
-    const slug = d.slug || d.title.toLowerCase().replace(/\s+/g, '-')
+    const slug = d.slug || slugifyLatin(d.title)
     onSave({ ...d, slug, orderIndex: parseInt(String(d.orderIndex)) || 0 })
   }
 
@@ -371,7 +372,7 @@ function EventForm({ initial, onSave, onCancel }: { initial: any; onSave: (d: an
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!d.title) return
-    const slug = d.slug || d.title.toLowerCase().replace(/\s+/g, '-')
+    const slug = d.slug || slugifyLatin(d.title)
     onSave({ ...d, slug, price: d.price !== '' ? parseInt(d.price) : null, orderIndex: parseInt(String(d.orderIndex)) || 0 })
   }
 
@@ -444,7 +445,7 @@ function FairForm({ initial, onSave, onCancel }: { initial: any; onSave: (d: any
   const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => setD((prev: any) => ({ ...prev, [k]: e.target.value }))
 
   return (
-    <form onSubmit={e => { e.preventDefault(); if (!d.title) return; const slug = d.slug || d.title.toLowerCase().replace(/\s+/g, '-'); onSave({ ...d, slug, orderIndex: parseInt(String(d.orderIndex)) || 0 }) }} className="space-y-4 p-4 bg-gray-50 rounded-lg border">
+    <form onSubmit={e => { e.preventDefault(); if (!d.title) return; const slug = d.slug || slugifyLatin(d.title); onSave({ ...d, slug, orderIndex: parseInt(String(d.orderIndex)) || 0 }) }} className="space-y-4 p-4 bg-gray-50 rounded-lg border">
       <div className="grid grid-cols-2 gap-4">
         <Field label="Название *"><Input required value={d.title} onChange={set('title')} /></Field>
         <Field label="Slug"><Input value={d.slug} onChange={set('slug')} placeholder="auto" /></Field>
@@ -548,7 +549,7 @@ function CollectionForm({ initial, onSave, onCancel }: { initial: any; onSave: (
   const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setD((prev: any) => ({ ...prev, [k]: e.target.value }))
 
   return (
-    <form onSubmit={e => { e.preventDefault(); if (!d.title) return; const slug = d.slug || d.title.toLowerCase().replace(/\s+/g, '-'); onSave({ ...d, slug, orderIndex: parseInt(String(d.orderIndex)) || 0 }) }} className="space-y-4 p-4 bg-gray-50 rounded-lg border">
+    <form onSubmit={e => { e.preventDefault(); if (!d.title) return; const slug = d.slug || slugifyLatin(d.title); onSave({ ...d, slug, orderIndex: parseInt(String(d.orderIndex)) || 0 }) }} className="space-y-4 p-4 bg-gray-50 rounded-lg border">
       <div className="grid grid-cols-2 gap-4">
         <Field label="Название *"><Input required value={d.title} onChange={set('title')} /></Field>
         <Field label="Slug"><Input value={d.slug} onChange={set('slug')} placeholder="auto" /></Field>

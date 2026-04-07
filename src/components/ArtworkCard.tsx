@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
+import { saveArtworkReturnScroll } from '@/lib/artwork-return-scroll'
 
 type Artwork = {
   id?: string
@@ -23,7 +24,7 @@ export function ArtworkCard({ artwork }: { artwork: Artwork }) {
   if (!slug) return null
 
   return (
-    <Link href={`/artwork/${slug}`} className="group block">
+    <Link href={`/artwork/${slug}`} onClick={saveArtworkReturnScroll} className="group block">
       <div className="relative bg-gray-50 overflow-hidden mb-4" style={{ aspectRatio: '3/4' }}>
         {imageUrl && (
           <Image
